@@ -35,6 +35,10 @@ class EmployeeEntity {
 
     lateinit var socialSecurityId: String
 
+    var minijob: Boolean = false
+
+    var hourlyWage: Double = 0.0
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false)
     var createdAt: LocalDateTime = LocalDateTime.now()
