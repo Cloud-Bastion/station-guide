@@ -1,8 +1,8 @@
 package dev.aventix.station.resource.server.schedule
 
 import dev.aventix.station.resource.server.employee.EmployeeEntity
+import dev.aventix.station.resource.server.schedule.event.ScheduleEvent
 import jakarta.persistence.*
-import java.time.Instant
 import java.util.UUID
 
 @Entity
@@ -21,17 +21,10 @@ class ScheduleEntry {
     @Column(nullable = false)
     lateinit var planType: ScheduleEntryPlanType
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    lateinit var entryType: ScheduleEntryType
-
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(nullable = false)
-    lateinit var startDate: Instant
-
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(nullable = false)
-    lateinit var endDate: Instant
-
+    @OneToMany(cascade = [(CascadeType.ALL)],
+        fetch = FetchType.EAGER,
+        orphanRemoval = true)
+    @JoinColumn(name = "schedule_entry_id")
+    lateinit var events: MutableList<ScheduleEvent>
 
 }
