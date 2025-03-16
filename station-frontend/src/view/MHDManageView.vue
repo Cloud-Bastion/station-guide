@@ -1,5 +1,5 @@
 <template>
-  <SidebarComponent/>
+  <SidebarComponent site="mhd-management"/>
 </template>
 
 <script setup lang="ts">
