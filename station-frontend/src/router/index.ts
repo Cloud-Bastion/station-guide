@@ -1,7 +1,7 @@
 import {createRouter, createWebHashHistory, RouteRecordRaw} from 'vue-router'
 import EmployeeManageView from "@/view/employee/EmployeeManageView.vue";
-import MHDManageView from "@/view/MHDManageView.vue";
 import TaskManagementView from "@/view/TaskManagementView.vue";
+import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -10,9 +10,9 @@ const routes: Array<RouteRecordRaw> = [
         component: EmployeeManageView
     },
     {
-        path: '/mhd-management',
-        name: 'mhd-management',
-        component: MHDManageView
+        path: '/product-expire-management',
+        name: 'product-expire-management',
+        component: ProductExpireManageView
     },
     {
         path: '/task-management',

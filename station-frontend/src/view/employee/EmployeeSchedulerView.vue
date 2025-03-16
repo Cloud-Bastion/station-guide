@@ -122,6 +122,8 @@ $border-design: 0.1vh solid #555;
 
   .datepicker {
     margin: 25px 25px;
+    width: fit-content;
+
 
     --dp-font-family: -apple-system, blinkmacsystemfont, "Segoe UI", roboto, oxygen, ubuntu, cantarell, "Open Sans", "Helvetica Neue", sans-serif;
     --dp-border-radius: 5px;
@@ -188,7 +190,7 @@ $border-design: 0.1vh solid #555;
   .schedule-parent {
     font-size: smaller;
     text-align: center;
-    margin: 20px 0;
+    margin: 20px 25px;
     background-color: #252525;
     border: $border-design;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);

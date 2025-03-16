@@ -12,17 +12,17 @@ const props = defineProps<{
       <img src="/logo.png" alt="circle k logo" :class="$style['logo']">
       <div :class="$style['workprogramms-container']">
         <router-link to="employee-management"
-                     :class="[$style['workprogramms-entity'], this.site === 'employee-management' ? $style['workprogramms-entity-active'] : '']">
+                     :class="[$style['workprogramms-entity'], props.site === 'employee-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'id-badge']" size="lg"/>
           Mitarbeiter-Management
         </router-link>
-        <router-link to="mhd-management"
-                     :class="[$style['workprogramms-entity'], this.site === 'mhd-management' ? $style['workprogramms-entity-active'] : '']">
+        <router-link to="product-expire-management"
+                     :class="[$style['workprogramms-entity'], props.site === 'product-expire-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'lemon']" size="lg"/>
           MHD-Tool
         </router-link>
         <router-link to="task-management"
-                     :class="[$style['workprogramms-entity'], this.site === 'task-management' ? $style['workprogramms-entity-active'] : '']">
+                     :class="[$style['workprogramms-entity'], props.site === 'task-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'fa-rectangle-list']" size="lg"/>
           Task-Manager
         </router-link>
