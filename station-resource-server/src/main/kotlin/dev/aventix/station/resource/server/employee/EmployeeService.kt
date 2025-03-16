@@ -7,6 +7,8 @@ import jakarta.persistence.EntityExistsException
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.*
+import kotlin.NoSuchElementException
 import kotlin.jvm.Throws
 import kotlin.jvm.optionals.getOrNull
 
@@ -25,6 +27,8 @@ class EmployeeService(
             )
         )
     }
+
+    fun findById(id: UUID): Optional<EmployeeEntity> = employeeRepository.findById(id)
 
     @Throws(EntityExistsException::class, IllegalArgumentException::class)
     fun create(createRequest: EmployeeCreateRequest): EmployeeEntity {
