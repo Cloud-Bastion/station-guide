@@ -8,5 +8,5 @@ data class StationExpireProductCreateRequest(
     val name: String,
     val productCategoryId: UUID? = null,
     val reduceProductTime: Long? = null,
-    val expireDate: LocalDate? = null,
+    val expireDate: LocalDate? = null
 )

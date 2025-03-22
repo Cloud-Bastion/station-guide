@@ -10,5 +10,6 @@ data class StationExpireProductDTO(
     val name: String,
     val category: StationExpireProductCategoryDTO?,
     val reduceProductTime: Long?,
-    val expireDate: LocalDate?
+    val expireDate: LocalDate?,
+    val lastUpdateDate: LocalDate?
 )

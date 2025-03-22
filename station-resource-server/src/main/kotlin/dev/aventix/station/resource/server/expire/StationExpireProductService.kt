@@ -81,7 +81,8 @@ class StationExpireProductService(
 
 
         getAllProductsSortedByCategory().forEach { product -> println("Registered: ${product.name} with id: ${product.id}") }
-        this.getAllProductsExpiringOrReduce().forEach { product -> println("Sort out: ${product.name} with id: ${product.id}") }
+        this.getAllProductsExpiringOrReduce()
+            .forEach { product -> println("Sort out: ${product.name} with id: ${product.id}") }
     }
 
     fun getAllProductsSortedByCategory(): MutableList<StationExpireProductDTO> {
@@ -116,8 +117,10 @@ class StationExpireProductService(
             }
 
             createRequest.expireDate?.let {
-                this.expireDate = createRequest.expireDate
+                this.expireDate = it
             }
+
+            this.lastUpdateDate = null
 
         }).toDTO()
     }
@@ -148,6 +151,8 @@ class StationExpireProductService(
         patchRequest.expireDate?.let {
             product.expireDate = it
         }
+
+        product.lastUpdateDate = LocalDate.now()
 
         return this.stationExpireProductRepository.saveAndFlush(product).toDTO()
     }

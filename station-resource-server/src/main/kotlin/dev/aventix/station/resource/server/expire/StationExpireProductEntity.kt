@@ -26,6 +26,10 @@ class StationExpireProductEntity {
     @Temporal(TemporalType.DATE)
     var expireDate: LocalDate? = null
 
+    @Column(nullable = true)
+    @Temporal(TemporalType.DATE)
+    var lastUpdateDate: LocalDate? = null
+
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = true)
     var category: StationExpireProductCategoryEntity? = null
@@ -37,7 +41,8 @@ class StationExpireProductEntity {
             name = this.name,
             category = this.category?.toDTO(),
             reduceProductTime = this.reduceProductTime,
-            expireDate = this.expireDate
+            expireDate = this.expireDate,
+            lastUpdateDate = this.lastUpdateDate
         )
     }
 }

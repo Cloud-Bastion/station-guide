@@ -5,16 +5,38 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {onMounted} from "vue";
 import Ref from "@/components/util/Ref";
 
-const expiredProducts: Ref<ExpireProduct[]> = new Ref<ExpireProduct[]>([]);
+const otherCategorie: ExpireProductCategory = new class implements ExpireProductCategory {
+  name = "Andere";
+  reduceProductTime: undefined;
+}
+
+const categories: Ref<Map<string, ExpireProductCategory>> = new Ref<Map<string, ExpireProductCategory>>(new Map<string, ExpireProductCategory>());
+const expiredProducts: Ref<Map<ExpireProductCategory, ExpireProduct[]>> = new Ref<Map<ExpireProductCategory, ExpireProduct[]>>(new Map<ExpireProductCategory, ExpireProduct[]>());
+
 
 onMounted(async () => {
   try {
     const products = await ExpireProductService.getExpiringItems();
 
-    const categorieMap = new Map<ExpireProductCategory, ExpireProduct[]>();
-
     products.forEach(product => {
-    })
+      if (product.category === undefined || product.category === null) {
+        product.category = otherCategorie
+      }
+
+      if (!categories.value.has(product.category.name)) {
+        categories.value.set(product.category.name, product.category)
+      }
+
+      if (!expiredProducts.value.has(categories.value.get(product.category.name))) {
+        expiredProducts.value.set(categories.value.get(product.category.name), []);
+      }
+
+      expiredProducts.value.get(categories.value.get(product.category.name)).push(product)
+    });
+
+    for (let value of expiredProducts.value.keys()) {
+      console.log(value.name + " registered as category")
+    }
   } catch (error) {
     console.error("Fehler beim Laden der Artikel:", error)
   }
@@ -30,46 +52,22 @@ onMounted(async () => {
     </div>
   </div>
   <div :class="$style['product-category-container']">
-    <div :class="$style['product-category-entry']">
-      <div :class="$style['product-category-name']">Produkt-Kategorie 1</div>
-      <div :class="$style['product-category-count']">(34 / 55)</div>
+    <div :class="$style['product-category-entry']" v-for="(category, index) in expiredProducts.value.keys()"
+         :key="index">
+      <div :class="$style['product-category-name']">{{ category.name }}:</div>
+      <div :class="$style['product-category-count']">(0 / {{ expiredProducts.value.get(category).length }})</div>
       <FontAwesomeIcon icon="fa-circle-down" :class="$style['product-category-arrow']"/>
-    </div>
-    <div :class="$style['product-container']">
-      <tr :class="$style['product-entry-container']">
-        <th :class="$style['product-id']">#502433</th>
-        <th :class="$style['product-name']">Coca-Cola 220ml</th>
-        <th :class="$style['product-date']">AUSSORTIEREN</th>
-        <th :class="$style['product-newdate']">
-          <FontAwesomeIcon
-              icon="fa-calendar-days"/>
-        </th>
-      </tr>
-      <tr :class="$style['product-entry-container']">
-        <th :class="$style['product-id']">#502433</th>
-        <th :class="$style['product-name']">Bier 330ml</th>
-        <th :class="$style['product-date']">REDUZIERT</th>
-        <th :class="$style['product-newdate']">
-          <FontAwesomeIcon
-              icon="fa-calendar-days"/>
-        </th>
-      </tr>
-    </div>
-    <div :class="$style['product-category-entry']">
-      <div :class="$style['product-category-name']">Produkt-Kategorie 2</div>
-      <div :class="$style['product-category-count']">(34 / 55)</div>
-      <FontAwesomeIcon icon="fa-circle-down" :class="$style['product-category-arrow']"/>
-    </div>
-    <div :class="$style['product-container']">
-      <tr :class="$style['product-entry-container']">
-        <th :class="$style['product-id']">#502433</th>
-        <th :class="$style['product-name']">Äppelwein 500ml</th>
-        <th :class="$style['product-date']">REDUZIEREN</th>
-        <th :class="$style['product-newdate']">
-          <FontAwesomeIcon
-              icon="fa-calendar-days"/>
-        </th>
-      </tr>
+      <div :class="$style['product-container']" v-for="(product, index) in expiredProducts.value.get(category)">
+        <tr :class="$style['product-entry-container']">
+          <th :class="$style['product-id']">{{ product.productId }}</th>
+          <th :class="$style['product-name']">{{ product.name }}</th>
+          <th :class="$style['product-date']">AUSSORTIEREN</th>
+          <th :class="$style['product-newdate']">
+            <FontAwesomeIcon
+                icon="fa-calendar-days"/>
+          </th>
+        </tr>
+      </div>
     </div>
   </div>
 </template>
