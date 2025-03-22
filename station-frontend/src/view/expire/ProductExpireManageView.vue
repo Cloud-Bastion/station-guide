@@ -6,7 +6,7 @@ import ExpireProductService, {
 } from "@/service/ExpireProductService";
 import SidebarComponent from "@/components/sidebar/SidebarComponent.vue";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {computed, onMounted} from "vue";
+import {onMounted, computed} from "vue";
 import Ref from "@/components/util/Ref";
 import Datepicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
@@ -128,8 +128,7 @@ onMounted(async () => {
   </div>
   <div :class="$style['product-parent']">
     <table :class="$style['product-container']">
-      <template v-for="(category, index) in expiredProducts.value.keys()"
-                :key="index">
+      <template v-for="(category, index) in expiredProducts.value.keys()" :key="index">
         <tr :class="$style['product-category-parent']">
           <td :class="$style['product-category-entry']" colspan="4">
             <div :class="$style['product-category-entry-wrapper']">
@@ -142,6 +141,7 @@ onMounted(async () => {
             </div>
           </td>
         </tr>
+        <tr v-if="category.showProducts" :class="$style['product-spacer']"></tr>
         <tr :class="$style['product-entry-container']" v-for="(product, index) in expiredProducts.value.get(category)"
             v-if="category.showProducts">
           <td :class="$style['product-id']">#{{ product.productId }}</td>
@@ -246,19 +246,19 @@ $border-design: 0.1vh solid #555;
           flex-direction: row;
           align-items: center;
           background-color: $bg-light;
-          padding: 12px 20px;
+          padding: 15px 20px;  // Increased padding
           border-bottom: 1px solid $bg-medium;
 
           .product-category-name {
             color: $text-color;
-            font-size: 1.1rem;
+            font-size: 1.2rem; // Larger font size
             font-weight: bold;
             flex-grow: 1;
           }
 
           .product-category-count {
             color: #bbb;
-            font-size: 0.9rem;
+            font-size: 1rem;   // Larger font size
             margin-right: 15px;
           }
 
@@ -275,9 +275,14 @@ $border-design: 0.1vh solid #555;
       }
     }
 
+    .product-spacer {
+      height: 20px; // Increased spacer height
+    }
+
     .product-entry-container {
       background-color: transparent;
       transition: background-color $transition-speed ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2); // Added shadow
 
       &:hover {
         background-color: $bg-light;
