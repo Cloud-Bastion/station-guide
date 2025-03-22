@@ -15,7 +15,7 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
             <span>Login mit Apple</span>
           </button>
           <button :class="$style['login-third-party-button']">
-            <FontAwesomeIcon :icon="['fab', 'google']" size="lg" :class="$style['icon']" />
+            <FontAwesomeIcon :icon="['fab', 'google']" size="lg" :class="$style['icon']"/>
             <span>Login mit Google</span>
           </button>
         </div>
@@ -28,12 +28,12 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
         <div :class="$style['login-input-container']">
           <label for="email">E-Mail / Personalnummer</label>
-          <input id="email" type="text" placeholder="Gib deine E-Mail ein" :class="$style['input']" />
+          <input id="email" type="text" placeholder="Gib deine E-Mail ein" :class="$style['input']"/>
         </div>
 
         <div :class="$style['login-input-container']">
           <label for="password">Passwort</label>
-          <input id="password" type="password" placeholder="••••••••" :class="$style['input']" />
+          <input id="password" type="password" placeholder="••••••••" :class="$style['input']"/>
         </div>
 
         <div :class="$style['login-remember-container']">
@@ -120,7 +120,8 @@ $input-focus: #007bff;
         margin-right: 8px; // Space between icon and text
         color: inherit;
       }
-      span{
+
+      span {
         color: inherit;
       }
     }
@@ -250,7 +251,8 @@ $input-focus: #007bff;
   }
   .login-third-party-container {
     flex-direction: column;
-    .login-third-party-button{
+
+    .login-third-party-button {
       width: 100%;
       margin-bottom: 10px;
     }
