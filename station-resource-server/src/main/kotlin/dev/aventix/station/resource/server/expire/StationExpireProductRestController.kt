@@ -1,8 +1,8 @@
-package dev.aventix.station.resource.server.station.expire
+package dev.aventix.station.resource.server.expire
 
-import dev.aventix.station.resource.server.station.expire.category.StationExpireProductCategoryDTO
-import dev.aventix.station.resource.server.station.expire.request.StationExpireProductCreateRequest
-import dev.aventix.station.resource.server.station.expire.request.StationExpireProductPatchRequest
+import dev.aventix.station.resource.server.expire.category.StationExpireProductCategoryDTO
+import dev.aventix.station.resource.server.expire.request.StationExpireProductCreateRequest
+import dev.aventix.station.resource.server.expire.request.StationExpireProductPatchRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -13,15 +13,9 @@ import kotlin.NoSuchElementException
 class StationExpireProductController(
     private val stationExpireProductService: StationExpireProductService,
 ) {
-
-    /*@GetMapping
-    fun getAllProducts(): ResponseEntity<List<StationExpireProductDTO>> {
-        return ResponseEntity.ok(stationExpireProductService.getAllProductsSortedByCategory())
-    }*/
-
     @GetMapping
-    fun getAllProducts(): ResponseEntity<Map<StationExpireProductCategoryDTO, List<StationExpireProductDTO>>> {
-        return ResponseEntity.ok(stationExpireProductService.getAllProductsMappedByCategory())
+    fun getAllExpiringProducts(): ResponseEntity<List<StationExpireProductDTO>> {
+        return ResponseEntity.ok(stationExpireProductService.getAllProductsExpiringOrReduce())
     }
 
     @PostMapping

@@ -1,4 +1,4 @@
-package dev.aventix.station.resource.server.station.expire.category.request
+package dev.aventix.station.resource.server.expire.category.request
 
 import java.util.*
 

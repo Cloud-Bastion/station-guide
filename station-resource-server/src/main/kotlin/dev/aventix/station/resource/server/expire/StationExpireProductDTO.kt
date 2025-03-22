@@ -1,6 +1,6 @@
-package dev.aventix.station.resource.server.station.expire
+package dev.aventix.station.resource.server.expire
 
-import dev.aventix.station.resource.server.station.expire.category.StationExpireProductCategoryDTO
+import dev.aventix.station.resource.server.expire.category.StationExpireProductCategoryDTO
 import java.time.LocalDate
 import java.util.*
 

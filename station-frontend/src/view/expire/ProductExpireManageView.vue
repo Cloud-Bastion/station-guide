@@ -1,7 +1,24 @@
 <script setup lang="ts">
-
+import ExpireProductService, {ExpireProduct, ExpireProductCategory} from "@/service/ExpireProductService";
 import SidebarComponent from "@/components/sidebar/SidebarComponent.vue";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import {onMounted} from "vue";
+import Ref from "@/components/util/Ref";
+
+const expiredProducts: Ref<ExpireProduct[]> = new Ref<ExpireProduct[]>([]);
+
+onMounted(async () => {
+  try {
+    const products = await ExpireProductService.getExpiringItems();
+
+    const categorieMap = new Map<ExpireProductCategory, ExpireProduct[]>();
+
+    products.forEach(product => {
+    })
+  } catch (error) {
+    console.error("Fehler beim Laden der Artikel:", error)
+  }
+})
 </script>
 
 <template>
@@ -20,22 +37,22 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
     </div>
     <div :class="$style['product-container']">
       <tr :class="$style['product-entry-container']">
-        <td :class="$style['product-id']">#502433</td>
-        <td :class="$style['product-name']">Coca-Cola 220ml</td>
-        <td :class="$style['product-date']">AUSSORTIEREN</td>
-        <td :class="$style['product-newdate']">
+        <th :class="$style['product-id']">#502433</th>
+        <th :class="$style['product-name']">Coca-Cola 220ml</th>
+        <th :class="$style['product-date']">AUSSORTIEREN</th>
+        <th :class="$style['product-newdate']">
           <FontAwesomeIcon
               icon="fa-calendar-days"/>
-        </td>
+        </th>
       </tr>
       <tr :class="$style['product-entry-container']">
-        <td :class="$style['product-id']">#502433</td>
-        <td :class="$style['product-name']">Bier 330ml</td>
-        <td :class="$style['product-date']">REDUZIERT</td>
-        <td :class="$style['product-newdate']">
+        <th :class="$style['product-id']">#502433</th>
+        <th :class="$style['product-name']">Bier 330ml</th>
+        <th :class="$style['product-date']">REDUZIERT</th>
+        <th :class="$style['product-newdate']">
           <FontAwesomeIcon
               icon="fa-calendar-days"/>
-        </td>
+        </th>
       </tr>
     </div>
     <div :class="$style['product-category-entry']">
@@ -45,18 +62,17 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
     </div>
     <div :class="$style['product-container']">
       <tr :class="$style['product-entry-container']">
-        <td :class="$style['product-id']">#502433</td>
-        <td :class="$style['product-name']">Äppelwein 500ml</td>
-        <td :class="$style['product-date']">REDUZIEREN</td>
-        <td :class="$style['product-newdate']">
+        <th :class="$style['product-id']">#502433</th>
+        <th :class="$style['product-name']">Äppelwein 500ml</th>
+        <th :class="$style['product-date']">REDUZIEREN</th>
+        <th :class="$style['product-newdate']">
           <FontAwesomeIcon
               icon="fa-calendar-days"/>
-        </td>
+        </th>
       </tr>
     </div>
   </div>
 </template>
-
 
 <style lang="scss" module>
 .settings-container {

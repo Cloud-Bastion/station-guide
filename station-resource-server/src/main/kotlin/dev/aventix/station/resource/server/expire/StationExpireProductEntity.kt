@@ -1,6 +1,6 @@
-package dev.aventix.station.resource.server.station.expire
+package dev.aventix.station.resource.server.expire
 
-import dev.aventix.station.resource.server.station.expire.category.StationExpireProductCategoryEntity
+import dev.aventix.station.resource.server.expire.category.StationExpireProductCategoryEntity
 import jakarta.persistence.*
 import java.time.LocalDate
 import java.util.UUID
@@ -23,6 +23,7 @@ class StationExpireProductEntity {
     var reduceProductTime: Long? = null
 
     @Column(nullable = true, unique = false)
+    @Temporal(TemporalType.DATE)
     var expireDate: LocalDate? = null
 
     @ManyToOne

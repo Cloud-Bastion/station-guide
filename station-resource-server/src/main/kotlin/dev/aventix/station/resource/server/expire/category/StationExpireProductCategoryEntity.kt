@@ -1,4 +1,4 @@
-package dev.aventix.station.resource.server.station.expire.category
+package dev.aventix.station.resource.server.expire.category
 
 import jakarta.persistence.*
 import java.util.UUID

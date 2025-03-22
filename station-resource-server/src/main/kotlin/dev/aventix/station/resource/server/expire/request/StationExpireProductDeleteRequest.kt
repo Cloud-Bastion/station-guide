@@ -1,4 +1,4 @@
-package dev.aventix.station.resource.server.station.expire.request
+package dev.aventix.station.resource.server.expire.request
 
 import java.util.UUID
 

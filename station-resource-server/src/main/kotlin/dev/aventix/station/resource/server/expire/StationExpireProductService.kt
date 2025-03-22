@@ -1,10 +1,8 @@
-package dev.aventix.station.resource.server.station.expire
+package dev.aventix.station.resource.server.expire
 
-import dev.aventix.station.resource.server.station.expire.category.StationExpireProductCategoryDTO
-import dev.aventix.station.resource.server.station.expire.category.StationExpireProductCategoryService
-import dev.aventix.station.resource.server.station.expire.category.request.StationExpireProductCategoryCreateRequest
-import dev.aventix.station.resource.server.station.expire.request.StationExpireProductCreateRequest
-import dev.aventix.station.resource.server.station.expire.request.StationExpireProductPatchRequest
+import dev.aventix.station.resource.server.expire.category.request.StationExpireProductCategoryCreateRequest
+import dev.aventix.station.resource.server.expire.request.StationExpireProductCreateRequest
+import dev.aventix.station.resource.server.expire.request.StationExpireProductPatchRequest
 import jakarta.annotation.PostConstruct
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
@@ -16,7 +14,7 @@ import kotlin.jvm.optionals.getOrNull
 @Service
 class StationExpireProductService(
     private val stationExpireProductRepository: StationExpireProductRepository,
-    private val stationExpireProductCategoryService: StationExpireProductCategoryService,
+    private val stationExpireProductCategoryService: dev.aventix.station.resource.server.expire.category.StationExpireProductCategoryService,
 ) {
 
     @PostConstruct
@@ -35,33 +33,55 @@ class StationExpireProductService(
 
         this.create(
             StationExpireProductCreateRequest(
-                111111, "Dosenbier", categoryB.id, 3, LocalDate.now().plusDays(10)
+                111111, "Dosenbier", categoryB.id, null, LocalDate.now().plusDays(6)
             )
         )
 
         this.create(
             StationExpireProductCreateRequest(
-                222222, "Birnenbier", categoryB.id, 3, LocalDate.now().plusDays(10)
+                555555, "Flaschenbier", categoryB.id, 6, LocalDate.now().plusDays(7)
             )
         )
 
         this.create(
             StationExpireProductCreateRequest(
-                333333, "Coca-Cola 250ml", categoryA.id, 3, LocalDate.now().plusDays(10)
+                222222, "Birnenbier", categoryB.id, null, LocalDate.now().plusDays(7)
             )
         )
 
         this.create(
             StationExpireProductCreateRequest(
-                444444, "Apfelsaft", categoryA.id, 3, LocalDate.now().plusDays(10)
+                333333, "Coca-Cola 250ml", categoryB.id, null, LocalDate.now().plusDays(3)
             )
         )
+
+        this.create(
+            StationExpireProductCreateRequest(
+                444444, "Apfelsaft", categoryA.id, null, LocalDate.now().plusDays(2)
+            )
+        )
+
+        this.create(
+            StationExpireProductCreateRequest(
+                666666, "Ananassaft", categoryA.id, 4, LocalDate.now().plusDays(1)
+            )
+        )
+
+        this.create(
+            StationExpireProductCreateRequest(
+                777777, "Apfelkuchen", null, null, LocalDate.now()
+            )
+        )
+
+        this.create(
+            StationExpireProductCreateRequest(
+                888888, "Torte", null, null, null
+            )
+        )
+
 
         getAllProductsSortedByCategory().forEach { product -> println("Registered: ${product.name} with id: ${product.id}") }
-    }
-
-    fun getAllProductsMappedByCategory(): MutableMap<StationExpireProductCategoryDTO, MutableList<StationExpireProductDTO>> {
-        return mutableMapOf()/*this.stationExpireProductRepository.findAllWithValidExpireDate()*/
+        this.getAllProductsExpiringOrReduce().forEach { product -> println("Sort out: ${product.name} with id: ${product.id}") }
     }
 
     fun getAllProductsSortedByCategory(): MutableList<StationExpireProductDTO> {
@@ -73,6 +93,12 @@ class StationExpireProductService(
             }
             entity.toDTO()
         }.toCollection(mutableListOf())
+    }
+
+    fun getAllProductsExpiringOrReduce(): MutableList<StationExpireProductDTO> {
+        return this.stationExpireProductRepository.findAllWithInvalidExpireDate()
+            .map(StationExpireProductEntity::toDTO)
+            .toCollection(mutableListOf())
     }
 
     @Throws(NoSuchElementException::class)

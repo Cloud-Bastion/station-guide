@@ -1,9 +1,23 @@
 import settings from "./settings/Settings";
-import axios from "axios";
 
-const API_URL = settings.API_BASE_URL + "v1/expire/products";
+const API_URL = "/v1/expire/products";
 
-export async function fetchAllProducts() {
-    const response = await axios.get(API_URL);
-    return response.data;
+export interface ExpireProductCategory {
+    name: string;
+    reduceProductTime: number;
+}
+
+export interface ExpireProduct {
+    productId: number;
+    name: string;
+    reduceProductTime: number;
+    expireDate: Date;
+    category: ExpireProductCategory;
+}
+
+export default {
+    async getExpiringItems(): Promise<ExpireProduct[]> {
+        const response = await settings.apiClient.get<ExpireProduct[]>(API_URL)
+        return response.data;
+    }
 }

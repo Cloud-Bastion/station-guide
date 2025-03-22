@@ -1,4 +1,4 @@
-package dev.aventix.station.resource.server.station.expire.request
+package dev.aventix.station.resource.server.expire.request
 
 import java.time.LocalDate
 import java.util.UUID
@@ -8,5 +8,5 @@ data class StationExpireProductCreateRequest(
     val name: String,
     val productCategoryId: UUID? = null,
     val reduceProductTime: Long? = null,
-    val expireDate: LocalDate? = null
+    val expireDate: LocalDate? = null,
 )
