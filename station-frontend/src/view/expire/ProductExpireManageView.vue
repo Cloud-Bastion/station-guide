@@ -6,9 +6,10 @@ import ExpireProductService, {
 } from "@/service/ExpireProductService";
 import SidebarComponent from "@/components/sidebar/SidebarComponent.vue";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {onMounted} from "vue";
+import {onMounted, computed} from "vue";
 import Ref from "@/components/util/Ref";
 import Datepicker from "@vuepic/vue-datepicker";
+import "@vuepic/vue-datepicker/dist/main.css";
 
 const otherCategorie: ExpireProductCategory = new class implements ExpireProductCategory {
   name = "Andere";
@@ -65,6 +66,20 @@ const getDropDownIcon = (bool: boolean): string => {
   return bool ? "fa-circle-down" : "fa-circle-right";
 }
 
+const getStateClass = (product: ExpireProduct) => {
+    const state = ExpireProductService.getState(product);
+    return {
+        [$style['state-reduce']]: state === ExpireProductState.REDUCE,
+        [$style['state-reduced']]: state === ExpireProductState.REDUCED,
+        [$style['state-sort-out']]: state === ExpireProductState.SORT_OUT,
+        [$style['state-set-date']]: state === ExpireProductState.SET_DATE,
+    };
+};
+
+const getStateText = (product: ExpireProduct) => {
+  return ExpireProductService.getState(product);
+}
+
 onMounted(async () => {
   try {
     const products = await ExpireProductService.getExpiringItems();
@@ -101,9 +116,10 @@ onMounted(async () => {
     <div :class="$style['product-count']">{{ countAllSuccess() }} /
       {{ Array.from(expiredProducts.value.values()).reduce((sum, products) => sum + products.length, 0) }} Artikel
     </div>
-    <div :class="$style['settings-button']">Einstellungen
+    <button :class="$style['settings-button']">
       <FontAwesomeIcon icon="fa-gear"/>
-    </div>
+      <span>Einstellungen</span>
+    </button>
   </div>
   <div :class="$style['product-parent']">
     <table :class="$style['product-container']">
@@ -112,7 +128,7 @@ onMounted(async () => {
         <tr :class="$style['product-category-parent']">
           <td :class="$style['product-category-entry']" colspan="4">
             <div :class="$style['product-category-entry-wrapper']">
-              <div :class="$style['product-category-name']">{{ category.name }}:</div>
+              <div :class="$style['product-category-name']">{{ category.name }}</div>
               <div :class="$style['product-category-count']">({{ countCategorySuccess(category) }} /
                 {{ expiredProducts.value.get(category)?.length }})
               </div>
@@ -125,12 +141,11 @@ onMounted(async () => {
             v-if="category.showProducts">
           <td :class="$style['product-id']">#{{ product.productId }}</td>
           <td :class="$style['product-name']">{{ product.name }}</td>
-          <td :class="$style['product-date']" @click="updateLastChange(product);">
-            {{ ExpireProductService.getState(product) }}
+          <td :class="[$style['product-date'], getStateClass(product)]" @click="updateLastChange(product)">
+            {{ getStateText(product) }}
           </td>
           <td :class="$style['product-newdate']">
             <Datepicker v-model="product.expireDate"
-                        six-weeks
                         :month-picker="false"
                         :enable-time-picker="false"
                         :time-picker-inline="true"
@@ -154,7 +169,7 @@ $bg-dark: #121212;
 $bg-medium: #1e1e1e;
 $bg-light: #2a2a2a;
 $text-color: #f1f1f1;
-$accent: #ff4500; // Changed to red
+$accent: #ff4500; // Red
 $accent-hover: #b83200; // Darker red for hover
 $border-radius: 10px;
 $transition-speed: 0.3s;
@@ -167,27 +182,35 @@ $border-design: 0.1vh solid #555;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  border-radius: 8px;
-  margin: 25px 25px 0 25px;
+  align-items: center;
+  border-radius: $border-radius;
+  margin: 25px;
+  padding: 10px 20px;
+  background-color: $bg-medium;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 
   .product-count {
-    background-color: $bg-medium;
     color: $text-color;
-    font-size: 16px;
-    padding: 10px;
-    border-radius: 4px;
+    font-size: 1rem;
   }
 
   .settings-button {
-    background-color: $bg-medium;
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: $accent;
     color: $text-color;
-    border-radius: 4px;
-    padding: 10px;
+    border: none;
+    border-radius: $border-radius;
     cursor: pointer;
     transition: background-color $transition-speed ease;
 
     &:hover {
-      background-color: $bg-light;
+      background-color: $accent-hover;
+    }
+
+    span {
+      margin-left: 8px;
     }
   }
 }
@@ -195,77 +218,85 @@ $border-design: 0.1vh solid #555;
 .product-parent {
   display: flex;
   flex-direction: column;
-  max-width: fit-content;
+  margin: 25px;
+  border-radius: $border-radius;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  background-color: $bg-medium;
+  overflow: hidden;
 
   .product-container {
-    margin: 25px 0 0 25px;
-    border: $border-design;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    background-color: $bg-medium;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
 
     .product-category-parent {
-      padding: 5px;
+      padding: 0;
 
       .product-category-entry {
+        width: 100%;
 
         .product-category-entry-wrapper {
           display: flex;
           flex-direction: row;
+          align-items: center;
           background-color: $bg-light;
-          padding: 12px;
-          margin-top: 5px;
-          border-radius: 6px;
+          padding: 12px 20px;
+          border-bottom: 1px solid $bg-medium;
 
           .product-category-name {
             color: $text-color;
-            font-size: 18px;
+            font-size: 1.1rem;
             font-weight: bold;
+            flex-grow: 1;
           }
 
           .product-category-count {
             color: #bbb;
-            font-size: 14px;
-            margin: 0 50px 0 50px;
+            font-size: 0.9rem;
+            margin-right: 15px;
           }
+
           .product-category-arrow {
             cursor: pointer;
+            color: #888;
+            transition: color $transition-speed ease;
+
+            &:hover {
+              color: $text-color;
+            }
           }
         }
       }
     }
 
     .product-entry-container {
-      background-color: $bg-medium;
-      border-radius: 6px;
+      background-color: transparent;
       transition: background-color $transition-speed ease;
 
       &:hover {
         background-color: $bg-light;
       }
 
+      td {
+        padding: 12px 20px;
+        color: $text-color;
+        font-size: 0.9rem;
+      }
+
       .product-id {
         color: #aaa;
-        font-size: 14px;
-        padding: 10px;
-        border-right: $border-design;
       }
 
       .product-name {
-        color: $text-color;
-        font-size: 16px;
-        padding: 10px;
-        border-right: $border-design;
+        flex-grow: 1;
       }
 
       .product-date {
-        color: #ccc;
-        font-size: 14px;
-        margin: 0 80px 0 0;
         cursor: pointer;
-        background-color: transparent;
-        padding: 10px;
-        border-right: $border-design;
         transition: background-color $transition-speed ease, color $transition-speed ease;
+        border-radius: $border-radius;
+        margin-right: 15px;
 
         &:hover {
           background-color: $input-bg;
@@ -273,42 +304,53 @@ $border-design: 0.1vh solid #555;
         }
       }
 
+      .state-reduce {
+        color: $accent;
+      }
+
+      .state-reduced {
+        color: green;
+      }
+
+      .state-sort-out {
+        color: $accent;
+      }
+
+      .state-set-date {
+        color: #aaa;
+      }
+
       .product-newdate {
-        color: #ccc;
-        font-size: 14px;
-        cursor: pointer;
-        padding: 10px;
-        border-right: $border-design;
+        .datepicker {
+          --dp-background-color: #1e1e1e !important;
+          --dp-text-color: white !important;
+          --dp-hover-color: #484848 !important;
+          --dp-hover-text-color: white !important;
+          --dp-primary-color: #ff4500 !important;
+          --dp-primary-disabled-color: #e53935 !important;
+          --dp-primary-text-color: white !important;
+          --dp-secondary-color: #a9a9a9 !important;
+          --dp-border-color: #333 !important;
+          --dp-menu-border-color: #333 !important;
+          --dp-border-color-hover: #aaaeb7 !important;
+          --dp-border-color-focus: #ff4500 !important;
+          --dp-disabled-color: #737373 !important;
+          --dp-disabled-color-text: #d0d0d0 !important;
+          --dp-scroll-bar-background: #212121 !important;
+          --dp-scroll-bar-color: #484848 !important;
+          --dp-success-color: #00701a !important;
+          --dp-success-color-disabled: #428f59 !important;
+          --dp-icon-color: #959595 !important;
+          --dp-danger-color: #e53935 !important;
+          --dp-marker-color: #e53935 !important;
+          --dp-tooltip-color: #3e3e3e !important;
+          --dp-highlight-color: rgb(0 92 178 / 20%) !important;
+          --dp-range-between-dates-background-color: #ff4500 !important;
+          --dp-range-between-dates-text-color: white !important;
+          --dp-range-between-border-color: #e53935 !important;
+        }
       }
     }
   }
-    .datepicker {
-      --dp-background-color: #1e1e1e !important;
-      --dp-text-color: white !important;
-      --dp-hover-color: #484848 !important;
-      --dp-hover-text-color: white !important;
-      --dp-primary-color: #ff4500 !important;
-      --dp-primary-disabled-color: #e53935 !important;
-      --dp-primary-text-color: white !important;
-      --dp-secondary-color: #a9a9a9 !important;
-      --dp-border-color: #333 !important;
-      --dp-menu-border-color: #333 !important;
-      --dp-border-color-hover: #aaaeb7 !important;
-      --dp-border-color-focus: #ff4500 !important;
-      --dp-disabled-color: #737373 !important;
-      --dp-disabled-color-text: #d0d0d0 !important;
-      --dp-scroll-bar-background: #212121 !important;
-      --dp-scroll-bar-color: #484848 !important;
-      --dp-success-color: #00701a !important;
-      --dp-success-color-disabled: #428f59 !important;
-      --dp-icon-color: #959595 !important;
-      --dp-danger-color: #e53935 !important;
-      --dp-marker-color: #e53935 !important;
-      --dp-tooltip-color: #3e3e3e !important;
-      --dp-highlight-color: rgb(0 92 178 / 20%) !important;
-      --dp-range-between-dates-background-color: #ff4500 !important;
-      --dp-range-between-dates-text-color: white !important;
-      --dp-range-between-border-color: #e53935 !important;
-    }
 }
 </style>
