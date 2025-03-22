@@ -51,23 +51,23 @@ onMounted(async () => {
       <FontAwesomeIcon icon="fa-gear"/>
     </div>
   </div>
-  <div :class="$style['product-category-container']">
-    <div :class="$style['product-category-entry']" v-for="(category, index) in expiredProducts.value.keys()"
-         :key="index">
+  <div :class="$style['product-category-container']" v-for="(category, index) in expiredProducts.value.keys()"
+       :key="index">
+    <div :class="$style['product-category-entry']" >
       <div :class="$style['product-category-name']">{{ category.name }}:</div>
       <div :class="$style['product-category-count']">(0 / {{ expiredProducts.value.get(category).length }})</div>
       <FontAwesomeIcon icon="fa-circle-down" :class="$style['product-category-arrow']"/>
-      <div :class="$style['product-container']" v-for="(product, index) in expiredProducts.value.get(category)">
-        <tr :class="$style['product-entry-container']">
-          <th :class="$style['product-id']">{{ product.productId }}</th>
-          <th :class="$style['product-name']">{{ product.name }}</th>
-          <th :class="$style['product-date']">AUSSORTIEREN</th>
-          <th :class="$style['product-newdate']">
-            <FontAwesomeIcon
-                icon="fa-calendar-days"/>
-          </th>
-        </tr>
-      </div>
+    </div>
+    <div :class="$style['product-container']" v-for="(product, index) in expiredProducts.value.get(category)">
+      <tr :class="$style['product-entry-container']">
+        <th :class="$style['product-id']">{{ product.productId }}</th>
+        <th :class="$style['product-name']">{{ product.name }}</th>
+        <th :class="$style['product-date']">AUSSORTIEREN</th>
+        <th :class="$style['product-newdate']">
+          <FontAwesomeIcon
+              icon="fa-calendar-days"/>
+        </th>
+      </tr>
     </div>
   </div>
 </template>
