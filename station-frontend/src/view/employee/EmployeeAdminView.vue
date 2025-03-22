@@ -40,25 +40,37 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 </template>
 
 <style lang="scss" module>
+$bg-dark: #121212;
+$bg-medium: #1e1e1e;
+$bg-light: #2a2a2a;
+$text-color: #f1f1f1;
+$accent: #ff4500; // Red accent
+$accent-hover: #b83200; // Darker red for hover
+$border-radius: 5px;
+$transition-speed: 0.3s;
+$border-design: 0.1vh solid #555;
+
 .parent {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  background-color: #111111;
-  border-radius: 5px 5px 5px 5px;
-  margin: 25px 25px;
+  background-color: $bg-medium; // Dark background
+  border-radius: $border-radius;
+  margin: 25px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 
   .title-container {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    align-items: center; // Vertically center items
 
     .title {
       align-self: flex-start;
       font-size: large;
       font-weight: bold;
       text-decoration: underline;
-      color: white;
+      color: $text-color;
       margin: 15px 10px 10px 10px;
     }
 
@@ -68,22 +80,22 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
       justify-content: flex-end;
       align-self: flex-end;
 
-      .archive-employee-button {
+      .archive-employee-button, .add-employee-button {
         font-size: small;
-        color: white;
-        background-color: black;
-        border-radius: 5px 5px 5px 5px;
-        padding: 5px;
+        color: $text-color;
+        background-color: $bg-light; // Slightly lighter background
+        border-radius: $border-radius;
+        padding: 8px 12px; // Slightly larger padding
         margin: 0 10px;
-      }
+        cursor: pointer;
+        transition: background-color $transition-speed ease;
+        display: flex;
+        align-items: center;
+        gap: 5px; // Space between icon and text
 
-      .add-employee-button {
-        font-size: small;
-        color: white;
-        background-color: black;
-        border-radius: 5px 5px 5px 5px;
-        padding: 5px;
-        margin: 0 10px;
+        &:hover {
+          background-color: $accent; // Red on hover
+        }
       }
     }
   }
@@ -99,7 +111,7 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
     flex: 0 0 2px;
     margin: 25px 10px;
     border-radius: 20px;
-    background-color: rgba(50, 50, 66, 1);
+    background-color: #444; // Darker stick color
   }
 
   .employee-container {
@@ -109,6 +121,7 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
     .employee-entity-container {
       display: flex;
       flex-direction: row;
+      // Add styles for employee entries here, if needed
     }
   }
 }
