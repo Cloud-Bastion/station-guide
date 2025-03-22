@@ -10,6 +10,7 @@ import {onMounted, computed, ref} from "vue";
 import Ref from "@/components/util/Ref";
 import Datepicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
+import AddExpireProduct from "@/view/expire/AddExpireProduct.vue";
 
 const otherCategorie: ExpireProductCategory = new class implements ExpireProductCategory {
   name = "Andere";
@@ -21,6 +22,7 @@ const categories: Ref<Map<string, ExpireProductCategory>> = new Ref<Map<string, 
 const expiredProducts: Ref<Map<ExpireProductCategory, ExpireProduct[]>> = new Ref<Map<ExpireProductCategory, ExpireProduct[]>>(new Map<ExpireProductCategory, ExpireProduct[]>());
 
 const settingsMenuOpen = ref(false);
+const addProductDialogOpen = ref(false);
 
 const updateLastChange = (product: ExpireProduct): void => {
   if (ExpireProductService.getState(product) === ExpireProductState.REDUCED) {
@@ -183,8 +185,11 @@ onMounted(async () => {
     <div :class="$style['settings-menu-content']">
       <!-- Settings menu content goes here -->
       <p>Hier kommen die Einstellungen hin.</p>
+      <button @click="addProductDialogOpen = true">Produkt hinzufügen</button>
     </div>
   </div>
+
+  <AddExpireProduct v-if="addProductDialogOpen" @close="addProductDialogOpen = false" />
 </template>
 
 <style lang="scss" module>
