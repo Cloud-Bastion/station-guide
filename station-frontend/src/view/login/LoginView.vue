@@ -187,6 +187,7 @@ $input-focus: #3d0000; // Darker red focus
       height: 18px;
       accent-color: $accent;
       cursor: pointer;
+      border-radius: 6px; /* Added border-radius */
     }
 
     .remember-label {
