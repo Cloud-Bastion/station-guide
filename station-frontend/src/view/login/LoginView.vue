@@ -9,31 +9,15 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
       <h1 :class="$style['login-header']">Login</h1>
 
       <div :class="$style['login-wrapper']">
-        <div :class="$style['login-third-party-container']">
-          <button :class="$style['login-third-party-button']">
-            <FontAwesomeIcon :icon="['fab', 'apple']" size="lg" :class="$style['icon']"/>
-            <span>Login mit Apple</span>
-          </button>
-          <button :class="$style['login-third-party-button']">
-            <FontAwesomeIcon :icon="['fab', 'google']" size="lg" :class="$style['icon']"/>
-            <span>Login mit Google</span>
-          </button>
-        </div>
-
-        <div :class="$style['login-sidebar-container']">
-          <div :class="$style['login-sidebar-line']"></div>
-          <span :class="$style['login-sidebar-text']">Oder</span>
-          <div :class="$style['login-sidebar-line']"></div>
-        </div>
 
         <div :class="$style['login-input-container']">
           <label for="email">E-Mail / Personalnummer</label>
-          <input id="email" type="text" placeholder="Gib deine E-Mail ein" :class="$style['input']"/>
+          <input id="email" type="text" placeholder="Gib deine E-Mail ein" :class="$style['input']" />
         </div>
 
         <div :class="$style['login-input-container']">
           <label for="password">Passwort</label>
-          <input id="password" type="password" placeholder="••••••••" :class="$style['input']"/>
+          <input id="password" type="password" placeholder="••••••••" :class="$style['input']" />
         </div>
 
         <div :class="$style['login-remember-container']">
@@ -43,6 +27,23 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
         <button :class="$style['login-submit-button']">Einloggen</button>
         <a href="#" :class="$style['login-forgot-password']">Passwort vergessen?</a>
+
+        <div :class="$style['login-sidebar-container']">
+          <div :class="$style['login-sidebar-line']"></div>
+          <span :class="$style['login-sidebar-text']">Oder</span>
+          <div :class="$style['login-sidebar-line']"></div>
+        </div>
+
+        <div :class="$style['login-third-party-container']">
+          <button :class="$style['login-third-party-button']">
+            <FontAwesomeIcon :icon="['fab', 'apple']" size="lg" :class="$style['icon']"/>
+            <span>Login mit Apple</span>
+          </button>
+          <button :class="$style['login-third-party-button']">
+            <FontAwesomeIcon :icon="['fab', 'google']" size="lg" :class="$style['icon']" />
+            <span>Login mit Google</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
