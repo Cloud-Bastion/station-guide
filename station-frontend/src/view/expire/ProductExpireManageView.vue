@@ -23,6 +23,7 @@ const expiredProducts: Ref<Map<ExpireProductCategory, ExpireProduct[]>> = new Re
 
 const settingsMenuOpen = ref(false);
 const addProductDialogOpen = ref(false);
+const searchInput = ref(''); // Add search input
 
 const updateLastChange = (product: ExpireProduct): void => {
   if (ExpireProductService.getState(product) === ExpireProductState.REDUCED) {
@@ -183,7 +184,13 @@ onMounted(async () => {
       </button>
     </div>
     <div :class="$style['settings-menu-content']">
-      <!-- Settings menu content goes here -->
+      <!-- Search Input -->
+      <div :class="$style['search-bar-container']">
+        <FontAwesomeIcon icon="search" :class="$style['search-icon']"/>
+        <input type="text" v-model="searchInput" :placeholder="'Produkt suchen...'" :class="$style['search-input']"/>
+        <!-- Add filtering logic here, e.g., with a computed property -->
+      </div>
+
       <p>Hier kommen die Einstellungen hin.</p>
       <button @click="addProductDialogOpen = true">Produkt hinzufügen</button>
     </div>
@@ -432,6 +439,32 @@ $border-design: 0.1vh solid #555;
 
   .settings-menu-content {
     color: $text-color;
+
+    .search-bar-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+
+      .search-icon {
+        color: #777;
+        margin-right: 10px;
+      }
+
+      .search-input {
+        padding: 10px;
+        border: 1px solid $input-border;
+        border-radius: $border-radius;
+        background-color: $input-bg;
+        color: $text-color;
+        transition: border-color $transition-speed ease;
+        flex-grow: 1;
+
+        &:focus {
+          border-color: $input-focus;
+          outline: none;
+        }
+      }
+    }
   }
 }
 </style>
