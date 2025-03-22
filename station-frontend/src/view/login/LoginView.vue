@@ -54,13 +54,13 @@ $bg-dark: #121212;
 $bg-medium: #1e1e1e;
 $bg-light: #2a2a2a;
 $text-color: #f1f1f1;
-$accent: #b83200; // Darker red
-$accent-hover: #800000; // Even darker red for hover
+$accent: #4f0000; // Darker red
+$accent-hover: #3d0000; // Even darker red for hover
 $border-radius: 10px;
 $transition-speed: 0.3s;
 $input-bg: #333;
 $input-border: #555;
-$input-focus: #b83200; // Darker red focus
+$input-focus: #3d0000; // Darker red focus
 
 .parent {
   display: flex;
