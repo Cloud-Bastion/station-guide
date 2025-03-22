@@ -150,6 +150,19 @@ onMounted(async () => {
 </template>
 
 <style lang="scss" module>
+$bg-dark: #121212;
+$bg-medium: #1e1e1e;
+$bg-light: #2a2a2a;
+$text-color: #f1f1f1;
+$accent: #ff4500; // Changed to red
+$accent-hover: #b83200; // Darker red for hover
+$border-radius: 10px;
+$transition-speed: 0.3s;
+$input-bg: #333;
+$input-border: #555;
+$input-focus: #ff4500; // Red focus
+$border-design: 0.1vh solid #555;
+
 .settings-container {
   display: flex;
   flex-direction: row;
@@ -158,23 +171,23 @@ onMounted(async () => {
   margin: 25px 25px 0 25px;
 
   .product-count {
-    background-color: #252525;
-    color: #fff;
+    background-color: $bg-medium;
+    color: $text-color;
     font-size: 16px;
-    padding: 10px 10px 10px 10px;
+    padding: 10px;
     border-radius: 4px;
   }
 
   .settings-button {
-    background-color: #252525;
-    color: #fff;
+    background-color: $bg-medium;
+    color: $text-color;
     border-radius: 4px;
-    padding: 10px 10px 10px 10px;
+    padding: 10px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color $transition-speed ease;
 
     &:hover {
-      background-color: #2d2d2d;
+      background-color: $bg-light;
     }
   }
 }
@@ -186,22 +199,25 @@ onMounted(async () => {
 
   .product-container {
     margin: 25px 0 0 25px;
+    border: $border-design;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    background-color: $bg-medium;
 
     .product-category-parent {
-      padding: 50px;
+      padding: 5px;
 
       .product-category-entry {
 
         .product-category-entry-wrapper {
           display: flex;
           flex-direction: row;
-          background-color: #252525;
+          background-color: $bg-light;
           padding: 12px;
-          margin-top: 25px;
+          margin-top: 5px;
           border-radius: 6px;
 
           .product-category-name {
-            color: #fff;
+            color: $text-color;
             font-size: 18px;
             font-weight: bold;
           }
@@ -211,29 +227,34 @@ onMounted(async () => {
             font-size: 14px;
             margin: 0 50px 0 50px;
           }
+          .product-category-arrow {
+            cursor: pointer;
+          }
         }
       }
     }
 
     .product-entry-container {
-      background-color: #2c2f38;
+      background-color: $bg-medium;
       border-radius: 6px;
-      transition: background-color 0.3s ease;
+      transition: background-color $transition-speed ease;
 
       &:hover {
-        background-color: #3e434c;
+        background-color: $bg-light;
       }
 
       .product-id {
         color: #aaa;
         font-size: 14px;
         padding: 10px;
+        border-right: $border-design;
       }
 
       .product-name {
-        color: #fff;
+        color: $text-color;
         font-size: 16px;
         padding: 10px;
+        border-right: $border-design;
       }
 
       .product-date {
@@ -241,8 +262,15 @@ onMounted(async () => {
         font-size: 14px;
         margin: 0 80px 0 0;
         cursor: pointer;
-        background-color: #2c2f38;
+        background-color: transparent;
         padding: 10px;
+        border-right: $border-design;
+        transition: background-color $transition-speed ease, color $transition-speed ease;
+
+        &:hover {
+          background-color: $input-bg;
+          color: $accent;
+        }
       }
 
       .product-newdate {
@@ -250,8 +278,37 @@ onMounted(async () => {
         font-size: 14px;
         cursor: pointer;
         padding: 10px;
+        border-right: $border-design;
       }
     }
   }
+    .datepicker {
+      --dp-background-color: #1e1e1e !important;
+      --dp-text-color: white !important;
+      --dp-hover-color: #484848 !important;
+      --dp-hover-text-color: white !important;
+      --dp-primary-color: #ff4500 !important;
+      --dp-primary-disabled-color: #e53935 !important;
+      --dp-primary-text-color: white !important;
+      --dp-secondary-color: #a9a9a9 !important;
+      --dp-border-color: #333 !important;
+      --dp-menu-border-color: #333 !important;
+      --dp-border-color-hover: #aaaeb7 !important;
+      --dp-border-color-focus: #ff4500 !important;
+      --dp-disabled-color: #737373 !important;
+      --dp-disabled-color-text: #d0d0d0 !important;
+      --dp-scroll-bar-background: #212121 !important;
+      --dp-scroll-bar-color: #484848 !important;
+      --dp-success-color: #00701a !important;
+      --dp-success-color-disabled: #428f59 !important;
+      --dp-icon-color: #959595 !important;
+      --dp-danger-color: #e53935 !important;
+      --dp-marker-color: #e53935 !important;
+      --dp-tooltip-color: #3e3e3e !important;
+      --dp-highlight-color: rgb(0 92 178 / 20%) !important;
+      --dp-range-between-dates-background-color: #ff4500 !important;
+      --dp-range-between-dates-text-color: white !important;
+      --dp-range-between-border-color: #e53935 !important;
+    }
 }
 </style>
