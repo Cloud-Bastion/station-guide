@@ -6,7 +6,7 @@ import ExpireProductService, {
 } from "@/service/ExpireProductService";
 import SidebarComponent from "@/components/sidebar/SidebarComponent.vue";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {onMounted, computed} from "vue";
+import {computed, onMounted} from "vue";
 import Ref from "@/components/util/Ref";
 import Datepicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
@@ -66,14 +66,19 @@ const getDropDownIcon = (bool: boolean): string => {
   return bool ? "fa-circle-down" : "fa-circle-right";
 }
 
-const getStateClass = (product: ExpireProduct) => {
-    const state = ExpireProductService.getState(product);
-    return {
-        [$style['state-reduce']]: state === ExpireProductState.REDUCE,
-        [$style['state-reduced']]: state === ExpireProductState.REDUCED,
-        [$style['state-sort-out']]: state === ExpireProductState.SORT_OUT,
-        [$style['state-set-date']]: state === ExpireProductState.SET_DATE,
-    };
+const getStateClass = (product: ExpireProduct): string => {
+  const state = ExpireProductService.getState(product);
+  const stateClass: string = ''
+
+  if (state === ExpireProductState.REDUCE) {
+    return 'state-reduce';
+  } else if(state === ExpireProductState.REDUCED) {
+    return 'state-reduced';
+  } else if(state === ExpireProductState.SORT_OUT) {
+    return 'state-sort-out';
+  } else {
+    return 'state-set-date'
+  }
 };
 
 const getStateText = (product: ExpireProduct) => {
@@ -141,7 +146,7 @@ onMounted(async () => {
             v-if="category.showProducts">
           <td :class="$style['product-id']">#{{ product.productId }}</td>
           <td :class="$style['product-name']">{{ product.name }}</td>
-          <td :class="[$style['product-date'], getStateClass(product)]" @click="updateLastChange(product)">
+          <td :class="[$style['product-date'], $style[getStateClass(product)]]" @click="updateLastChange(product)">
             {{ getStateText(product) }}
           </td>
           <td :class="$style['product-newdate']">
