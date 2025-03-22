@@ -6,7 +6,7 @@ import ExpireProductService, {
 } from "@/service/ExpireProductService";
 import SidebarComponent from "@/components/sidebar/SidebarComponent.vue";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {onMounted, computed} from "vue";
+import {onMounted, computed, ref} from "vue";
 import Ref from "@/components/util/Ref";
 import Datepicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
@@ -19,6 +19,8 @@ const otherCategorie: ExpireProductCategory = new class implements ExpireProduct
 
 const categories: Ref<Map<string, ExpireProductCategory>> = new Ref<Map<string, ExpireProductCategory>>(new Map<string, ExpireProductCategory>());
 const expiredProducts: Ref<Map<ExpireProductCategory, ExpireProduct[]>> = new Ref<Map<ExpireProductCategory, ExpireProduct[]>>(new Map<ExpireProductCategory, ExpireProduct[]>());
+
+const settingsMenuOpen = ref(false);
 
 const updateLastChange = (product: ExpireProduct): void => {
   if (ExpireProductService.getState(product) === ExpireProductState.REDUCED) {
@@ -116,56 +118,72 @@ onMounted(async () => {
 </script>
 
 <template>
-  <SidebarComponent site="product-expire-management"/>
-  <div :class="$style['settings-container']">
-    <div :class="$style['product-count']">{{ countAllSuccess() }} /
-      {{ Array.from(expiredProducts.value.values()).reduce((sum, products) => sum + products.length, 0) }} Artikel
+  <div :class="{[$style['blur-background']]: settingsMenuOpen}">
+    <SidebarComponent site="product-expire-management"/>
+    <div :class="$style['settings-container']">
+      <div :class="$style['product-count']">{{ countAllSuccess() }} /
+        {{ Array.from(expiredProducts.value.values()).reduce((sum, products) => sum + products.length, 0) }} Artikel
+      </div>
+      <button :class="$style['settings-button']" @click="settingsMenuOpen = !settingsMenuOpen">
+        <FontAwesomeIcon icon="fa-gear"/>
+        <span>Einstellungen</span>
+      </button>
     </div>
-    <button :class="$style['settings-button']">
-      <FontAwesomeIcon icon="fa-gear"/>
-      <span>Einstellungen</span>
-    </button>
-  </div>
-  <div :class="$style['product-parent']">
-    <table :class="$style['product-container']">
-      <template v-for="(category, index) in expiredProducts.value.keys()" :key="index">
-        <tr :class="$style['product-category-parent']">
-          <td :class="$style['product-category-entry']" colspan="4">
-            <div :class="$style['product-category-entry-wrapper']">
-              <div :class="$style['product-category-name']">{{ category.name }}</div>
-              <div :class="$style['product-category-count']">({{ countCategorySuccess(category) }} /
-                {{ expiredProducts.value.get(category)?.length }})
+    <div :class="$style['product-parent']">
+      <table :class="$style['product-container']">
+        <template v-for="(category, index) in expiredProducts.value.keys()" :key="index">
+          <tr :class="$style['product-category-parent']">
+            <td :class="$style['product-category-entry']" colspan="4">
+              <div :class="$style['product-category-entry-wrapper']">
+                <div :class="$style['product-category-name']">{{ category.name }}</div>
+                <div :class="$style['product-category-count']">({{ countCategorySuccess(category) }} /
+                  {{ expiredProducts.value.get(category)?.length }})
+                </div>
+                <FontAwesomeIcon :icon="getDropDownIcon(category.showProducts)" :class="$style['product-category-arrow']"
+                                 @click="category.showProducts=!category.showProducts"/>
               </div>
-              <FontAwesomeIcon :icon="getDropDownIcon(category.showProducts)" :class="$style['product-category-arrow']"
-                               @click="category.showProducts=!category.showProducts"/>
-            </div>
-          </td>
-        </tr>
-        <tr v-if="category.showProducts" :class="$style['product-spacer']"></tr>
-        <tr :class="$style['product-entry-container']" v-for="(product, index) in expiredProducts.value.get(category)"
-            v-if="category.showProducts">
-          <td :class="$style['product-id']">#{{ product.productId }}</td>
-          <td :class="$style['product-name']">{{ product.name }}</td>
-          <td :class="[$style['product-date'], $style[getStateClass(product)]]" @click="updateLastChange(product)">
-            {{ getStateText(product) }}
-          </td>
-          <td :class="$style['product-newdate']">
-            <Datepicker v-model="product.expireDate"
-                        :month-picker="false"
-                        :enable-time-picker="false"
-                        :time-picker-inline="true"
-                        :min-date="new Date(Date.now())"
-                        :month-change-on-scroll="false"
-                        format="dd.MM.yyyy"
-                        locale="de"
-                        @update:model-value="() => ExpireProductService.updateExpireDate(product)"
-                        :dark="true"
-                        :class="$style['datepicker']"
-            />
-          </td>
-        </tr>
-      </template>
-    </table>
+            </td>
+          </tr>
+          <tr v-if="category.showProducts" :class="$style['product-spacer']"></tr>
+          <tr :class="$style['product-entry-container']" v-for="(product, index) in expiredProducts.value.get(category)"
+              v-if="category.showProducts">
+            <td :class="$style['product-id']">#{{ product.productId }}</td>
+            <td :class="$style['product-name']">{{ product.name }}</td>
+            <td :class="[$style['product-date'], $style[getStateClass(product)]]" @click="updateLastChange(product)">
+              {{ getStateText(product) }}
+            </td>
+            <td :class="$style['product-newdate']">
+              <Datepicker v-model="product.expireDate"
+                          :month-picker="false"
+                          :enable-time-picker="false"
+                          :time-picker-inline="true"
+                          :min-date="new Date(Date.now())"
+                          :month-change-on-scroll="false"
+                          format="dd.MM.yyyy"
+                          locale="de"
+                          @update:model-value="() => ExpireProductService.updateExpireDate(product)"
+                          :dark="true"
+                          :class="$style['datepicker']"
+              />
+            </td>
+          </tr>
+        </template>
+      </table>
+    </div>
+  </div>
+
+  <!-- Settings Menu -->
+  <div v-if="settingsMenuOpen" :class="$style['settings-menu']">
+    <div :class="$style['settings-menu-header']">
+      <h2>Einstellungen</h2>
+      <button @click="settingsMenuOpen = false" :class="$style['close-button']">
+        <FontAwesomeIcon icon="times"/>
+      </button>
+    </div>
+    <div :class="$style['settings-menu-content']">
+      <!-- Settings menu content goes here -->
+      <p>Hier kommen die Einstellungen hin.</p>
+    </div>
   </div>
 </template>
 
@@ -182,6 +200,11 @@ $input-bg: #333;
 $input-border: #555;
 $input-focus: #ff4500; // Red focus
 $border-design: 0.1vh solid #555;
+
+.blur-background {
+  filter: blur(4px);
+  pointer-events: none; /* Prevent interaction with blurred content */
+}
 
 .settings-container {
   display: flex;
@@ -361,6 +384,49 @@ $border-design: 0.1vh solid #555;
         }
       }
     }
+  }
+}
+
+.settings-menu {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: $bg-medium;
+  border-radius: $border-radius;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  width: 300px;
+  z-index: 1000; /* Ensure it's above other content */
+
+  .settings-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+
+    h2 {
+      color: $text-color;
+      font-size: 1.5rem;
+      margin: 0;
+    }
+
+    .close-button {
+      background: none;
+      border: none;
+      color: #aaa;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: color $transition-speed ease;
+
+      &:hover {
+        color: $text-color;
+      }
+    }
+  }
+
+  .settings-menu-content {
+    color: $text-color;
   }
 }
 </style>
