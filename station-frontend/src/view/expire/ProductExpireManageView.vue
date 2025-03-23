@@ -24,6 +24,7 @@ const expiredProducts: Ref<Map<ExpireProductCategory, ExpireProduct[]>> = new Re
 const settingsMenuOpen = ref(false);
 const addProductDialogOpen = ref(false);
 const searchInput = ref(''); // Add search input
+const selectedSetting = ref('products'); // Add selected setting
 
 const updateLastChange = (product: ExpireProduct): void => {
   if (ExpireProductService.getState(product) === ExpireProductState.REDUCED) {
@@ -222,34 +223,53 @@ onMounted(async () => {
       </button>
     </div>
 
-    <div :class="$style['settings-menu-content']">
-      <!-- Add Product Button -->
-      <button @click="addProductDialogOpen = true" :class="$style['add-product-button']">
-        <FontAwesomeIcon icon="plus" :class="$style['add-product-icon']"/>
-        <span>Produkt hinzufügen</span>
+    <div :class="$style['settings-menu-tabs']">
+      <button
+          :class="[$style['tab-button'], selectedSetting === 'products' ? $style['active-tab'] : '']"
+          @click="selectedSetting = 'products'">
+        Products
       </button>
+      <button
+          :class="[$style['tab-button'], selectedSetting === 'categories' ? $style['active-tab'] : '']"
+          @click="selectedSetting = 'categories'">
+        Categories
+      </button>
+    </div>
 
-      <!-- Search Input -->
-      <div :class="$style['search-bar-container']">
-        <FontAwesomeIcon icon="search" :class="$style['search-icon']"/>
-        <input
-            type="text"
-            v-model="searchInput"
-            :placeholder="'Produkt suchen...'"
-            :class="$style['search-input']"
-        />
+    <div :class="$style['settings-menu-content']">
+      <!-- Products Section -->
+      <div v-if="selectedSetting === 'products'">
+        <button @click="addProductDialogOpen = true" :class="$style['add-product-button']">
+          <FontAwesomeIcon icon="plus" :class="$style['add-product-icon']"/>
+          <span>Produkt hinzufügen</span>
+        </button>
+
+        <div :class="$style['search-bar-container']">
+          <FontAwesomeIcon icon="search" :class="$style['search-icon']"/>
+          <input
+              type="text"
+              v-model="searchInput"
+              :placeholder="'Produkt suchen...'"
+              :class="$style['search-input']"
+          />
+        </div>
+
+        <div :class="$style['filtered-products-list']" v-if="filteredProducts.length > 0">
+          <ul>
+            <li v-for="product in filteredProducts" :key="product.id">
+              {{ product.name }} (#{{ product.productId }})
+            </li>
+          </ul>
+        </div>
+        <div v-else-if="searchInput">
+          Keine passenden Produkte gefunden.
+        </div>
       </div>
 
-      <!-- Filtered Products List -->
-      <div :class="$style['filtered-products-list']" v-if="filteredProducts.length > 0">
-        <ul>
-          <li v-for="product in filteredProducts" :key="product.id">
-            {{ product.name }} (#{{ product.productId }})
-          </li>
-        </ul>
-      </div>
-      <div v-else-if="searchInput">
-        Keine passenden Produkte gefunden.
+      <!-- Categories Section -->
+      <div v-else-if="selectedSetting === 'categories'">
+        <p>Category Management Placeholder</p>
+        <!--  Category list and management will go here -->
       </div>
     </div>
   </div>
@@ -491,6 +511,35 @@ $border-design: 0.1vh solid #555;
 
       &:hover {
         color: $text-color;
+      }
+    }
+  }
+
+  .settings-menu-tabs {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 10px;
+
+    .tab-button {
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      color: $text-color;
+      cursor: pointer;
+      transition: background-color $transition-speed ease, color $transition-speed ease;
+      border-radius: $border-radius;
+
+      &:hover {
+        background-color: $bg-light;
+      }
+    }
+
+    .active-tab {
+      background-color: $accent;
+      color: white;
+
+      &:hover {
+        background-color: $accent-hover;
       }
     }
   }
