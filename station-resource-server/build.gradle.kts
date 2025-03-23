@@ -1,3 +1,6 @@
+group = "dev.aventix.station.guide"
+version = "0.0.1-SNAPSHOT"
+
 plugins {
     kotlin("jvm") version "1.9.25"
     kotlin("plugin.spring") version "1.9.25"
@@ -7,12 +10,15 @@ plugins {
     kotlin("plugin.jpa") version "1.9.25"
 }
 
-group = "dev.aventix"
-version = "0.0.1-SNAPSHOT"
-
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
 
