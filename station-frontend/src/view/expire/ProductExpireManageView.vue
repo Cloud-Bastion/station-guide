@@ -385,15 +385,26 @@ onMounted(async () => {
             <FontAwesomeIcon v-if="isCategoryLoading" icon="spinner" spin :class="$style['loading-spinner']"/>
           </div>
 
-          <transition-group name="category-list" tag="div">
-            <div :class="$style['filtered-categories-list']" v-if="filteredCategories.length > 0">
-              <ul>
-                <li v-for="category in filteredCategories" :key="category.name">
-                  {{ category.name }}
-                </li>
-              </ul>
-            </div>
-          </transition-group>
+          <table :class="$style['products-table']">
+            <thead>
+            <tr>
+              <th>Name</th>
+              <th>Reduce Time (Days)</th>
+            </tr>
+            </thead>
+            <transition-group name="category-list" tag="tbody">
+              <tr v-for="category in filteredCategories" :key="category.id">
+                <td>
+                  <input type="text" v-model="category.name" @change="updateCategory(category)"
+                         :class="$style['editable-input']"/>
+                </td>
+                <td>
+                  <input type="number" v-model="category.reduceProductTime" @change="updateCategory(category)"
+                         :class="$style['editable-input']"/>
+                </td>
+              </tr>
+            </transition-group>
+          </table>
           <div v-if="categorySearchInput && !isCategoryLoading">
             Keine passenden Kategorien gefunden.
           </div>
