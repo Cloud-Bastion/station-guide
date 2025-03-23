@@ -1,5 +1,15 @@
 <script setup lang="ts">
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import Ref from "@/components/util/Ref";
+import AuthUserService from "@/service/AuthUserService";
+
+const email: Ref<string> = new Ref("");
+const password: Ref<string> = new Ref("");
+
+const submitLogin = async () => {
+  const authentication = await AuthUserService.getUserAuth(email.value, password.value);
+  console.log(authentication.token);
+};
 
 </script>
 
@@ -12,12 +22,12 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
         <div :class="$style['login-input-container']">
           <label for="email">E-Mail / Personalnummer</label>
-          <input id="email" type="text" placeholder="Gib deine E-Mail ein" :class="$style['input']" />
+          <input v-model="email.value" type="text" placeholder="Gib deine E-Mail ein" :class="$style['input']" />
         </div>
 
         <div :class="$style['login-input-container']">
           <label for="password">Passwort</label>
-          <input id="password" type="password" placeholder="••••••••" :class="$style['input']" />
+          <input v-model="password.value" type="password" placeholder="••••••••" :class="$style['input']" />
         </div>
 
         <div :class="$style['login-remember-container']">
@@ -25,7 +35,7 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
           <label for="remember-me" :class="$style['remember-label']">Angemeldet bleiben</label>
         </div>
 
-        <button :class="$style['login-submit-button']">Einloggen</button>
+        <button :class="$style['login-submit-button']" @click="submitLogin()">Einloggen</button>
         <a href="#" :class="$style['login-forgot-password']">Passwort vergessen?</a>
 
         <div :class="$style['login-sidebar-container']">
@@ -60,7 +70,7 @@ $border-radius: 10px;
 $transition-speed: 0.3s;
 $input-bg: #333;
 $input-border: #555;
-$input-focus: #3d0000ire; // Darker red focus
+$input-focus: #3d0000; // Darker red focus
 
 .parent {
   display: flex;

@@ -6,6 +6,7 @@ import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.ProviderManager
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
@@ -21,10 +22,11 @@ import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import org.springframework.web.filter.CorsFilter
 
 @Configuration
-@EnableWebSecurity
 class SecurityConfig(
     private val applicationConfig: ApplicationConfigProperties
 ) {
@@ -32,13 +34,25 @@ class SecurityConfig(
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http
+            .cors {
+                it.configurationSource(UrlBasedCorsConfigurationSource().apply {
+                    registerCorsConfiguration("/**", CorsConfiguration().applyPermitDefaultValues().apply {
+                        addAllowedMethod(HttpMethod.OPTIONS)
+                        addAllowedMethod(HttpMethod.POST)
+                        addAllowedMethod(HttpMethod.PATCH)
+                        addAllowedMethod(HttpMethod.DELETE)
+                        addAllowedMethod(HttpMethod.GET)
+                        addAllowedOrigin("http://localhost:5173")
+                    })
+                })
+            }
             .authorizeHttpRequests {
                 auth -> auth
-                .requestMatchers("/v1/auth/login").permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().permitAll()
+                /*.requestMatchers("/api/v1/auth/login").permitAll()
+                .anyRequest().authenticated()*/
             }
             .csrf { csrf -> csrf.disable() }
-            // .cors { Customizer.withDefaults<CorsFilter>() }
             .sessionManagement { session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .build()

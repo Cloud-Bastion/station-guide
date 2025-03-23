@@ -1,8 +1,11 @@
 package dev.aventix.station.resource.server.employee
 
+import dev.aventix.station.resource.server.employee.address.EmployeeAddressDTO
 import dev.aventix.station.resource.server.employee.address.EmployeeAddressEntity
+import jakarta.annotation.PostConstruct
 import jakarta.persistence.EntityExistsException
 import org.springframework.stereotype.Service
+import java.time.LocalDate
 import java.util.*
 import kotlin.NoSuchElementException
 import kotlin.jvm.Throws
@@ -10,8 +13,19 @@ import kotlin.jvm.optionals.getOrNull
 
 @Service
 class EmployeeService(
-    private val employeeRepository: EmployeeRepository
+    private val employeeRepository: EmployeeRepository,
 ) {
+    @PostConstruct
+    fun init() {
+        this.create(
+            EmployeeCreateRequest(
+                "Melvin", "S", "test@gmail.com", EmployeeAddressDTO(
+                    64342, "Seeheim", "Ham", "2", "2 Stock"
+                ), LocalDate.now(), 24242L, "a23d2", null
+            )
+        )
+    }
+
     fun findById(id: UUID): Optional<EmployeeEntity> = employeeRepository.findById(id)
 
     @Throws(EntityExistsException::class, IllegalArgumentException::class)

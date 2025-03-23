@@ -26,7 +26,7 @@ class UserService(
     fun init() {
         createUser(
             UserCreateRequest(
-            "test@station.airforce",
+            "test@gmail.com",
             "Raphael",
             "Eiden",
             "password",

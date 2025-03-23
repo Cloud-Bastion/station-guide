@@ -1,5 +1,7 @@
 rootProject.name = "station-guide"
-include(":station-resource-server")
+
+include("station-resource-server")
+include("auth-server")
 
 pluginManagement {
     repositories {

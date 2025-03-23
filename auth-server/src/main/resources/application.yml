@@ -4,6 +4,12 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+logging:
+  level:
+    org:
+      springframework:
+        security: trace
+
   security:
     oauth2:
       client:
@@ -25,6 +31,4 @@ station:
       password-prefix: "{bcrypt}"
       rsa-public-key: classpath:rsa/public.pem
       rsa-private-key: classpath:rsa/private.pem
-
-server:
-  port: 8090
+debug: true

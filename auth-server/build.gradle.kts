@@ -6,8 +6,15 @@ plugins {
     kotlin("plugin.jpa") version "1.9.25"
 }
 
-group = "dev.aventix.station"
+group = "dev.aventix.station.guide"
 version = "0.0.1-SNAPSHOT"
+
+
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
 
 java {
     toolchain {
