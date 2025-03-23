@@ -56,3 +56,17 @@ allOpen {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+tasks.bootBuildImage {
+    publish.set(true)
+    docker {
+        publishRegistry {
+            url.set("ghcr.io")
+            username.set(project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR"))
+            password.set(project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN"))
+            imageName.set("ghcr.io/cloud-bastion/station-guide/station-resource-server:${project.properties["bootImageTag"]}")
+            tags.set(listOf("ghcr.io/cloud-bastion/station-guide/station-resource-server:latest"))
+        }
+    }
+}
+
