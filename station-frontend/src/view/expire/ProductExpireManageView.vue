@@ -192,7 +192,10 @@ onMounted(async () => {
       </div>
 
       <p>Hier kommen die Einstellungen hin.</p>
-      <button @click="addProductDialogOpen = true">Produkt hinzufügen</button>
+      <button @click="addProductDialogOpen = true" :class="$style['add-product-button']">
+        <FontAwesomeIcon icon="plus" :class="$style['add-product-icon']"/>
+        <span>Produkt hinzufügen</span>
+      </button>
     </div>
   </div>
 
@@ -463,6 +466,26 @@ $border-design: 0.1vh solid #555;
           border-color: $input-focus;
           outline: none;
         }
+      }
+    }
+
+    .add-product-button {
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
+      background-color: $accent;
+      color: $text-color;
+      border: none;
+      border-radius: $border-radius;
+      cursor: pointer;
+      transition: background-color $transition-speed ease;
+
+      &:hover {
+        background-color: $accent-hover;
+      }
+
+      .add-product-icon {
+        margin-right: 8px;
       }
     }
   }
