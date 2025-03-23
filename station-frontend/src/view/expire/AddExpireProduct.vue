@@ -32,16 +32,12 @@ function addProduct() {
       </div>
       <div :class="$style['modal-body']">
         <div :class="$style['input-group']">
-          <label for="product-name">Produktname:</label>
-          <input id="product-name" type="text" v-model="productName" :class="$style['input']"/>
-        </div>
-        <div :class="$style['input-group']">
-          <label for="product-number">Produktnummer:</label>
+          <label for="product-number">Artikelnummer:</label>
           <input id="product-number" type="number" v-model="productNumber" :class="$style['input']"/>
         </div>
         <div :class="$style['input-group']">
-          <label for="expire-date">Verfallsdatum:</label>
-          <input id="expire-date" type="date" v-model="expireDate" :class="$style['input']"/>
+          <label for="product-name">Produktname:</label>
+          <input id="product-name" type="text" v-model="productName" :class="$style['input']"/>
         </div>
         <div :class="$style['input-group']">
           <label for="reduce-time">Reduzierzeit (Tage):</label>
