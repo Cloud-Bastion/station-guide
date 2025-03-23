@@ -90,6 +90,24 @@ const getStateText = (product: ExpireProduct) => {
   return ExpireProductService.getState(product);
 }
 
+// Computed property for filtered products
+const filteredProducts = computed(() => {
+  const searchTerm = searchInput.value.toLowerCase();
+  if (!searchTerm) {
+    return []; // Return empty array if no search term for better UX in settings
+  }
+
+  let allProducts: ExpireProduct[] = [];
+  for (const products of expiredProducts.value.values()) {
+    allProducts = allProducts.concat(products);
+  }
+
+  return allProducts.filter(product =>
+      product.name.toLowerCase().includes(searchTerm) ||
+      product.productId.toString().includes(searchTerm)
+  );
+});
+
 onMounted(async () => {
   try {
     const products = await ExpireProductService.getExpiringItems();
@@ -194,6 +212,18 @@ onMounted(async () => {
       <div :class="$style['search-bar-container']">
         <FontAwesomeIcon icon="search" :class="$style['search-icon']"/>
         <input type="text" v-model="searchInput" :placeholder="'Produkt suchen...'" :class="$style['search-input']"/>
+      </div>
+
+      <!-- Filtered Products List -->
+      <div :class="$style['filtered-products-list']" v-if="filteredProducts.length > 0">
+        <ul>
+          <li v-for="product in filteredProducts" :key="product.id">
+            {{ product.name }} (#{{ product.productId }})
+          </li>
+        </ul>
+      </div>
+      <div v-else-if="searchInput">
+        Keine passenden Produkte gefunden.
       </div>
 
       <p>Hier kommen die Einstellungen hin.</p>
@@ -487,6 +517,28 @@ $border-design: 0.1vh solid #555;
         &:focus {
           border-color: $input-focus;
           outline: none;
+        }
+      }
+    }
+
+    .filtered-products-list {
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        li {
+          padding: 8px 12px;
+          border-bottom: 1px solid $input-border;
+          transition: background-color $transition-speed ease;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          &:hover {
+            background-color: $bg-light;
+          }
         }
       }
     }
