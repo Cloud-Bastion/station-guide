@@ -18,6 +18,11 @@ const addCategoryDialogOpen = ref(false);
 const addProductSuccess = ref<boolean | null>(null); // null = no message, true = success, false = error
 const addProductError = ref<boolean | null>(null);
 
+// Validation refs
+const productNumberError = ref('');
+const productNameError = ref('');
+const reduceTimeError = ref('');
+
 const otherCategory: ExpireProductCategory = {
   name: "Andere",
   reduceProductTime: undefined,
@@ -42,6 +47,10 @@ onMounted(async () => {
 });
 
 async function addProduct() {
+  if (!validateInput()) {
+    return; // Stop if validation fails
+  }
+
   try {
     // Send category ID (or null for "Other")
     const categoryId = selectedCategory.value;
@@ -77,6 +86,42 @@ async function handleCategoryAdded(newCategory: ExpireProductCategory) {
   selectedCategory.value = newCategory.id; // Select the newly added category
   addCategoryDialogOpen.value = false; // Close the add category dialog
 }
+
+function validateInput() {
+  let isValid = true;
+
+  // Reset error messages
+  productNumberError.value = '';
+  productNameError.value = '';
+  reduceTimeError.value = '';
+
+  // Product Number validation
+  if (!productNumber.value) {
+    productNumberError.value = 'Artikelnummer ist erforderlich.';
+    isValid = false;
+  } else if (isNaN(parseInt(productNumber.value))) {
+    productNumberError.value = 'Artikelnummer muss eine Zahl sein.';
+    isValid = false;
+  }
+
+  // Product Name validation
+  if (!productName.value) {
+    productNameError.value = 'Produktname ist erforderlich.';
+    isValid = false;
+  }
+
+  // Reduce Time validation (optional, but must be a number if provided)
+  if (reduceTime.value && isNaN(parseInt(reduceTime.value))) {
+    reduceTimeError.value = 'Reduzierzeit muss eine Zahl sein.';
+    isValid = false;
+  }
+    if (reduceTime.value && parseInt(reduceTime.value) < 0) {
+        reduceTimeError.value = 'Reduzierzeit muss positiv sein.';
+        isValid = false;
+    }
+
+  return isValid;
+}
 </script>
 
 <template>
@@ -92,10 +137,12 @@ async function handleCategoryAdded(newCategory: ExpireProductCategory) {
         <div :class="$style['input-group']">
           <label for="product-number">Artikelnummer:</label>
           <input id="product-number" type="number" v-model="productNumber" :class="$style['input']"/>
+          <div v-if="productNumberError" :class="$style['error-message']">{{ productNumberError }}</div>
         </div>
         <div :class="$style['input-group']">
           <label for="product-name">Produktname:</label>
           <input id="product-name" type="text" v-model="productName" :class="$style['input']"/>
+          <div v-if="productNameError" :class="$style['error-message']">{{ productNameError }}</div>
         </div>
         <div :class="$style['input-group']">
           <label for="category">Kategorie:</label>
@@ -114,6 +161,7 @@ async function handleCategoryAdded(newCategory: ExpireProductCategory) {
         <div :class="$style['input-group']">
           <label for="reduce-time">Reduzierzeit (Tage):</label>
           <input id="reduce-time" type="number" v-model="reduceTime" :class="$style['input']"/>
+          <div v-if="reduceTimeError" :class="$style['error-message']">{{ reduceTimeError }}</div>
         </div>
 
         <transition name="fade">
@@ -273,6 +321,7 @@ $input-border: #555;
         color: $accent;
         margin-bottom: 10px;
         text-align: center;
+        font-size: 0.8rem;
       }
       .error-icon {
         color: $accent;
