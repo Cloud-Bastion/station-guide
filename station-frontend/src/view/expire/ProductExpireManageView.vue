@@ -225,8 +225,6 @@ onMounted(async () => {
       <div v-else-if="searchInput">
         Keine passenden Produkte gefunden.
       </div>
-
-      <p>Hier kommen die Einstellungen hin.</p>
     </div>
   </div>
 
@@ -296,7 +294,6 @@ $border-design: 0.1vh solid #555;
   border-radius: $border-radius;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   background-color: $bg-medium;
-  overflow: hidden;
 
   .product-container {
     margin: 0;
