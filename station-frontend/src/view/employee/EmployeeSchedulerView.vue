@@ -110,7 +110,7 @@ const getDaysInRange = computed(() => {
           </td>
         </tr>
         <!--  Example Row - Add more rows as needed -->
-        <tr :class="$style['schedule-container']" :class="$style['schedule-row-even']">
+        <tr :class="[$style['schedule-container'], $style['schedule-row-even']]">
           <td :class="$style['schedule-employee-name-parent']">
             <div :class="$style['schedule-employee-name-container']">
               <div :class="$style['schedule-employee-name-entity']">Müller, Lisa</div>
