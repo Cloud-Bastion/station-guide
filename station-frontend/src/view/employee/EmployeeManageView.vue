@@ -40,24 +40,37 @@ function changeSiteMode(mode: string) {
 <style lang="scss" module>
 .submenu-container {
   display: flex;
-  width: fit-content;
+  width: 100%;  // Use full width
   flex-direction: row;
   margin: 0 25px;
-  padding: 3px 3px 3px 3px;
-  border-radius: 5px 5px 5px 5px;
+  padding: 3px; // Simplified padding
+  border-radius: 5px;
   background-color: #222222;
+  overflow-x: auto; // Add horizontal scrolling if needed
+  white-space: nowrap; // Prevent wrapping
 
   .submenu-entity {
     font-size: small;
     color: #b0b0b0;
     margin: 0 2px;
-    padding: 8px 8px 8px 8px;
+    padding: 8px; // Simplified padding
+    flex-shrink: 0; // Prevent shrinking
   }
 
   .submenu-entity-active {
     color: white;
-    border-radius: 5px 5px 5px 5px;
+    border-radius: 5px;
     background-color: black;
+  }
+}
+
+// Media query for smaller screens
+@media (max-width: 768px) {
+  .submenu-container {
+    margin: 0 10px; // Reduce margin on smaller screens
+    .submenu-entity{
+      padding: 8px 4px;
+    }
   }
 }
 </style>
