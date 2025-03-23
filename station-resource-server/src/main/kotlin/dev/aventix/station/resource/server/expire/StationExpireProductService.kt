@@ -94,7 +94,7 @@ class StationExpireProductService(
 
     fun getAllProductsSortedByCategory(): MutableList<StationExpireProductDTO> {
         return this.stationExpireProductRepository.findAll(
-            Sort.by(Sort.Order.asc("category.name"), Sort.Order.asc("name"))
+            Sort.by(Sort.Order.desc("category.name"), Sort.Order.asc("name"))
         ).map { entity ->
             entity.toDTO()
         }.toCollection(mutableListOf())

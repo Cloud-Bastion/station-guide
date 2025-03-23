@@ -220,7 +220,6 @@ $border-design: 0.1vh solid #555;
     // Removed flex-grow: 1
   display: flex;
   flex-direction: column;
-  overflow-y: auto; // Add vertical scroll if needed
 }
 
 .submenu-container {
@@ -231,7 +230,6 @@ $border-design: 0.1vh solid #555;
   padding: 10px; // More padding
   border-radius: $border-radius;
   background-color: $bg-medium; // Consistent background
-  overflow-x: auto;
   white-space: nowrap;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); // Add shadow
 
