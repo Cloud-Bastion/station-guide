@@ -24,5 +24,5 @@ i18next
             loadPath: '/i18n/{{lng}}.json'
         }
     }).then(() => {
-    createApp(App).use(router).mount('#app')
+    createApp(App).use(router).component("FontAwesomeIcon", FontAwesomeIcon).mount('#app')
 })

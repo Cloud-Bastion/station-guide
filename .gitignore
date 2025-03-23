@@ -71,3 +71,7 @@ out/
 
 ### Kotlin ###
 .kotlin
+.aider*
+
+# Ignore Gradle build output directory
+build

@@ -7,4 +7,8 @@ spring:
       ddl-auto: update
   application:
     name: Station-Guide
-debug: false
+logging:
+  level:
+    org:
+      springframework:
+        security: trace
