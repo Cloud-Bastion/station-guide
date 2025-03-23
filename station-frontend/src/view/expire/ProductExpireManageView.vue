@@ -21,7 +21,7 @@ const otherCategorie: ExpireProductCategory = new class implements ExpireProduct
 
 const categories: Ref<Map<string, ExpireProductCategory>> = new Ref<Map<string, ExpireProductCategory>>(new Map<string, ExpireProductCategory>());
 const expiredProducts: Ref<Map<ExpireProductCategory, ExpireProduct[]>> = new Ref<Map<ExpireProductCategory, ExpireProduct[]>>(new Map<ExpireProductCategory, ExpireProduct[]>());
-const allProducts: Ref<ExpireProduct[]> = new Ref([]);
+const allProducts: Ref<ExpireProduct[]> = new Ref<ExpireProduct[]>([]);
 
 const settingsMenuOpen = ref(false);
 const addProductDialogOpen = ref(false);
@@ -102,7 +102,9 @@ const filteredProducts = computed(() => {
     return []; // Return empty array if no search term for better UX in settings
   }
 
-  return allProducts.value.filter(product =>
+  let cachedProducts = allProducts.value
+
+  return cachedProducts.filter(product =>
       product.name.toLowerCase().includes(searchTerm) ||
       product.productId.toString().includes(searchTerm)
   );
@@ -292,17 +294,19 @@ onMounted(async () => {
           <tr v-for="product in filteredProducts" :key="product.id">
             <td>{{ product.productId }}</td>
             <td>
-              <input type="text" v-model="product.name" @change="updateProduct(product)" :class="$style['editable-input']"/>
+              <input type="text" v-model="product.name" @change="updateProduct(product)"
+                     :class="$style['editable-input']"/>
             </td>
             <td>
-              <input type="number" v-model="product.reduceProductTime" @change="updateProduct(product)" :class="$style['editable-input']"/>
+              <input type="number" v-model="product.reduceProductTime" @change="updateProduct(product)"
+                     :class="$style['editable-input']"/>
             </td>
             <td>
               <select v-model="product.category" @change="updateProduct(product)" :class="$style['editable-select']">
-                <option :value="null">Andere</option>
                 <option v-for="category in allCategories" :key="category.id" :value="category">
                   {{ category.name }}
                 </option>
+                <option :value="null">Andere</option>
               </select>
             </td>
           </tr>
