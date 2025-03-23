@@ -148,10 +148,10 @@ const getDaysInRange = computed(() => {
 </template>
 
 <style scoped lang="scss" module>
-$min-width-name: 160px; // Reduced min-width
-$min-width-balance: 70px; // Reduced min-width
-$min-width-illness: 35px; // Reduced min-width
-$min-width-shift: 55px;   // Reduced min-width
+$min-width-name: 140px; // Further reduced
+$min-width-balance: 60px; // Further reduced
+$min-width-illness: 30px; // Further reduced
+$min-width-shift: 50px;   // Further reduced
 $border-design: 0.1vh solid #555;
 $bg-dark: #121212;
 $bg-medium: #1e1e1e;
@@ -168,37 +168,37 @@ $transition-speed: 0.3s;
   align-items: center;
 
   .datepicker {
-    margin: 15px; // Reduced margin
+    margin: 10px; // Further reduced margin
     width: fit-content;
 
     --dp-font-family: -apple-system, blinkmacsystemfont, "Segoe UI", roboto, oxygen, ubuntu, cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-    --dp-border-radius: 5px;
-    --dp-cell-border-radius: 5px;
+    --dp-border-radius: 4px; // Slightly smaller
+    --dp-cell-border-radius: 4px; // Slightly smaller
     --dp-common-transition: all 0.1s ease-in;
 
     /*Sizing*/
-    --dp-button-height: 22px; // Reduced
-    --dp-month-year-row-height: 22px; // Reduced
-    --dp-month-year-row-button-size: 22px; // Reduced
-    --dp-button-icon-height: 8px; // Reduced
-    --dp-cell-size: 22px; // Reduced
-    --dp-cell-padding: 4px; // Reduced
-    --dp-common-padding: 8px; // Reduced
-    --dp-input-icon-padding: 30px; // Reduced
-    --dp-input-padding: 5px 25px 5px 10px; // Reduced
-    --dp-menu-min-width: 200px; // Reduced
-    --dp-action-buttons-padding: 1px 4px; // Reduced
-    --dp-row-margin: 4px 0; // Reduced
-    --dp-calendar-header-cell-padding: 0.4rem; // Reduced
-    --dp-two-calendars-spacing: 8px; // Reduced
-    --dp-overlay-col-padding: 2px; // Reduced
-    --dp-time-inc-dec-button-size: 28px; // Reduced
-    --dp-menu-padding: 5px 6px; // Reduced
+    --dp-button-height: 20px; // Further reduced
+    --dp-month-year-row-height: 20px; // Further reduced
+    --dp-month-year-row-button-size: 20px; // Further reduced
+    --dp-button-icon-height: 7px; // Further reduced
+    --dp-cell-size: 20px; // Further reduced
+    --dp-cell-padding: 3px; // Further reduced
+    --dp-common-padding: 6px; // Further reduced
+    --dp-input-icon-padding: 25px; // Further reduced
+    --dp-input-padding: 4px 20px 4px 8px; // Further reduced
+    --dp-menu-min-width: 180px; // Further reduced
+    --dp-action-buttons-padding: 1px 3px; // Further reduced
+    --dp-row-margin: 3px 0; // Further reduced
+    --dp-calendar-header-cell-padding: 0.3rem; // Further reduced
+    --dp-two-calendars-spacing: 6px; // Further reduced
+    --dp-overlay-col-padding: 1px; // Further reduced
+    --dp-time-inc-dec-button-size: 24px; // Further reduced
+    --dp-menu-padding: 4px 5px; // Further reduced
 
     /*Font sizes*/
-    --dp-font-size: 0.7rem; // Reduced
-    --dp-preview-font-size: 0.5rem; // Reduced
-    --dp-time-font-size: 0.5rem; // Reduced
+    --dp-font-size: 0.6rem; // Further reduced
+    --dp-preview-font-size: 0.4rem; // Further reduced
+    --dp-time-font-size: 0.4rem; // Further reduced
 
     /*Transitions*/
 
@@ -236,11 +236,10 @@ $transition-speed: 0.3s;
   .schedule-parent {
     font-size: smaller;
     text-align: center;
-    margin: 15px 20px; // Reduced margin
+    margin: 10px 15px; // Further reduced margin
     background-color: $bg-medium;
     border: $border-design;
     border-radius: $border-radius;
-    // Removed box-shadow
     width: 90%;
     overflow-x: auto;
 
@@ -250,12 +249,13 @@ $transition-speed: 0.3s;
       color: $text-color;
 
       th {
-        padding: 8px 12px; // Reduced padding
+        padding: 6px 8px; // Further reduced padding
         border: $border-design;
         min-width: $min-width-shift;
         white-space: nowrap;
         .header-icon {
-          margin-right: 4px; // Reduced margin
+          margin-right: 3px; // Further reduced margin
+          font-size: 0.8em; // Reduce icon size
         }
       }
     }
@@ -269,10 +269,11 @@ $transition-speed: 0.3s;
       }
 
       td {
-        padding: 6px 10px; // Reduced padding
+        padding: 4px 6px; // Further reduced padding
         border: $border-design;
         color: $text-color;
         vertical-align: top;
+        font-size: 0.7rem; // Reduce font size
       }
 
       .schedule-employee-name-parent {
@@ -285,13 +286,14 @@ $transition-speed: 0.3s;
           text-align: left;
 
           .schedule-employee-name-entity, .schedule-employee-badgeid-entity {
-            padding: 1px 0; // Reduced padding
+            padding: 1px 0; // Further reduced padding
           }
         }
 
         .schedule-employee-name-icon {
-          margin-left: 8px; // Reduced margin
+          margin-left: 5px; // Further reduced margin
           color: $accent;
+          font-size: 0.8em; // Reduce icon size
         }
       }
 
@@ -301,7 +303,7 @@ $transition-speed: 0.3s;
         display: flex;
         flex-direction: column;
         .schedule-employee-balance-entity{
-          padding: 1px 0; // Reduced padding
+          padding: 1px 0; // Further reduced padding
         }
       }
 
@@ -311,7 +313,7 @@ $transition-speed: 0.3s;
         display: flex;
         flex-direction: column;
         .schedule-employee-illness-entity{
-          padding: 1px 0; // Reduced padding
+          padding: 1px 0; // Further reduced padding
         }
       }
 
@@ -321,7 +323,7 @@ $transition-speed: 0.3s;
 
         .schedule-employee-shift-header {
           font-weight: bold;
-          padding-bottom: 1px; // Reduced padding
+          padding-bottom: 0px; // Further reduced padding
         }
       }
     }
@@ -335,7 +337,7 @@ $transition-speed: 0.3s;
 
     .schedule-header-container, .schedule-container {
       th, td {
-        padding: 4px 6px; // Reduced padding
+        padding: 2px 4px; // Even smaller padding on very small screens
       }
     }
   }
