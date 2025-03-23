@@ -24,7 +24,17 @@ const routes: Array<RouteRecordRaw> = [
         path: '/login',
         name: 'login',
         component: LoginView
-    }
+    },
+    {
+        path: '/profile',
+        name: 'profile',
+        component: LoginView //TODO: Add correct view
+    },
+    {
+        path: '/settings',
+        name: 'settings',
+        component: LoginView //TODO: Add correct view
+    },
 ]
 
 const router = createRouter({

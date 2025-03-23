@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {ref, onMounted} from 'vue';
+import {ref, onMounted, computed} from 'vue';
 
 const props = defineProps<{
   site: string;
@@ -25,22 +25,33 @@ onMounted(async () => {
   // }
 });
 
+const isDropdownOpen = ref(false);
+
+// Computed property to toggle dropdown visibility
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+// Close dropdown when clicking outside
+const closeDropdown = (event: MouseEvent) => {
+  if (isDropdownOpen.value && event.target instanceof Node && !$refs.userProfile.contains(event.target)) {
+    isDropdownOpen.value = false;
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('click', closeDropdown);
+});
+
+onMounted(() => {
+    window.removeEventListener('click', closeDropdown);
+})
 </script>
 
 <template>
   <div :class="$style['menu-parent']">
     <div :class="$style['menu-container']">
       <img src="/logo.png" alt="circle k logo" :class="$style['logo']">
-
-      <!-- User Profile Section -->
-      <div :class="$style['user-profile']">
-        <img :src="user.avatar" alt="User Avatar" :class="$style['user-avatar']"/>
-        <div :class="$style['user-info']">
-          <div :class="$style['user-name']">{{ user.name }}</div>
-          <div :class="$style['user-role']">{{ user.role }}</div> <!-- Display user role -->
-        </div>
-      </div>
-      <!-- End User Profile Section -->
 
       <div :class="$style['workprogramms-container']">
         <router-link to="employee-management"
@@ -59,6 +70,36 @@ onMounted(async () => {
           <span>Task-Manager</span>
         </router-link>
       </div>
+
+      <!-- User Profile Section -->
+      <div :class="$style['user-profile']" @click="toggleDropdown" ref="userProfile">
+        <img :src="user.avatar" alt="User Avatar" :class="$style['user-avatar']"/>
+        <div :class="$style['user-info']">
+          <div :class="$style['user-name']">{{ user.name }}</div>
+          <div :class="$style['user-role']">{{ user.role }}</div> <!-- Display user role -->
+        </div>
+        <FontAwesomeIcon :icon="['fas', 'chevron-down']" :class="$style['dropdown-icon']" />
+
+        <!-- Dropdown Menu -->
+        <transition name="fade">
+          <div v-if="isDropdownOpen" :class="$style['dropdown-menu']">
+            <router-link to="/profile" :class="$style['dropdown-item']">
+              <FontAwesomeIcon :icon="['fas', 'user']" :class="$style['dropdown-item-icon']" />
+              Profil
+            </router-link>
+            <router-link to="/settings" :class="$style['dropdown-item']">
+              <FontAwesomeIcon :icon="['fas', 'cog']" :class="$style['dropdown-item-icon']" />
+              Einstellungen
+            </router-link>
+            <div :class="$style['dropdown-divider']"></div>
+            <router-link to="/logout" :class="$style['dropdown-item']" @click.prevent="logout">
+              <FontAwesomeIcon :icon="['fas', 'sign-out-alt']" :class="$style['dropdown-item-icon']" />
+              Logout
+            </router-link>
+          </div>
+        </transition>
+      </div>
+      <!-- End User Profile Section -->
     </div>
     <div :class="$style['menu-stick']"></div>
   </div>
@@ -90,36 +131,6 @@ $transition-speed: 0.3s;
       width: 120px; // Slightly smaller logo
       height: auto;
       margin-right: 30px; // Reduced margin
-    }
-
-    .user-profile {
-      display: flex;
-      align-items: center;
-      margin-right: 30px; /* Add margin to separate from the links */
-
-      .user-avatar {
-        width: 40px; /* Adjust size as needed */
-        height: 40px; /* Adjust size as needed */
-        border-radius: 50%; /* Make it circular */
-        margin-right: 10px; /* Space between avatar and text */
-        object-fit: cover; /* Ensure the image covers the area */
-        border: 2px solid $accent; /* Add a border */
-      }
-
-      .user-info {
-        text-align: left; /* Align text to the left */
-
-        .user-name {
-          color: $text-color;
-          font-weight: bold;
-          font-size: 0.9rem; /* Adjust size as needed */
-        }
-
-        .user-role {
-          color: #aaa; /* Lighter color for the role */
-          font-size: 0.7rem; /* Adjust size as needed */
-        }
-      }
     }
 
     .workprogramms-container {
@@ -167,6 +178,87 @@ $transition-speed: 0.3s;
         }
       }
     }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      margin-left: auto; /* Push to the right */
+      cursor: pointer; /* Indicate it's clickable */
+      position: relative; /* For dropdown positioning */
+
+      .user-avatar {
+        width: 40px; /* Adjust size as needed */
+        height: 40px; /* Adjust size as needed */
+        border-radius: 50%; /* Make it circular */
+        margin-right: 10px; /* Space between avatar and text */
+        object-fit: cover; /* Ensure the image covers the area */
+        border: 2px solid $accent; /* Add a border */
+      }
+
+      .user-info {
+        text-align: left; /* Align text to the left */
+
+        .user-name {
+          color: $text-color;
+          font-weight: bold;
+          font-size: 0.9rem; /* Adjust size as needed */
+        }
+
+        .user-role {
+          color: #aaa; /* Lighter color for the role */
+          font-size: 0.7rem; /* Adjust size as needed */
+        }
+      }
+
+      .dropdown-icon {
+        color: #aaa;
+        margin-left: 5px;
+        transition: transform $transition-speed ease;
+      }
+
+      &:hover .dropdown-icon {
+        transform: rotate(180deg); /* Rotate on hover */
+      }
+
+      .dropdown-menu {
+        position: absolute;
+        top: 100%; /* Position below the profile */
+        right: 0; /* Align to the right */
+        background-color: $bg-medium;
+        border: 1px solid #444;
+        border-radius: $border-radius;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        z-index: 100; /* Ensure it's above other content */
+        min-width: 160px; /* Minimum width */
+        padding: 5px 0; /* Vertical padding */
+
+        .dropdown-item {
+          display: flex;
+          align-items: center;
+          padding: 8px 15px;
+          color: $text-color;
+          text-decoration: none;
+          transition: background-color $transition-speed ease;
+
+          &:hover {
+            background-color: $bg-light;
+          }
+
+          .dropdown-item-icon {
+            margin-right: 10px;
+            color: #aaa;
+            width: 20px; /* Fixed width for icons */
+            text-align: center; /* Center the icons */
+          }
+        }
+
+        .dropdown-divider {
+          height: 1px;
+          background-color: #444;
+          margin: 5px 0;
+        }
+      }
+    }
   }
 
   .menu-stick {
@@ -175,5 +267,17 @@ $transition-speed: 0.3s;
     border-radius: 20px;
     background-color: #444; // Darker stick color
   }
+}
+
+// --- Transitions ---
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px); /* Slight vertical movement */
 }
 </style>
