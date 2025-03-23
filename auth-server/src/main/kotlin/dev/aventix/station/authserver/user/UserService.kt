@@ -1,5 +1,6 @@
 package dev.aventix.station.authserver.user
 
+import dev.aventix.station.authserver.config.ApplicationConfigProperties
 import dev.aventix.station.authserver.user.authority.UserAuthority
 import dev.aventix.station.authserver.user.authority.UserAuthorityCreateRequest
 import dev.aventix.station.authserver.user.authority.UserAuthorityDto
@@ -18,6 +19,7 @@ class UserService(
     private val userRepository: UserRepository,
     private val authorityRepository: UserAuthorityRepository,
     private val passwordEncoder: PasswordEncoder,
+    private val appProperties: ApplicationConfigProperties,
 ): UserDetailsService {
 
     @PostConstruct
@@ -51,7 +53,8 @@ class UserService(
             this.email = request.email
             this.firstName = request.firstName
             this.lastName = request.lastName
-            this.password = passwordEncoder.encode(request.password)
+            this.password = appProperties.passwordPrefix + passwordEncoder.encode(request.password)
+            this.authProvider = AuthProvider.LOCAL
             this.authorities = request.initialAuthorities.map { authorityId ->
                 authorityRepository.findById(authorityId).orElseThrow { NoSuchElementException("Authority does not exist.") }
             }.toMutableSet()

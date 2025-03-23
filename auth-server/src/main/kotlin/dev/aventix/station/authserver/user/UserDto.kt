@@ -10,5 +10,7 @@ data class UserDto(
     val firstName: String,
     val lastName: String,
     val password: String,
-    val authorities: Set<UserAuthorityDto>
+    val authorities: Set<UserAuthorityDto>,
+    val authProvider: AuthProvider,
+    val oAuthId: String?,
 )

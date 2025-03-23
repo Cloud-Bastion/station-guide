@@ -31,7 +31,23 @@ class User {
     )
     lateinit var authorities: MutableSet<UserAuthority>
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    lateinit var authProvider: AuthProvider
+
+    @Column(nullable = true)
+    var oAuthId: String? = null
+
     fun toDto(): UserDto =
-        UserDto(id, badgeNumber, email, firstName, lastName, password, authorities.map { authority -> authority.toDto() }.toSet())
+        UserDto(id,
+            badgeNumber,
+            email,
+            firstName,
+            lastName,
+            password,
+            authorities.map { authority -> authority.toDto() }.toSet(),
+            authProvider,
+            oAuthId
+        )
 
 }

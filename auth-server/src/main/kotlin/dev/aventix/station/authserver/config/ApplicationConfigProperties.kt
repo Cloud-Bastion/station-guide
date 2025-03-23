@@ -8,4 +8,5 @@ import java.security.interfaces.RSAPublicKey
 class ApplicationConfigProperties {
     lateinit var rsaPublicKey: RSAPublicKey
     lateinit var rsaPrivateKey: RSAPrivateKey
+    lateinit var passwordPrefix: String
 }
