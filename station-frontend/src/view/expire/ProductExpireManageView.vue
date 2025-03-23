@@ -11,6 +11,7 @@ import Ref from "@/components/util/Ref";
 import Datepicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 import AddExpireProduct from "@/view/expire/AddExpireProduct.vue";
+import AddExpireProductCategory from "@/view/expire/AddExpireProductCategory.vue";
 
 const otherCategorie: ExpireProductCategory = new class implements ExpireProductCategory {
   name = "Andere";
@@ -23,7 +24,9 @@ const expiredProducts: Ref<Map<ExpireProductCategory, ExpireProduct[]>> = new Re
 
 const settingsMenuOpen = ref(false);
 const addProductDialogOpen = ref(false);
+const addCategoryDialogOpen = ref(false); // Add category dialog
 const searchInput = ref(''); // Add search input
+const categorySearchInput = ref(''); // Category search input
 const selectedSetting = ref('products'); // Add selected setting
 
 const updateLastChange = (product: ExpireProduct): void => {
@@ -106,6 +109,17 @@ const filteredProducts = computed(() => {
   return allProducts.filter(product =>
       product.name.toLowerCase().includes(searchTerm) ||
       product.productId.toString().includes(searchTerm)
+  );
+});
+
+const filteredCategories = computed(() => {
+  const searchTerm = categorySearchInput.value.toLowerCase();
+  if (!searchTerm) {
+    return Array.from(categories.value.values());
+  }
+
+  return Array.from(categories.value.values()).filter(category =>
+      category.name.toLowerCase().includes(searchTerm)
   );
 });
 
@@ -268,13 +282,37 @@ onMounted(async () => {
 
       <!-- Categories Section -->
       <div v-else-if="selectedSetting === 'categories'">
-        <p>Category Management Placeholder</p>
-        <!--  Category list and management will go here -->
+        <button @click="addCategoryDialogOpen = true" :class="$style['add-category-button']">
+          <FontAwesomeIcon icon="plus" :class="$style['add-category-icon']"/>
+          <span>Kategorie hinzufügen</span>
+        </button>
+
+        <div :class="$style['search-bar-container']">
+          <FontAwesomeIcon icon="search" :class="$style['search-icon']"/>
+          <input
+              type="text"
+              v-model="categorySearchInput"
+              :placeholder="'Kategorie suchen...'"
+              :class="$style['search-input']"
+          />
+        </div>
+
+        <div :class="$style['filtered-categories-list']" v-if="filteredCategories.length > 0">
+          <ul>
+            <li v-for="category in filteredCategories" :key="category.name">
+              {{ category.name }}
+            </li>
+          </ul>
+        </div>
+        <div v-else-if="categorySearchInput">
+          Keine passenden Kategorien gefunden.
+        </div>
       </div>
     </div>
   </div>
 
   <AddExpireProduct v-if="addProductDialogOpen" @close="addProductDialogOpen = false"/>
+  <AddExpireProductCategory v-if="addCategoryDialogOpen" @close="addCategoryDialogOpen = false" />
 </template>
 
 <style lang="scss" module>
@@ -568,6 +606,27 @@ $border-design: 0.1vh solid #555;
       }
     }
 
+    .add-category-button {
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
+      background-color: $accent;
+      color: $text-color;
+      border: none;
+      border-radius: $border-radius;
+      cursor: pointer;
+      transition: background-color $transition-speed ease;
+      margin-bottom: 10px;
+
+      &:hover {
+        background-color: $accent-hover;
+      }
+
+      .add-category-icon {
+        margin-right: 8px;
+      }
+    }
+
     .search-bar-container {
       display: flex;
       align-items: center;
@@ -595,6 +654,28 @@ $border-design: 0.1vh solid #555;
     }
 
     .filtered-products-list {
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        li {
+          padding: 8px 12px;
+          border-bottom: 1px solid $input-border;
+          transition: background-color $transition-speed ease;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          &:hover {
+            background-color: $bg-light;
+          }
+        }
+      }
+    }
+
+    .filtered-categories-list {
       ul {
         list-style: none;
         padding: 0;
