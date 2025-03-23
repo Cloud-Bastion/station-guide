@@ -31,6 +31,7 @@ const categorySearchInput = ref(''); // Category search input
 const selectedSetting = ref('products'); // Add selected setting
 const isProductLoading = ref(false); // Loading indicator for products
 const isCategoryLoading = ref(false); // Loading indicator for categories
+const displayedProducts = ref<ExpireProduct[]>([]); // New ref for displayed products
 
 
 const updateLastChange = (product: ExpireProduct): void => {
@@ -117,8 +118,9 @@ watch(searchInput, () => {
   clearTimeout(productSearchTimeout);
   isProductLoading.value = true; // Show loading indicator
   productSearchTimeout = setTimeout(() => {
-    // Simulate API call (replace with actual API call if needed)
-      isProductLoading.value = false; // Hide loading indicator
+    // Update displayedProducts after debounce
+    displayedProducts.value = filteredProducts.value;
+    isProductLoading.value = false; // Hide loading indicator
   }, 300); // 300ms debounce time
 });
 
@@ -194,6 +196,8 @@ onMounted(async () => {
     allCategories.forEach(category => {
       categories.value.set(category.name, category);
     })
+
+      displayedProducts.value = [];
   } catch (error) {
     console.error("Fehler beim Laden der Artikel:", error)
   }
@@ -323,7 +327,7 @@ onMounted(async () => {
         </div>
 
         <!-- Table for Products -->
-        <table :class="$style['products-table']" v-if="filteredProducts.length > 0">
+        <table :class="$style['products-table']" v-if="displayedProducts.length > 0">
           <thead>
           <tr>
             <th>ID</th>
@@ -333,7 +337,7 @@ onMounted(async () => {
           </tr>
           </thead>
           <transition-group name="product-list" tag="tbody">
-          <tr v-for="product in filteredProducts" :key="product.id">
+          <tr v-for="product in displayedProducts" :key="product.id">
             <td>{{ product.productId }}</td>
             <td>
               <input type="text" v-model="product.name" @change="updateProduct(product)"
@@ -389,7 +393,7 @@ onMounted(async () => {
           </ul>
         </div>
         </transition-group>
-        <div v-if="categorySearchInput && !isCategoryLoading">
+        <div v-else-if="categorySearchInput && !isCategoryLoading">
           Keine passenden Kategorien gefunden.
         </div>
       </div>
