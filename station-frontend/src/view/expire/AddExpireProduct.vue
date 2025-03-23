@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import {ref, defineEmits} from 'vue';
+import {ref, defineEmits, onMounted, computed} from 'vue';
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import ExpireProductService, {ExpireProductCategory} from "@/service/ExpireProductService";
+import AddExpireProductCategory from "@/view/expire/AddExpireProductCategory.vue";
 
 const emit = defineEmits(['close']);
 
@@ -8,16 +10,49 @@ const productName = ref('');
 const productNumber = ref('');
 const expireDate = ref(null);
 const reduceTime = ref('');
+const selectedCategory = ref<string | null>(null); // Holds category ID or null
+const categories = ref<ExpireProductCategory[]>([]);
+const addCategoryDialogOpen = ref(false);
+
+const otherCategory: ExpireProductCategory = {
+  name: "Andere",
+  reduceProductTime: undefined,
+  showProducts: true
+};
+
+// Computed property to include "Other" category
+const allCategories = computed(() => {
+  return [otherCategory, ...categories.value];
+});
+
+onMounted(async () => {
+  // Fetch categories from backend
+  try {
+    // Assuming you have a service method to fetch categories
+    categories.value = await ExpireProductService.getAllCategories();
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+  }
+});
 
 function addProduct() {
-  //TODO: Implement logic to add the product using an API call
+  // Send category ID (or null for "Other")
+  const categoryId = selectedCategory.value;
+
   console.log('Adding product:', {
     name: productName.value,
     number: productNumber.value,
     expireDate: expireDate.value,
-    reduceTime: reduceTime.value
+    reduceTime: reduceTime.value,
+    categoryId: categoryId
   });
   emit('close'); // Close the modal after adding
+}
+
+async function handleCategoryAdded(newCategory: ExpireProductCategory) {
+  categories.value = await ExpireProductService.getAllCategories(); // Refresh categories
+  selectedCategory.value = newCategory.id; // Select the newly added category
+  addCategoryDialogOpen.value = false; // Close the add category dialog
 }
 </script>
 
@@ -40,6 +75,20 @@ function addProduct() {
           <input id="product-name" type="text" v-model="productName" :class="$style['input']"/>
         </div>
         <div :class="$style['input-group']">
+          <label for="category">Kategorie:</label>
+          <div :class="$style['category-select-wrapper']">
+            <select id="category" v-model="selectedCategory" :class="$style['input']">
+              <option :value="null">Andere</option>
+              <option v-for="category in categories" :key="category.id" :value="category.id">
+                {{ category.name }}
+              </option>
+            </select>
+            <button @click="addCategoryDialogOpen = true" :class="$style['add-category-button']">
+              <FontAwesomeIcon icon="plus"/>
+            </button>
+          </div>
+        </div>
+        <div :class="$style['input-group']">
           <label for="reduce-time">Reduzierzeit (Tage):</label>
           <input id="reduce-time" type="number" v-model="reduceTime" :class="$style['input']"/>
         </div>
@@ -47,6 +96,12 @@ function addProduct() {
       </div>
     </div>
   </div>
+
+  <AddExpireProductCategory
+      v-if="addCategoryDialogOpen"
+      @close="addCategoryDialogOpen = false"
+      @category-added="handleCategoryAdded"
+  />
 </template>
 
 <style module lang="scss">
@@ -128,6 +183,29 @@ $input-border: #555;
           &:focus {
             border-color: $accent;
             outline: none;
+          }
+        }
+      }
+
+      .category-select-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 5px; /* Spacing between select and button */
+
+        .input {
+          flex-grow: 1; /* Allow select to take up remaining space */
+        }
+
+        .add-category-button {
+          background: none;
+          border: none;
+          color: $accent;
+          cursor: pointer;
+          font-size: 1rem;
+          transition: color $transition-speed ease;
+
+          &:hover {
+            color: $accent-hover;
           }
         }
       }

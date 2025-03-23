@@ -1,19 +1,25 @@
 <script setup lang="ts">
 import {ref, defineEmits} from 'vue';
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import ExpireProductService from "@/service/ExpireProductService";
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'category-added']);
 
 const categoryName = ref('');
 const reduceTime = ref('');
 
-function addCategory() {
-  //TODO: Implement logic to add the category using an API call
-  console.log('Adding category:', {
-    name: categoryName.value,
-    reduceTime: reduceTime.value
-  });
-  emit('close'); // Close the modal after adding
+async function addCategory() {
+  try {
+    const newCategory = await ExpireProductService.createCategory({
+      name: categoryName.value,
+      reduceProductTime: reduceTime.value ? parseInt(reduceTime.value) : undefined,
+    });
+    emit('category-added', newCategory); // Emit the new category
+    emit('close'); // Close the modal after adding
+  } catch (error) {
+    console.error("Error adding category:", error);
+    // Optionally show an error message to the user
+  }
 }
 </script>
 

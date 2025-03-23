@@ -12,23 +12,23 @@ import kotlin.jvm.optionals.getOrNull
 
 @Service
 class StationExpireProductCategoryService(
-    private val stationExpireItemCategoryRepository: dev.aventix.station.resource.server.expire.category.StationExpireProductCategoryRepository,
+    private val stationExpireItemCategoryRepository: StationExpireProductCategoryRepository,
 ) {
-    fun findCategory(productCategoryId: UUID): Optional<dev.aventix.station.resource.server.expire.category.StationExpireProductCategoryEntity> {
+    fun findCategory(productCategoryId: UUID): Optional<StationExpireProductCategoryEntity> {
         return this.stationExpireItemCategoryRepository.findById(productCategoryId)
     }
 
     @Throws(EntityExistsException::class, IllegalArgumentException::class)
-    fun create(createRequest: StationExpireProductCategoryCreateRequest): dev.aventix.station.resource.server.expire.category.StationExpireProductCategoryDTO {
+    fun create(createRequest: StationExpireProductCategoryCreateRequest): StationExpireProductCategoryDTO {
         return this.stationExpireItemCategoryRepository.saveAndFlush(
-            dev.aventix.station.resource.server.expire.category.StationExpireProductCategoryEntity().apply {
+            StationExpireProductCategoryEntity().apply {
                 this.name = createRequest.name
                 this.reduceProductTime = createRequest.reduceProductTime
             }).toDTO()
     }
 
     @Throws(NoSuchElementException::class)
-    fun patch(patchRequest: dev.aventix.station.resource.server.expire.category.request.StationExpireProductCategoryPatchRequest): dev.aventix.station.resource.server.expire.category.StationExpireProductCategoryDTO {
+    fun patch(patchRequest: StationExpireProductCategoryPatchRequest): StationExpireProductCategoryDTO {
         val productCategory = this.stationExpireItemCategoryRepository.findById(patchRequest.id).getOrNull()
             ?: throw NoSuchElementException("No such product category with id ${patchRequest.id}")
 
@@ -41,5 +41,9 @@ class StationExpireProductCategoryService(
     @Throws(NoSuchElementException::class)
     fun delete(deleteRequest: StationExpireProductCategoryDeleteRequest) {
         this.stationExpireItemCategoryRepository.deleteById(deleteRequest.id)
+    }
+
+    fun getAllCategories(): List<StationExpireProductCategoryDTO> {
+        return stationExpireItemCategoryRepository.findAll().map { it.toDTO() }
     }
 }
