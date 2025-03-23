@@ -60,11 +60,11 @@ jobs:
         working-directory: station-frontend
       - name: Build Docker Image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/station-frontend:${{ github.sha }} ./station-frontend
+          docker build -t ghcr.io/cloud-bastion/station-guide/station-frontend:${{ github.sha }} ./station-frontend
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Push Docker Image
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
-          docker push ghcr.io/${{ github.repository }}/station-frontend:${{ github.sha }}
+          docker push ghcr.io/cloud-bastion/station-guide/station-frontend:${{ github.sha }}
