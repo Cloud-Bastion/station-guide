@@ -32,6 +32,8 @@ const selectedSetting = ref('products'); // Add selected setting
 const isProductLoading = ref(false); // Loading indicator for products
 const isCategoryLoading = ref(false); // Loading indicator for categories
 const displayedProducts = ref<ExpireProduct[]>([]); // New ref for displayed products
+const changesMade = ref(false); // Track changes
+const isSaving = ref(false); // Add a saving indicator
 
 
 const updateLastChange = (product: ExpireProduct): void => {
@@ -155,7 +157,7 @@ function clearCategorySearch() {
 }
 
 async function updateProduct(product: ExpireProduct) {
-  await ExpireProductService.updateProduct(product);
+  changesMade.value = true; // Set changesMade to true
 }
 
 async function updateCategory(category: ExpireProductCategory) {
@@ -165,6 +167,20 @@ async function updateCategory(category: ExpireProductCategory) {
 const allCategories = computed(() => {
   return [...Array.from(categories.value.values())];
 });
+
+async function saveChanges() {
+  isSaving.value = true; // Show loading indicator
+  try {
+    for (const product of displayedProducts.value) {
+        await ExpireProductService.updateProduct(product);
+    }
+    changesMade.value = false; // Reset changesMade
+    await loadData(); // Reload data to reflect changes
+
+  } finally {
+     isSaving.value = false; // Hide loading indicator
+  }
+}
 
 async function loadData() {
     try {
@@ -367,6 +383,12 @@ onMounted(async () => {
           <div v-else-if="searchInput && !isProductLoading">
             Keine passenden Produkte gefunden.
           </div>
+
+          <!-- Save Changes Button -->
+          <button v-if="changesMade" @click="saveChanges" :class="$style['save-changes-button']" :disabled="isSaving">
+            <FontAwesomeIcon v-if="isSaving" icon="spinner" spin :class="$style['loading-spinner']"/>
+            <span v-else>Änderungen speichern</span>
+          </button>
         </div>
 
         <!-- Categories Section -->
@@ -838,6 +860,23 @@ $border-design: 0.1vh solid #555;
         }
       }
     }
+      .save-changes-button {
+        padding: 10px 15px;
+        background-color: $accent;
+        color: $text-color;
+        border: none;
+        border-radius: $border-radius;
+        cursor: pointer;
+        transition: background-color $transition-speed ease;
+        margin-top: 10px;
+
+        &:hover:not(:disabled) {
+          background-color: $accent-hover;
+        }
+        &:disabled {
+            background-color: #7d1f00;
+        }
+      }
   }
 }
 
