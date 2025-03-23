@@ -148,27 +148,27 @@ const getDaysInRange = computed(() => {
 </template>
 
 <style scoped lang="scss" module>
-$min-width-name: 180px;
-$min-width-balance: 80px;
-$min-width-illness: 40px;
-$min-width-shift: 60px; // Increased for better spacing
+$min-width-name: 160px; // Reduced min-width
+$min-width-balance: 70px; // Reduced min-width
+$min-width-illness: 35px; // Reduced min-width
+$min-width-shift: 55px;   // Reduced min-width
 $border-design: 0.1vh solid #555;
 $bg-dark: #121212;
 $bg-medium: #1e1e1e;
 $bg-light: #2a2a2a;
 $text-color: #f1f1f1;
-$accent: #ff4500; // Red accent
-$accent-hover: #b83200; // Darker red for hover
+$accent: #ff4500;
+$accent-hover: #b83200;
 $border-radius: 5px;
 $transition-speed: 0.3s;
 
 .parent {
   display: flex;
   flex-direction: column;
-  align-items: center; // Center content horizontally
+  align-items: center;
 
   .datepicker {
-    margin: 25px;
+    margin: 15px; // Reduced margin
     width: fit-content;
 
     --dp-font-family: -apple-system, blinkmacsystemfont, "Segoe UI", roboto, oxygen, ubuntu, cantarell, "Open Sans", "Helvetica Neue", sans-serif;
@@ -177,28 +177,28 @@ $transition-speed: 0.3s;
     --dp-common-transition: all 0.1s ease-in;
 
     /*Sizing*/
-    --dp-button-height: 25px;
-    --dp-month-year-row-height: 25px; /*Height of the month-year select row */
-    --dp-month-year-row-button-size: 25px; /*Specific height for the next/previous buttons*/
-    --dp-button-icon-height: 10px; /*Icon sizing in buttons */
-    --dp-cell-size: 25px; /*Width and height of calendar cell */
-    --dp-cell-padding: 5px; /*Padding in the  cell*/
-    --dp-common-padding: 10px; /*Common padding used */
-    --dp-input-icon-padding: 35px; /*Padding on the left side of the input if icon is present */
-    --dp-input-padding: 6px 30px 6px 12px; /*Padding in the  input*/
-    --dp-menu-min-width: 220px; /*Adjust the min width of the  menu*/
-    --dp-action-buttons-padding: 2px 5px; /*Adjust padding for the action buttons in action  row*/
-    --dp-row-margin: 5px 0; /*Adjust the spacing between rows in the calendar */
-    --dp-calendar-header-cell-padding: 0.5rem; /*Adjust padding in calendar header cells */
-    --dp-two-calendars-spacing: 10px; /*Space between multiple calendars*/
-    --dp-overlay-col-padding: 3px; /*Padding in the overlay column */
-    --dp-time-inc-dec-button-size: 32px; /*Sizing for arrow buttons in the time picker */
-    --dp-menu-padding: 6px 8px; /*Menu  padding*/
+    --dp-button-height: 22px; // Reduced
+    --dp-month-year-row-height: 22px; // Reduced
+    --dp-month-year-row-button-size: 22px; // Reduced
+    --dp-button-icon-height: 8px; // Reduced
+    --dp-cell-size: 22px; // Reduced
+    --dp-cell-padding: 4px; // Reduced
+    --dp-common-padding: 8px; // Reduced
+    --dp-input-icon-padding: 30px; // Reduced
+    --dp-input-padding: 5px 25px 5px 10px; // Reduced
+    --dp-menu-min-width: 200px; // Reduced
+    --dp-action-buttons-padding: 1px 4px; // Reduced
+    --dp-row-margin: 4px 0; // Reduced
+    --dp-calendar-header-cell-padding: 0.4rem; // Reduced
+    --dp-two-calendars-spacing: 8px; // Reduced
+    --dp-overlay-col-padding: 2px; // Reduced
+    --dp-time-inc-dec-button-size: 28px; // Reduced
+    --dp-menu-padding: 5px 6px; // Reduced
 
     /*Font sizes*/
-    --dp-font-size: 0.8rem; /*Default font-size*/
-    --dp-preview-font-size: 0.6rem; /*Font size of the date preview in the action row*/
-    --dp-time-font-size: 0.6rem; /*Font size in the time picker*/
+    --dp-font-size: 0.7rem; // Reduced
+    --dp-preview-font-size: 0.5rem; // Reduced
+    --dp-time-font-size: 0.5rem; // Reduced
 
     /*Transitions*/
 
@@ -236,43 +236,43 @@ $transition-speed: 0.3s;
   .schedule-parent {
     font-size: smaller;
     text-align: center;
-    margin: 20px 25px;
+    margin: 15px 20px; // Reduced margin
     background-color: $bg-medium;
     border: $border-design;
-    border-radius: $border-radius; // Add border-radius
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    width: 90%; // Wider table
-    overflow-x: auto; // Enable horizontal scrolling if needed
+    border-radius: $border-radius;
+    // Removed box-shadow
+    width: 90%;
+    overflow-x: auto;
 
     .schedule-header-container {
       font-weight: bold;
-      background-color: $bg-light; // Header background
+      background-color: $bg-light;
       color: $text-color;
 
       th {
-        padding: 10px 15px; // More padding
+        padding: 8px 12px; // Reduced padding
         border: $border-design;
-        min-width: $min-width-shift; // Ensure minimum width
-        white-space: nowrap; // Prevent text wrapping
+        min-width: $min-width-shift;
+        white-space: nowrap;
         .header-icon {
-          margin-right: 5px; // Space between icon and text
+          margin-right: 4px; // Reduced margin
         }
       }
     }
 
     .schedule-container {
       &:hover {
-        background-color: lighten($bg-medium, 10%); // Highlight on hover
+        background-color: lighten($bg-medium, 10%);
       }
       &.schedule-row-even {
         background-color: darken($bg-medium, 5%);
       }
 
       td {
-        padding: 8px 12px; // Consistent padding
+        padding: 6px 10px; // Reduced padding
         border: $border-design;
         color: $text-color;
-        vertical-align: top; // Align content to the top
+        vertical-align: top;
       }
 
       .schedule-employee-name-parent {
@@ -282,16 +282,16 @@ $transition-speed: 0.3s;
         .schedule-employee-name-container {
           display: flex;
           flex-direction: column;
-          text-align: left; // Align text to the left
+          text-align: left;
 
           .schedule-employee-name-entity, .schedule-employee-badgeid-entity {
-            padding: 2px 0; // Vertical spacing
+            padding: 1px 0; // Reduced padding
           }
         }
 
         .schedule-employee-name-icon {
-          margin-left: 10px; // Space between name and icon
-          color: $accent; // Accent color for the icon
+          margin-left: 8px; // Reduced margin
+          color: $accent;
         }
       }
 
@@ -301,7 +301,7 @@ $transition-speed: 0.3s;
         display: flex;
         flex-direction: column;
         .schedule-employee-balance-entity{
-          padding: 2px 0;
+          padding: 1px 0; // Reduced padding
         }
       }
 
@@ -311,17 +311,17 @@ $transition-speed: 0.3s;
         display: flex;
         flex-direction: column;
         .schedule-employee-illness-entity{
-          padding: 2px 0;
+          padding: 1px 0; // Reduced padding
         }
       }
 
       .schedule-employee-shift-container {
         min-width: $min-width-shift;
-        text-align: center; // Center shift times
+        text-align: center;
 
         .schedule-employee-shift-header {
           font-weight: bold;
-          padding-bottom: 2px;
+          padding-bottom: 1px; // Reduced padding
         }
       }
     }
@@ -331,11 +331,11 @@ $transition-speed: 0.3s;
 // Media query for smaller screens
 @media (max-width: 768px) {
   .schedule-parent {
-    font-size: x-small; // Smaller font on small screens
+    font-size: x-small;
 
     .schedule-header-container, .schedule-container {
       th, td {
-        padding: 6px 8px; // Reduce padding
+        padding: 4px 6px; // Reduced padding
       }
     }
   }
