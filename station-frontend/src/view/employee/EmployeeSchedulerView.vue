@@ -3,6 +3,7 @@ import Ref from "@/components/util/Ref";
 import Datepicker from "@vuepic/vue-datepicker";
 import {computed, ref as vueRef} from "vue";
 import "@vuepic/vue-datepicker/dist/main.css";
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 interface Shift {
 }
@@ -52,78 +53,123 @@ const getDaysInRange = computed(() => {
     ></Datepicker>
 
     <table :class="$style['schedule-parent']">
-      <tr :class="$style['schedule-header-container']">
-        <td
-            :class="$style['schedule-employee-header-name']">Mitarbeiter
-        </td>
-        <td
-            :class="$style['schedule-employee-header-balance']">Saldo
-        </td>
-        <td
-            :class="$style['schedule-employee-header-illness']">K
-        </td>
-        <td
-            :class="$style['schedule-date-entry']"
-            v-for="day in getDaysInRange" :key="day.toISOString()">{{
-            day.toLocaleDateString("de-DE", {
-              day: "2-digit",
-              month: "2-digit"
-            })
-          }}
-        </td>
-        <td
-            :class="$style['schedule-employee-header-balance']">Saldo
-        </td>
-      </tr>
-      <tr :class="$style['schedule-container']">
-        <td :class="$style['schedule-employee-name-parent']">
-          <div :class="$style['schedule-employee-name-container']">
-            <div :class="$style['schedule-employee-name-entity']">Schneider, Melvin</div>
-            <div :class="$style['schedule-employee-badgeid-entity']">131530</div>
-          </div>
-          <div :class="$style['schedule-employee-name-icon']">Info</div>
-        </td>
-        <td :class="$style['schedule-employee-balance-container']">
-          <div :class="$style['schedule-employee-balance-entity']">22:02</div>
-          <div :class="$style['schedule-employee-balance-entity']">-24:45</div>
-          <div :class="$style['schedule-employee-balance-entity']">-02:43</div>
-        </td>
-        <td :class="$style['schedule-employee-illness-container']">
-          <div :class="$style['schedule-employee-illness-entity']">8</div>
-          <div :class="$style['schedule-employee-illness-entity']">0</div>
-          <div :class="$style['schedule-employee-illness-entity']">8</div>
-        </td>
-        <td :class="$style['schedule-employee-shift-container']"
-            v-for="day in getDaysInRange" :key="day.toISOString()">
-          <div :class="$style['schedule-employee-shift-header']">E</div>
-          <div :class="$style['schedule-employee-shift-entity']">09:00</div>
-          <div :class="$style['schedule-employee-shift-entity']">18:00</div>
-        </td>
-        <td :class="$style['schedule-employee-balance-container']">
-          <div :class="$style['schedule-employee-balance-entity']">22:02</div>
-          <div :class="$style['schedule-employee-balance-entity']">-24:45</div>
-          <div :class="$style['schedule-employee-balance-entity']">-02:43</div>
-        </td>
-      </tr>
+      <thead>
+        <tr :class="$style['schedule-header-container']">
+          <th>
+            <FontAwesomeIcon :icon="['fas', 'user']" :class="$style['header-icon']" />
+            Mitarbeiter
+          </th>
+          <th>
+            <FontAwesomeIcon :icon="['fas', 'balance-scale']" :class="$style['header-icon']" />
+            Saldo
+          </th>
+          <th>
+            <FontAwesomeIcon :icon="['fas', 'briefcase-medical']" :class="$style['header-icon']" />
+            K
+          </th>
+          <th v-for="day in getDaysInRange" :key="day.toISOString()" :class="$style['schedule-date-entry']">
+            {{ day.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }) }}
+          </th>
+          <th>
+            <FontAwesomeIcon :icon="['fas', 'balance-scale']" :class="$style['header-icon']" />
+            Saldo
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr :class="$style['schedule-container']">
+          <td :class="$style['schedule-employee-name-parent']">
+            <div :class="$style['schedule-employee-name-container']">
+              <div :class="$style['schedule-employee-name-entity']">Schneider, Melvin</div>
+              <div :class="$style['schedule-employee-badgeid-entity']">131530</div>
+            </div>
+            <div :class="$style['schedule-employee-name-icon']">
+              <FontAwesomeIcon :icon="['fas', 'info-circle']" />
+            </div>
+          </td>
+          <td :class="$style['schedule-employee-balance-container']">
+            <div :class="$style['schedule-employee-balance-entity']">22:02</div>
+            <div :class="$style['schedule-employee-balance-entity']">-24:45</div>
+            <div :class="$style['schedule-employee-balance-entity']">-02:43</div>
+          </td>
+          <td :class="$style['schedule-employee-illness-container']">
+            <div :class="$style['schedule-employee-illness-entity']">8</div>
+            <div :class="$style['schedule-employee-illness-entity']">0</div>
+            <div :class="$style['schedule-employee-illness-entity']">8</div>
+          </td>
+          <td :class="$style['schedule-employee-shift-container']"
+              v-for="day in getDaysInRange" :key="day.toISOString()">
+            <div :class="$style['schedule-employee-shift-header']">E</div>
+            <div :class="$style['schedule-employee-shift-entity']">09:00</div>
+            <div :class="$style['schedule-employee-shift-entity']">18:00</div>
+          </td>
+          <td :class="$style['schedule-employee-balance-container']">
+            <div :class="$style['schedule-employee-balance-entity']">22:02</div>
+            <div :class="$style['schedule-employee-balance-entity']">-24:45</div>
+            <div :class="$style['schedule-employee-balance-entity']">-02:43</div>
+          </td>
+        </tr>
+        <!--  Example Row - Add more rows as needed -->
+        <tr :class="$style['schedule-container']" :class="$style['schedule-row-even']">
+          <td :class="$style['schedule-employee-name-parent']">
+            <div :class="$style['schedule-employee-name-container']">
+              <div :class="$style['schedule-employee-name-entity']">Müller, Lisa</div>
+              <div :class="$style['schedule-employee-badgeid-entity']">123456</div>
+            </div>
+            <div :class="$style['schedule-employee-name-icon']">
+              <FontAwesomeIcon :icon="['fas', 'info-circle']" />
+            </div>
+          </td>
+          <td :class="$style['schedule-employee-balance-container']">
+            <div>15:30</div>
+            <div>-10:15</div>
+            <div>05:15</div>
+          </td>
+          <td :class="$style['schedule-employee-illness-container']">
+            <div>2</div>
+            <div>0</div>
+            <div>2</div>
+          </td>
+          <td :class="$style['schedule-employee-shift-container']"
+              v-for="day in getDaysInRange" :key="day.toISOString()">
+            <div :class="$style['schedule-employee-shift-header']">E</div>
+            <div>10:00</div>
+            <div>19:00</div>
+          </td>
+          <td :class="$style['schedule-employee-balance-container']">
+            <div>15:30</div>
+            <div>-10:15</div>
+            <div>05:15</div>
+          </td>
+        </tr>
+      </tbody>
     </table>
   </div>
 </template>
 
 <style scoped lang="scss" module>
-$min-width-name: 120px;
-$min-width-balance: 20px;
-$min-width-illness: 20px;
-$min-width-shift: 20px;
+$min-width-name: 180px;
+$min-width-balance: 80px;
+$min-width-illness: 40px;
+$min-width-shift: 60px; // Increased for better spacing
 $border-design: 0.1vh solid #555;
+$bg-dark: #121212;
+$bg-medium: #1e1e1e;
+$bg-light: #2a2a2a;
+$text-color: #f1f1f1;
+$accent: #ff4500; // Red accent
+$accent-hover: #b83200; // Darker red for hover
+$border-radius: 5px;
+$transition-speed: 0.3s;
 
 .parent {
   display: flex;
   flex-direction: column;
+  align-items: center; // Center content horizontally
 
   .datepicker {
-    margin: 25px 25px;
+    margin: 25px;
     width: fit-content;
-
 
     --dp-font-family: -apple-system, blinkmacsystemfont, "Segoe UI", roboto, oxygen, ubuntu, cantarell, "Open Sans", "Helvetica Neue", sans-serif;
     --dp-border-radius: 5px;
@@ -191,100 +237,105 @@ $border-design: 0.1vh solid #555;
     font-size: smaller;
     text-align: center;
     margin: 20px 25px;
-    background-color: #252525;
+    background-color: $bg-medium;
     border: $border-design;
+    border-radius: $border-radius; // Add border-radius
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    width: 90%; // Wider table
+    overflow-x: auto; // Enable horizontal scrolling if needed
 
     .schedule-header-container {
       font-weight: bold;
+      background-color: $bg-light; // Header background
+      color: $text-color;
 
-      .schedule-employee-header-name {
-        padding: 8px 12px;
+      th {
+        padding: 10px 15px; // More padding
         border: $border-design;
-        background: #333;
-        color: white;
-        min-width: $min-width-name;
-      }
-
-      .schedule-employee-header-balance {
-        padding: 8px 12px;
-        border: $border-design;
-        background: #333;
-        color: white;
-        min-width: $min-width-balance;
-      }
-
-      .schedule-employee-header-illness {
-        padding: 8px 12px;
-        border: $border-design;
-        background: #333;
-        color: white;
-        min-width: $min-width-illness;
-      }
-
-      .schedule-date-entry {
-        padding: 6px 10px;
-        border: $border-design;
-        background: #333;
-        color: white;
-        min-width: $min-width-shift;
-        justify-content: center;
+        min-width: $min-width-shift; // Ensure minimum width
+        white-space: nowrap; // Prevent text wrapping
+        .header-icon {
+          margin-right: 5px; // Space between icon and text
+        }
       }
     }
 
     .schedule-container {
-      font-size: smaller;
+      &:hover {
+        background-color: lighten($bg-medium, 10%); // Highlight on hover
+      }
+      &.schedule-row-even {
+        background-color: darken($bg-medium, 5%);
+      }
+
+      td {
+        padding: 8px 12px; // Consistent padding
+        border: $border-design;
+        color: $text-color;
+        vertical-align: top; // Align content to the top
+      }
 
       .schedule-employee-name-parent {
-        border: $border-design;
         text-align: right;
+        min-width: $min-width-name;
 
         .schedule-employee-name-container {
           display: flex;
           flex-direction: column;
-          min-width: $min-width-name;
+          text-align: left; // Align text to the left
 
-          .schedule-employee-name-entity {
-          }
-          .schedule-employee-badgeid-entity {
-
+          .schedule-employee-name-entity, .schedule-employee-badgeid-entity {
+            padding: 2px 0; // Vertical spacing
           }
         }
-        .schedule-employee-name-icon {
 
+        .schedule-employee-name-icon {
+          margin-left: 10px; // Space between name and icon
+          color: $accent; // Accent color for the icon
         }
       }
+
       .schedule-employee-balance-container {
         text-align: right;
         min-width: $min-width-balance;
-        border: $border-design;
-
-        .schedule-employee-balance-entity {
-          min-width: $min-width-balance;
+        display: flex;
+        flex-direction: column;
+        .schedule-employee-balance-entity{
+          padding: 2px 0;
         }
       }
+
       .schedule-employee-illness-container {
         text-align: right;
         min-width: $min-width-illness;
-        border: $border-design;
-
-        .schedule-employee-illness-entity {
-          min-width: $min-width-illness;
-
+        display: flex;
+        flex-direction: column;
+        .schedule-employee-illness-entity{
+          padding: 2px 0;
         }
       }
+
       .schedule-employee-shift-container {
         min-width: $min-width-shift;
-        border: $border-design;
+        text-align: center; // Center shift times
 
         .schedule-employee-shift-header {
-
-          min-width: $min-width-shift;
+          font-weight: bold;
+          padding-bottom: 2px;
         }
-        .schedule-employee-shift-entity {
+      }
+    }
+  }
+}
 
-          min-width: $min-width-shift;
-        }
+// Media query for smaller screens
+@media (max-width: 768px) {
+  .schedule-parent {
+    font-size: x-small; // Smaller font on small screens
+
+    .schedule-header-container, .schedule-container {
+      th, td {
+        padding: 6px 8px; // Reduce padding
       }
     }
   }
