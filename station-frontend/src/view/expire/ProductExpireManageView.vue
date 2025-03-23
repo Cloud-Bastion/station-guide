@@ -184,18 +184,19 @@ onMounted(async () => {
       </button>
     </div>
     <div :class="$style['settings-menu-content']">
-      <!-- Search Input -->
-      <div :class="$style['search-bar-container']">
-        <FontAwesomeIcon icon="search" :class="$style['search-icon']"/>
-        <input type="text" v-model="searchInput" :placeholder="'Produkt suchen...'" :class="$style['search-input']"/>
-        <!-- Add filtering logic here, e.g., with a computed property -->
-      </div>
-
-      <p>Hier kommen die Einstellungen hin.</p>
+      <!-- Add Product Button -->
       <button @click="addProductDialogOpen = true" :class="$style['add-product-button']">
         <FontAwesomeIcon icon="plus" :class="$style['add-product-icon']"/>
         <span>Produkt hinzufügen</span>
       </button>
+
+      <!-- Search Input -->
+      <div :class="$style['search-bar-container']">
+        <FontAwesomeIcon icon="search" :class="$style['search-icon']"/>
+        <input type="text" v-model="searchInput" :placeholder="'Produkt suchen...'" :class="$style['search-input']"/>
+      </div>
+
+      <p>Hier kommen die Einstellungen hin.</p>
     </div>
   </div>
 
@@ -443,6 +444,27 @@ $border-design: 0.1vh solid #555;
   .settings-menu-content {
     color: $text-color;
 
+    .add-product-button {
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
+      background-color: $accent;
+      color: $text-color;
+      border: none;
+      border-radius: $border-radius;
+      cursor: pointer;
+      transition: background-color $transition-speed ease;
+      margin-bottom: 10px;
+
+      &:hover {
+        background-color: $accent-hover;
+      }
+
+      .add-product-icon {
+        margin-right: 8px;
+      }
+    }
+
     .search-bar-container {
       display: flex;
       align-items: center;
@@ -466,26 +488,6 @@ $border-design: 0.1vh solid #555;
           border-color: $input-focus;
           outline: none;
         }
-      }
-    }
-
-    .add-product-button {
-      display: flex;
-      align-items: center;
-      padding: 10px 15px;
-      background-color: $accent;
-      color: $text-color;
-      border: none;
-      border-radius: $border-radius;
-      cursor: pointer;
-      transition: background-color $transition-speed ease;
-
-      &:hover {
-        background-color: $accent-hover;
-      }
-
-      .add-product-icon {
-        margin-right: 8px;
       }
     }
   }
