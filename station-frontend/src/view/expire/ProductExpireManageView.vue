@@ -360,17 +360,20 @@ onMounted(async () => {
             </thead>
             <transition-group name="product-list" tag="tbody">
               <tr v-for="product in displayedProducts" :key="product.id">
-                <td>{{ product.productId }}</td>
                 <td>
-                  <input type="text" v-model="product.name" @change="updateProduct(product)"
+                  <input type="text" v-model="product.productId" @input="updateProduct(product)"
                          :class="$style['editable-input']"/>
                 </td>
                 <td>
-                  <input type="number" v-model="product.reduceProductTime" @change="updateProduct(product)"
+                  <input type="text" v-model="product.name" @input="updateProduct(product)"
                          :class="$style['editable-input']"/>
                 </td>
                 <td>
-                  <select v-model="product.category" @change="updateProduct(product)"
+                  <input type="number" v-model="product.reduceProductTime" @input="updateProduct(product)"
+                         :class="$style['editable-input']"/>
+                </td>
+                <td>
+                  <select v-model="product.category" @input="updateProduct(product)"
                           :class="$style['editable-select']">
                     <option v-for="category in allCategories" :key="category.id" :value="category">
                       {{ category.name }}
