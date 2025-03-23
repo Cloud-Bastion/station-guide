@@ -67,12 +67,12 @@ export default {
         //TODO: implement
     },
 
-    async createProduct(product: ExpireProduct) {
-        await settings.apiClient.patch(API_URL, {
+    async createProduct(product: { productId: number; name: string; reduceProductTime?: number; productCategoryId?: string | null }) {
+        await settings.apiClient.post(API_URL, { // Changed to post
             productId: product.productId,
+            name: product.name, // Added name
             reduceProductTime: product.reduceProductTime,
-            category: product.category,
-            updateLastModifiedDate: false
+            productCategoryId: product.productCategoryId, // Changed to productCategoryId
         });
     },
 

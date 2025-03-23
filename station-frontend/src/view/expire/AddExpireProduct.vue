@@ -35,20 +35,23 @@ onMounted(async () => {
   }
 });
 
-function addProduct() {
-  // Send category ID (or null for "Other")
-  const categoryId = selectedCategory.value;
+async function addProduct() {
+  try {
+    // Send category ID (or null for "Other")
+    const categoryId = selectedCategory.value;
 
-  ExpireProductService.createProduct({
-    name: productName.value,
-    productId: productNumber.value,
-    expireDate: null,
-    reduceProductTime: reduceTime.value,
-    category: {
-      id: categoryId
-    }
-  })
-  emit('close'); // Close the modal after adding
+    await ExpireProductService.createProduct({
+      name: productName.value,
+      productId: parseInt(productNumber.value), // Ensure productId is a number
+      expireDate: null, // You're not setting expireDate on creation
+      reduceProductTime: reduceTime.value ? parseInt(reduceTime.value) : undefined, // Number or undefined
+      productCategoryId: categoryId, // Send category ID
+    });
+    emit('close'); // Close the modal after adding
+  } catch (error) {
+    console.error("Error adding product:", error);
+    // Optionally show an error message to the user
+  }
 }
 
 async function handleCategoryAdded(newCategory: ExpireProductCategory) {
