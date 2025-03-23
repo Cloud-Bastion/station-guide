@@ -6,7 +6,7 @@ import ExpireProductService, {
 } from "@/service/ExpireProductService";
 import SidebarComponent from "@/components/sidebar/SidebarComponent.vue";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {onMounted, computed, ref} from "vue";
+import {onMounted, computed, ref, watch} from "vue";
 import Ref from "@/components/util/Ref";
 import Datepicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
@@ -29,6 +29,9 @@ const addCategoryDialogOpen = ref(false); // Add category dialog
 const searchInput = ref(''); // Add search input
 const categorySearchInput = ref(''); // Category search input
 const selectedSetting = ref('products'); // Add selected setting
+const isProductLoading = ref(false); // Loading indicator for products
+const isCategoryLoading = ref(false); // Loading indicator for categories
+
 
 const updateLastChange = (product: ExpireProduct): void => {
   if (ExpireProductService.getState(product) === ExpireProductState.REDUCED) {
@@ -95,34 +98,66 @@ const getStateText = (product: ExpireProduct) => {
   return ExpireProductService.getState(product);
 }
 
-// Computed property for filtered products
+// --- Debounced Search Logic (Products) ---
+let productSearchTimeout: number | undefined;
+
 const filteredProducts = computed(() => {
   const searchTerm = searchInput.value.toLowerCase();
   if (!searchTerm) {
-    return []; // Return empty array if no search term for better UX in settings
+    return [];
   }
 
-  let cachedProducts = allProducts.value
-
-  return cachedProducts.filter(product =>
+  return allProducts.value.filter(product =>
       product.name.toLowerCase().includes(searchTerm) ||
       product.productId.toString().includes(searchTerm)
   );
 });
 
+watch(searchInput, () => {
+  clearTimeout(productSearchTimeout);
+  isProductLoading.value = true; // Show loading indicator
+  productSearchTimeout = setTimeout(() => {
+    // Simulate API call (replace with actual API call if needed)
+      isProductLoading.value = false; // Hide loading indicator
+  }, 300); // 300ms debounce time
+});
+
+// --- Debounced Search Logic (Categories) ---
+let categorySearchTimeout: number | undefined;
 const filteredCategories = computed(() => {
   const searchTerm = categorySearchInput.value.toLowerCase();
-  if (!searchTerm) {
-    return Array.from(categories.value.values());
-  }
+    if (!searchTerm) {
+        return Array.from(categories.value.values());
+    }
 
-  return Array.from(categories.value.values()).filter(category =>
-      category.name.toLowerCase().includes(searchTerm)
-  );
+    return Array.from(categories.value.values()).filter(category =>
+        category.name.toLowerCase().includes(searchTerm)
+    );
 });
+
+watch(categorySearchInput, () => {
+  clearTimeout(categorySearchTimeout);
+  isCategoryLoading.value = true;
+  categorySearchTimeout = setTimeout(() => {
+      isCategoryLoading.value = false;
+  }, 300);
+});
+
+// --- Clear Search Functions ---
+function clearProductSearch() {
+  searchInput.value = '';
+}
+
+function clearCategorySearch() {
+  categorySearchInput.value = '';
+}
 
 async function updateProduct(product: ExpireProduct) {
   await ExpireProductService.updateExpireDate(product);
+}
+
+async function updateCategory(category: ExpireProductCategory){
+    //TODO: Add update category
 }
 
 const allCategories = computed(() => {
@@ -183,8 +218,8 @@ onMounted(async () => {
 
     <div :class="$style['product-parent']">
       <table :class="$style['product-container']">
-        <template v-for="(category, index) in expiredProducts.value.keys()" :key="index">
-
+        <transition-group name="product-list" tag="tbody">
+        <template v-for="(category, index) in expiredProducts.value.keys()" :key="category.name">
           <tr :class="$style['product-category-parent']">
             <td :class="$style['product-category-entry']" colspan="4">
               <div :class="$style['product-category-entry-wrapper']">
@@ -210,6 +245,7 @@ onMounted(async () => {
               :class="$style['product-entry-container']"
               v-for="(product, index) in expiredProducts.value.get(category)"
               v-if="category.showProducts"
+              :key="product.id"
           >
             <td :class="$style['product-id']">#{{ product.productId }}</td>
             <td :class="$style['product-name']">{{ product.name }}</td>
@@ -236,11 +272,13 @@ onMounted(async () => {
             </td>
           </tr>
         </template>
+        </transition-group>
       </table>
     </div>
   </div>
 
   <!-- Settings Menu -->
+  <transition name="settings-menu">
   <div v-if="settingsMenuOpen" :class="$style['settings-menu']">
     <div :class="$style['settings-menu-header']">
       <h2>Einstellungen</h2>
@@ -278,6 +316,10 @@ onMounted(async () => {
               :placeholder="'Produkt suchen...'"
               :class="$style['search-input']"
           />
+          <button v-if="searchInput" @click="clearProductSearch" :class="$style['clear-search-button']">
+            <FontAwesomeIcon icon="times"/>
+          </button>
+            <FontAwesomeIcon v-if="isProductLoading" icon="spinner" spin :class="$style['loading-spinner']" />
         </div>
 
         <!-- Table for Products -->
@@ -290,7 +332,7 @@ onMounted(async () => {
             <th>Category</th>
           </tr>
           </thead>
-          <tbody>
+          <transition-group name="product-list" tag="tbody">
           <tr v-for="product in filteredProducts" :key="product.id">
             <td>{{ product.productId }}</td>
             <td>
@@ -310,9 +352,9 @@ onMounted(async () => {
               </select>
             </td>
           </tr>
-          </tbody>
+          </transition-group>
         </table>
-        <div v-else-if="searchInput">
+        <div v-else-if="searchInput && !isProductLoading">
           Keine passenden Produkte gefunden.
         </div>
       </div>
@@ -332,8 +374,13 @@ onMounted(async () => {
               :placeholder="'Kategorie suchen...'"
               :class="$style['search-input']"
           />
+          <button v-if="categorySearchInput" @click="clearCategorySearch" :class="$style['clear-search-button']">
+            <FontAwesomeIcon icon="times"/>
+          </button>
+            <FontAwesomeIcon v-if="isCategoryLoading" icon="spinner" spin :class="$style['loading-spinner']" />
         </div>
 
+        <transition-group name="category-list" tag="div">
         <div :class="$style['filtered-categories-list']" v-if="filteredCategories.length > 0">
           <ul>
             <li v-for="category in filteredCategories" :key="category.name">
@@ -341,12 +388,14 @@ onMounted(async () => {
             </li>
           </ul>
         </div>
-        <div v-else-if="categorySearchInput">
+        </transition-group>
+        <div v-else-if="categorySearchInput && !isCategoryLoading">
           Keine passenden Kategorien gefunden.
         </div>
       </div>
     </div>
   </div>
+  </transition>
 
   <AddExpireProduct v-if="addProductDialogOpen" @close="addProductDialogOpen = false"/>
   <AddExpireProductCategory v-if="addCategoryDialogOpen" @close="addCategoryDialogOpen = false"/>
@@ -668,14 +717,18 @@ $border-design: 0.1vh solid #555;
       display: flex;
       align-items: center;
       margin-bottom: 15px;
+      position: relative;
 
       .search-icon {
         color: #777;
-        margin-right: 10px;
+        position: absolute;
+        left: 10px;
+        z-index: 1;
       }
 
       .search-input {
         padding: 10px;
+        padding-left: 35px;
         border: 1px solid $input-border;
         border-radius: $border-radius;
         background-color: $input-bg;
@@ -687,6 +740,28 @@ $border-design: 0.1vh solid #555;
           border-color: $input-focus;
           outline: none;
         }
+      }
+
+      .clear-search-button{
+        position: absolute;
+        right: 10px;
+        background: none;
+        border: none;
+        color: #aaa;
+        cursor: pointer;
+        transition: color $transition-speed ease;
+        padding: 0;
+        z-index: 1;
+
+        &:hover {
+          color: $text-color;
+        }
+      }
+
+      .loading-spinner {
+        position: absolute;
+        right: 10px;
+        z-index: 1;
       }
     }
 
@@ -743,5 +818,38 @@ $border-design: 0.1vh solid #555;
       }
     }
   }
+}
+
+// --- Animations ---
+.settings-menu-enter-active,
+.settings-menu-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.settings-menu-enter-from,
+.settings-menu-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -40%);
+}
+
+.product-list-enter-active,
+.product-list-leave-active,
+.category-list-enter-active,
+.category-list-leave-active
+{
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.product-list-enter-from,
+.product-list-leave-to,
+.category-list-enter-from,
+.category-list-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.product-list-move,
+.category-list-move{
+  transition: transform 0.3s ease;
 }
 </style>
