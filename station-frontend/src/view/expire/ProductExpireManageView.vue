@@ -166,42 +166,48 @@ const allCategories = computed(() => {
   return [...Array.from(categories.value.values())];
 });
 
-onMounted(async () => {
-  try {
-    const products = await ExpireProductService.getExpiringItems();
-    allProducts.value = await ExpireProductService.getAllProducts();
+async function loadData() {
+    try {
+        const products = await ExpireProductService.getExpiringItems();
+        allProducts.value = await ExpireProductService.getAllProducts();
+        categories.value.clear();
+        expiredProducts.value.clear();
 
-    products.forEach(product => {
-      if (product.category === undefined || product.category === null) {
-        product.category = otherCategorie
-      }
+        products.forEach(product => {
+            if (product.category === undefined || product.category === null) {
+                product.category = otherCategorie
+            }
 
-      if (!categories.value.has(product.category.name)) {
-        product.category.showProducts = true
-        categories.value.set(product.category.name, product.category)
-      }
+            if (!categories.value.has(product.category.name)) {
+                product.category.showProducts = true
+                categories.value.set(product.category.name, product.category)
+            }
 
-      if (!expiredProducts.value.has(categories.value.get(product.category.name)!)) {
-        expiredProducts.value.set(categories.value.get(product.category.name)!, []);
-      }
+            if (!expiredProducts.value.has(categories.value.get(product.category.name)!)) {
+                expiredProducts.value.set(categories.value.get(product.category.name)!, []);
+            }
 
-      expiredProducts.value.get(categories.value.get(product.category.name)!)!.push(product)
-    });
+            expiredProducts.value.get(categories.value.get(product.category.name)!)!.push(product)
+        });
 
-    for (let value of expiredProducts.value.keys()) {
-      console.log(value.name + " registered as category")
+        for (let value of expiredProducts.value.keys()) {
+            console.log(value.name + " registered as category")
+        }
+
+        let allCategories = await ExpireProductService.getAllCategories();
+        allCategories.forEach(category => {
+            categories.value.set(category.name, category);
+        })
+
+        displayedProducts.value = [];
+    } catch (error) {
+        console.error("Fehler beim Laden der Artikel:", error)
     }
+}
 
-    let allCategories = await ExpireProductService.getAllCategories();
-    allCategories.forEach(category => {
-      categories.value.set(category.name, category);
-    })
-
-    displayedProducts.value = [];
-  } catch (error) {
-    console.error("Fehler beim Laden der Artikel:", error)
-  }
-})
+onMounted(async () => {
+  await loadData();
+});
 </script>
 
 <template>
@@ -412,7 +418,7 @@ onMounted(async () => {
     </div>
   </transition>
 
-  <AddExpireProduct v-if="addProductDialogOpen" @close="addProductDialogOpen = false"/>
+  <AddExpireProduct v-if="addProductDialogOpen" @close="addProductDialogOpen = false" @product-added="loadData"/>
   <AddExpireProductCategory v-if="addCategoryDialogOpen" @close="addCategoryDialogOpen = false"/>
 </template>
 
