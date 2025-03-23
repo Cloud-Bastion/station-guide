@@ -155,15 +155,15 @@ function clearCategorySearch() {
 }
 
 async function updateProduct(product: ExpireProduct) {
-  await ExpireProductService.updateExpireDate(product);
+  await ExpireProductService.updateProduct(product);
 }
 
 async function updateCategory(category: ExpireProductCategory) {
-  //TODO: Add update category
+  await ExpireProductService.updateCategory(category);
 }
 
 const allCategories = computed(() => {
-  return [otherCategorie, ...Array.from(categories.value.values())];
+  return [...Array.from(categories.value.values())];
 });
 
 onMounted(async () => {
@@ -353,7 +353,6 @@ onMounted(async () => {
                     <option v-for="category in allCategories" :key="category.id" :value="category">
                       {{ category.name }}
                     </option>
-                    <option :value="null">Andere</option>
                   </select>
                 </td>
               </tr>
