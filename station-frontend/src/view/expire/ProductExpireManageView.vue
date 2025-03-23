@@ -49,7 +49,7 @@ const updateLastChange = (product: ExpireProduct): void => {
 const countCategorySuccess = (category: ExpireProductCategory): number => {
   const currentDate = new Date(Date.now());
   let count: number = 0;
-  expiredProducts.value.get(categories.value.get(category.name)!)!.forEach(product => {
+  (expiredProducts.value.get(categories.value.get(category.name)!) ?? []).forEach(product => {
     if (product.lastUpdateDate !== undefined && product.lastUpdateDate !== null && ExpireProductService.compareDates(product.lastUpdateDate, currentDate)) {
       count = count + 1
     }
