@@ -141,50 +141,70 @@ onMounted(async () => {
 <template>
   <div :class="{[$style['blur-background']]: settingsMenuOpen}">
     <SidebarComponent site="product-expire-management"/>
+
     <div :class="$style['settings-container']">
-      <div :class="$style['product-count']">{{ countAllSuccess() }} /
+      <div :class="$style['product-count']">
+        {{ countAllSuccess() }} /
         {{ Array.from(expiredProducts.value.values()).reduce((sum, products) => sum + products.length, 0) }} Artikel
       </div>
+
       <button :class="$style['settings-button']" @click="settingsMenuOpen = !settingsMenuOpen">
         <FontAwesomeIcon icon="fa-gear"/>
         <span>Einstellungen</span>
       </button>
     </div>
+
     <div :class="$style['product-parent']">
       <table :class="$style['product-container']">
         <template v-for="(category, index) in expiredProducts.value.keys()" :key="index">
+
           <tr :class="$style['product-category-parent']">
             <td :class="$style['product-category-entry']" colspan="4">
               <div :class="$style['product-category-entry-wrapper']">
                 <div :class="$style['product-category-name']">{{ category.name }}</div>
-                <div :class="$style['product-category-count']">({{ countCategorySuccess(category) }} /
+
+                <div :class="$style['product-category-count']">
+                  ({{ countCategorySuccess(category) }} /
                   {{ expiredProducts.value.get(category)?.length }})
                 </div>
-                <FontAwesomeIcon :icon="getDropDownIcon(category.showProducts)" :class="$style['product-category-arrow']"
-                                 @click="category.showProducts=!category.showProducts"/>
+
+                <FontAwesomeIcon
+                    :icon="getDropDownIcon(category.showProducts)"
+                    :class="$style['product-category-arrow']"
+                    @click="category.showProducts=!category.showProducts"
+                />
               </div>
             </td>
           </tr>
+
           <tr v-if="category.showProducts" :class="$style['product-spacer']"></tr>
-          <tr :class="$style['product-entry-container']" v-for="(product, index) in expiredProducts.value.get(category)"
-              v-if="category.showProducts">
+
+          <tr
+              :class="$style['product-entry-container']"
+              v-for="(product, index) in expiredProducts.value.get(category)"
+              v-if="category.showProducts"
+          >
             <td :class="$style['product-id']">#{{ product.productId }}</td>
             <td :class="$style['product-name']">{{ product.name }}</td>
-            <td :class="[$style['product-date'], $style[getStateClass(product)]]" @click="updateLastChange(product)">
+            <td
+                :class="[$style['product-date'], $style[getStateClass(product)]]"
+                @click="updateLastChange(product)"
+            >
               {{ getStateText(product) }}
             </td>
             <td :class="$style['product-newdate']">
-              <Datepicker v-model="product.expireDate"
-                          :month-picker="false"
-                          :enable-time-picker="false"
-                          :time-picker-inline="true"
-                          :min-date="new Date(Date.now())"
-                          :month-change-on-scroll="false"
-                          format="dd.MM.yyyy"
-                          locale="de"
-                          @update:model-value="() => ExpireProductService.updateExpireDate(product)"
-                          :dark="true"
-                          :class="$style['datepicker']"
+              <Datepicker
+                  v-model="product.expireDate"
+                  :month-picker="false"
+                  :enable-time-picker="false"
+                  :time-picker-inline="true"
+                  :min-date="new Date(Date.now())"
+                  :month-change-on-scroll="false"
+                  format="dd.MM.yyyy"
+                  locale="de"
+                  @update:model-value="() => ExpireProductService.updateExpireDate(product)"
+                  :dark="true"
+                  :class="$style['datepicker']"
               />
             </td>
           </tr>
@@ -201,6 +221,7 @@ onMounted(async () => {
         <FontAwesomeIcon icon="times"/>
       </button>
     </div>
+
     <div :class="$style['settings-menu-content']">
       <!-- Add Product Button -->
       <button @click="addProductDialogOpen = true" :class="$style['add-product-button']">
@@ -211,7 +232,12 @@ onMounted(async () => {
       <!-- Search Input -->
       <div :class="$style['search-bar-container']">
         <FontAwesomeIcon icon="search" :class="$style['search-icon']"/>
-        <input type="text" v-model="searchInput" :placeholder="'Produkt suchen...'" :class="$style['search-input']"/>
+        <input
+            type="text"
+            v-model="searchInput"
+            :placeholder="'Produkt suchen...'"
+            :class="$style['search-input']"
+        />
       </div>
 
       <!-- Filtered Products List -->
@@ -228,7 +254,7 @@ onMounted(async () => {
     </div>
   </div>
 
-  <AddExpireProduct v-if="addProductDialogOpen" @close="addProductDialogOpen = false" />
+  <AddExpireProduct v-if="addProductDialogOpen" @close="addProductDialogOpen = false"/>
 </template>
 
 <style lang="scss" module>
