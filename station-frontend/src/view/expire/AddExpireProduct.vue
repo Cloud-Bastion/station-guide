@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import {ref, defineEmits, onMounted, computed} from 'vue';
+import {ref, defineEmits, onMounted, computed, watch} from 'vue';
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import ExpireProductService, {ExpireProductCategory} from "@/service/ExpireProductService";
 import AddExpireProductCategory from "@/view/expire/AddExpireProductCategory.vue";
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'product-added']);
 
 const productName = ref('');
 const productNumber = ref('');
@@ -13,6 +13,8 @@ const reduceTime = ref('');
 const selectedCategory = ref<string | null>(null); // Holds category ID or null
 const categories = ref<ExpireProductCategory[]>([]);
 const addCategoryDialogOpen = ref(false);
+const addProductSuccess = ref<boolean | null>(null); // null = no message, true = success, false = error
+const addProductError = ref<boolean | null>(null);
 
 const otherCategory: ExpireProductCategory = {
   name: "Andere",
@@ -47,10 +49,22 @@ async function addProduct() {
       reduceProductTime: reduceTime.value ? parseInt(reduceTime.value) : undefined, // Number or undefined
       productCategoryId: categoryId, // Send category ID
     });
-    emit('close'); // Close the modal after adding
+    addProductSuccess.value = true;
+    addProductError.value = false;
+    emit('product-added');
+    setTimeout(() => {
+      emit('close'); // Close the modal after adding
+      addProductSuccess.value = null; // Reset success for next time
+    }, 1500);
+
   } catch (error) {
     console.error("Error adding product:", error);
+    addProductSuccess.value = false;
+    addProductError.value = true;
     // Optionally show an error message to the user
+    setTimeout(() => {
+      addProductError.value = null;
+    }, 1500)
   }
 }
 
@@ -59,6 +73,13 @@ async function handleCategoryAdded(newCategory: ExpireProductCategory) {
   selectedCategory.value = newCategory.id; // Select the newly added category
   addCategoryDialogOpen.value = false; // Close the add category dialog
 }
+
+watch(addCategoryDialogOpen, (isOpen) => {
+  if (isOpen) {
+    addProductSuccess.value = null; // Reset success/error when opening dialog
+    addProductError.value = null;
+  }
+});
 </script>
 
 <template>
@@ -97,6 +118,18 @@ async function handleCategoryAdded(newCategory: ExpireProductCategory) {
           <label for="reduce-time">Reduzierzeit (Tage):</label>
           <input id="reduce-time" type="number" v-model="reduceTime" :class="$style['input']"/>
         </div>
+
+        <transition name="fade">
+          <div v-if="addProductSuccess" :class="$style['success-message']">
+            Produkt erfolgreich hinzugefügt!
+          </div>
+        </transition>
+        <transition name="fade">
+          <div v-if="addProductError" :class="$style['error-message']">
+            Fehler beim Hinzufügen des Produkts.
+          </div>
+        </transition>
+
         <button @click="addProduct" :class="$style['add-button']">Hinzufügen</button>
       </div>
     </div>
@@ -229,7 +262,25 @@ $input-border: #555;
           background-color: $accent-hover;
         }
       }
+      .success-message {
+        color: green;
+        margin-bottom: 10px;
+      }
+
+      .error-message {
+        color: $accent;
+        margin-bottom: 10px;
+      }
     }
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
