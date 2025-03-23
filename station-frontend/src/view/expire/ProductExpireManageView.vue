@@ -161,7 +161,7 @@ onMounted(async () => {
           <tr :class="$style['product-category-parent']">
             <td :class="$style['product-category-entry']" colspan="4">
               <div :class="$style['product-category-entry-wrapper']">
-                <div :class="$style['product-category-name']">{{ category.name }}</div>
+                <div :class="$style['product-category-name']">{{ category.name }}:</div>
 
                 <div :class="$style['product-category-count']">
                   ({{ countCategorySuccess(category) }} /
@@ -346,6 +346,7 @@ $border-design: 0.1vh solid #555;
             font-size: 1.2rem; // Larger font size
             font-weight: bold;
             flex-grow: 1;
+            text-align: left; /* Left-align the text */
           }
 
           .product-category-count {
