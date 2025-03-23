@@ -60,7 +60,7 @@ function updateEmployee(employee: Employee) {
 
 <template>
   <div :class="$style['page-container']">
-    <SidebarComponent site="employee-management"/>
+    <SidebarComponent site="employee-management"/> <!-- Sidebar will stay at the top -->
     <div :class="$style['main-content']">
       <div :class="$style['submenu-container']">
         <button
