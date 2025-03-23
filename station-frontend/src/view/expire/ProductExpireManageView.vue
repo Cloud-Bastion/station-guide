@@ -21,6 +21,7 @@ const otherCategorie: ExpireProductCategory = new class implements ExpireProduct
 
 const categories: Ref<Map<string, ExpireProductCategory>> = new Ref<Map<string, ExpireProductCategory>>(new Map<string, ExpireProductCategory>());
 const expiredProducts: Ref<Map<ExpireProductCategory, ExpireProduct[]>> = new Ref<Map<ExpireProductCategory, ExpireProduct[]>>(new Map<ExpireProductCategory, ExpireProduct[]>());
+const allProducts: Ref<ExpireProduct[]> = new Ref([]);
 
 const settingsMenuOpen = ref(false);
 const addProductDialogOpen = ref(false);
@@ -81,9 +82,9 @@ const getStateClass = (product: ExpireProduct): string => {
 
   if (state === ExpireProductState.REDUCE) {
     return 'state-reduce';
-  } else if(state === ExpireProductState.REDUCED) {
+  } else if (state === ExpireProductState.REDUCED) {
     return 'state-reduced';
-  } else if(state === ExpireProductState.SORT_OUT) {
+  } else if (state === ExpireProductState.SORT_OUT) {
     return 'state-sort-out';
   } else {
     return 'state-set-date'
@@ -101,12 +102,7 @@ const filteredProducts = computed(() => {
     return []; // Return empty array if no search term for better UX in settings
   }
 
-  let allProducts: ExpireProduct[] = [];
-  for (const products of expiredProducts.value.values()) {
-    allProducts = allProducts.concat(products);
-  }
-
-  return allProducts.filter(product =>
+  return allProducts.value.filter(product =>
       product.name.toLowerCase().includes(searchTerm) ||
       product.productId.toString().includes(searchTerm)
   );
@@ -126,6 +122,7 @@ const filteredCategories = computed(() => {
 onMounted(async () => {
   try {
     const products = await ExpireProductService.getExpiringItems();
+    allProducts.value = await ExpireProductService.getAllProducts();
 
     products.forEach(product => {
       if (product.category === undefined || product.category === null) {
@@ -241,12 +238,12 @@ onMounted(async () => {
       <button
           :class="[$style['tab-button'], selectedSetting === 'products' ? $style['active-tab'] : '']"
           @click="selectedSetting = 'products'">
-        Products
+        Produkte
       </button>
       <button
           :class="[$style['tab-button'], selectedSetting === 'categories' ? $style['active-tab'] : '']"
           @click="selectedSetting = 'categories'">
-        Categories
+        Kategorien
       </button>
     </div>
 
@@ -312,7 +309,7 @@ onMounted(async () => {
   </div>
 
   <AddExpireProduct v-if="addProductDialogOpen" @close="addProductDialogOpen = false"/>
-  <AddExpireProductCategory v-if="addCategoryDialogOpen" @close="addCategoryDialogOpen = false" />
+  <AddExpireProductCategory v-if="addCategoryDialogOpen" @close="addCategoryDialogOpen = false"/>
 </template>
 
 <style lang="scss" module>
@@ -396,7 +393,7 @@ $border-design: 0.1vh solid #555;
           flex-direction: row;
           align-items: center;
           background-color: $bg-light;
-          padding: 15px 20px;  // Increased padding
+          padding: 15px 20px; // Increased padding
           border-bottom: 1px solid $bg-medium;
 
           .product-category-name {
@@ -409,7 +406,7 @@ $border-design: 0.1vh solid #555;
 
           .product-category-count {
             color: #bbb;
-            font-size: 1rem;   // Larger font size
+            font-size: 1rem; // Larger font size
             margin-right: 15px;
           }
 
@@ -433,7 +430,7 @@ $border-design: 0.1vh solid #555;
     .product-entry-container {
       background-color: transparent;
       transition: background-color $transition-speed ease;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2); // Added shadow
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); // Added shadow
 
       &:hover {
         background-color: $bg-light;
