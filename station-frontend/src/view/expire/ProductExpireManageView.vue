@@ -119,6 +119,14 @@ const filteredCategories = computed(() => {
   );
 });
 
+async function updateProduct(product: ExpireProduct) {
+  await ExpireProductService.updateExpireDate(product);
+}
+
+const allCategories = computed(() => {
+  return [otherCategorie, ...Array.from(categories.value.values())];
+});
+
 onMounted(async () => {
   try {
     const products = await ExpireProductService.getExpiringItems();
@@ -144,6 +152,11 @@ onMounted(async () => {
     for (let value of expiredProducts.value.keys()) {
       console.log(value.name + " registered as category")
     }
+
+    let allCategories = await ExpireProductService.getAllCategories();
+    allCategories.forEach(category => {
+      categories.value.set(category.name, category);
+    })
   } catch (error) {
     console.error("Fehler beim Laden der Artikel:", error)
   }
@@ -265,13 +278,36 @@ onMounted(async () => {
           />
         </div>
 
-        <div :class="$style['filtered-products-list']" v-if="filteredProducts.length > 0">
-          <ul>
-            <li v-for="product in filteredProducts" :key="product.id">
-              {{ product.name }} (#{{ product.productId }})
-            </li>
-          </ul>
-        </div>
+        <!-- Table for Products -->
+        <table :class="$style['products-table']" v-if="filteredProducts.length > 0">
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Reduce Time (Days)</th>
+            <th>Category</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="product in filteredProducts" :key="product.id">
+            <td>{{ product.productId }}</td>
+            <td>
+              <input type="text" v-model="product.name" @change="updateProduct(product)" :class="$style['editable-input']"/>
+            </td>
+            <td>
+              <input type="number" v-model="product.reduceProductTime" @change="updateProduct(product)" :class="$style['editable-input']"/>
+            </td>
+            <td>
+              <select v-model="product.category" @change="updateProduct(product)" :class="$style['editable-select']">
+                <option :value="null">Andere</option>
+                <option v-for="category in allCategories" :key="category.id" :value="category">
+                  {{ category.name }}
+                </option>
+              </select>
+            </td>
+          </tr>
+          </tbody>
+        </table>
         <div v-else-if="searchInput">
           Keine passenden Produkte gefunden.
         </div>
@@ -521,7 +557,7 @@ $border-design: 0.1vh solid #555;
   border-radius: $border-radius;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   padding: 20px;
-  width: 300px;
+  width: 400px; /* Increased width */
   z-index: 1000; /* Ensure it's above other content */
 
   .settings-menu-header {
@@ -650,24 +686,33 @@ $border-design: 0.1vh solid #555;
       }
     }
 
-    .filtered-products-list {
-      ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
+    .products-table {
+      width: 100%;
+      border-collapse: collapse;
 
-        li {
-          padding: 8px 12px;
-          border-bottom: 1px solid $input-border;
-          transition: background-color $transition-speed ease;
+      th, td {
+        padding: 8px 12px;
+        border-bottom: 1px solid $input-border;
+        text-align: left;
+      }
 
-          &:last-child {
-            border-bottom: none;
-          }
+      th {
+        background-color: $bg-light;
+        color: $text-color;
+      }
 
-          &:hover {
-            background-color: $bg-light;
-          }
+      .editable-input, .editable-select {
+        padding: 6px;
+        border: 1px solid $input-border;
+        border-radius: $border-radius;
+        background-color: $input-bg;
+        color: $text-color;
+        transition: border-color $transition-speed ease;
+        width: 90%;
+
+        &:focus {
+          border-color: $input-focus;
+          outline: none;
         }
       }
     }
