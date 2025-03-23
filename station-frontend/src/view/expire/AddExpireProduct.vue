@@ -39,13 +39,15 @@ function addProduct() {
   // Send category ID (or null for "Other")
   const categoryId = selectedCategory.value;
 
-  console.log('Adding product:', {
+  ExpireProductService.createProduct({
     name: productName.value,
-    number: productNumber.value,
-    expireDate: expireDate.value,
-    reduceTime: reduceTime.value,
-    categoryId: categoryId
-  });
+    productId: productNumber.value,
+    expireDate: null,
+    reduceProductTime: reduceTime.value,
+    category: {
+      id: categoryId
+    }
+  })
   emit('close'); // Close the modal after adding
 }
 
