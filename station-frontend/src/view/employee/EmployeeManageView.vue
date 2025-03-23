@@ -59,8 +59,8 @@ function updateEmployee(employee: Employee) {
 </script>
 
 <template>
-  <div :class="$style['page-container']">
-    <SidebarComponent site="employee-management"/> <!-- Sidebar will stay at the top -->
+  <div :class="$style['top-level-container']">
+    <SidebarComponent site="employee-management"/>
     <div :class="$style['main-content']">
       <div :class="$style['submenu-container']">
         <button
@@ -206,13 +206,18 @@ $input-border: #555;
 $input-focus: #ff4500; // Red focus
 $border-design: 0.1vh solid #555;
 
-.page-container {
+.top-level-container {
   display: flex;
-  height: 100vh; // Full viewport height
+  flex-direction: column;
+  height: 100vh;
+}
+
+.page-container {
+  // Removed display: flex and height
 }
 
 .main-content {
-  flex-grow: 1; // Take up remaining space
+    // Removed flex-grow: 1
   display: flex;
   flex-direction: column;
   overflow-y: auto; // Add vertical scroll if needed
