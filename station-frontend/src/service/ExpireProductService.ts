@@ -57,8 +57,9 @@ export default {
         await settings.apiClient.patch(API_URL + "/" + product.id, {
             id: product.id,
             productId: product.productId,
+            name: product.name, // Now sending the name
             reduceProductTime: product.reduceProductTime,
-            category: product.category,
+            categoryId: product.category?.id, // Send only the category ID
             updateLastModifiedDate: false
         })
     },
