@@ -128,20 +128,20 @@ watch(searchInput, () => {
 let categorySearchTimeout: number | undefined;
 const filteredCategories = computed(() => {
   const searchTerm = categorySearchInput.value.toLowerCase();
-    if (!searchTerm) {
-        return Array.from(categories.value.values());
-    }
+  if (!searchTerm) {
+    return Array.from(categories.value.values());
+  }
 
-    return Array.from(categories.value.values()).filter(category =>
-        category.name.toLowerCase().includes(searchTerm)
-    );
+  return Array.from(categories.value.values()).filter(category =>
+      category.name.toLowerCase().includes(searchTerm)
+  );
 });
 
 watch(categorySearchInput, () => {
   clearTimeout(categorySearchTimeout);
   isCategoryLoading.value = true;
   categorySearchTimeout = setTimeout(() => {
-      isCategoryLoading.value = false;
+    isCategoryLoading.value = false;
   }, 300);
 });
 
@@ -158,8 +158,8 @@ async function updateProduct(product: ExpireProduct) {
   await ExpireProductService.updateExpireDate(product);
 }
 
-async function updateCategory(category: ExpireProductCategory){
-    //TODO: Add update category
+async function updateCategory(category: ExpireProductCategory) {
+  //TODO: Add update category
 }
 
 const allCategories = computed(() => {
@@ -197,7 +197,7 @@ onMounted(async () => {
       categories.value.set(category.name, category);
     })
 
-      displayedProducts.value = [];
+    displayedProducts.value = [];
   } catch (error) {
     console.error("Fehler beim Laden der Artikel:", error)
   }
@@ -223,59 +223,59 @@ onMounted(async () => {
     <div :class="$style['product-parent']">
       <table :class="$style['product-container']">
         <transition-group name="product-list" tag="tbody">
-        <template v-for="(category, index) in expiredProducts.value.keys()" :key="category.name">
-          <tr :class="$style['product-category-parent']">
-            <td :class="$style['product-category-entry']" colspan="4">
-              <div :class="$style['product-category-entry-wrapper']">
-                <div :class="$style['product-category-name']">{{ category.name }}:</div>
+          <template v-for="(category, index) in expiredProducts.value.keys()" :key="category.name">
+            <tr :class="$style['product-category-parent']">
+              <td :class="$style['product-category-entry']" colspan="4">
+                <div :class="$style['product-category-entry-wrapper']">
+                  <div :class="$style['product-category-name']">{{ category.name }}:</div>
 
-                <div :class="$style['product-category-count']">
-                  ({{ countCategorySuccess(category) }} /
-                  {{ expiredProducts.value.get(category)?.length }})
+                  <div :class="$style['product-category-count']">
+                    ({{ countCategorySuccess(category) }} /
+                    {{ expiredProducts.value.get(category)?.length }})
+                  </div>
+
+                  <FontAwesomeIcon
+                      :icon="getDropDownIcon(category.showProducts)"
+                      :class="$style['product-category-arrow']"
+                      @click="category.showProducts=!category.showProducts"
+                  />
                 </div>
+              </td>
+            </tr>
 
-                <FontAwesomeIcon
-                    :icon="getDropDownIcon(category.showProducts)"
-                    :class="$style['product-category-arrow']"
-                    @click="category.showProducts=!category.showProducts"
-                />
-              </div>
-            </td>
-          </tr>
+            <tr v-if="category.showProducts" :class="$style['product-spacer']"></tr>
 
-          <tr v-if="category.showProducts" :class="$style['product-spacer']"></tr>
-
-          <tr
-              :class="$style['product-entry-container']"
-              v-for="(product, index) in expiredProducts.value.get(category)"
-              v-if="category.showProducts"
-              :key="product.id"
-          >
-            <td :class="$style['product-id']">#{{ product.productId }}</td>
-            <td :class="$style['product-name']">{{ product.name }}</td>
-            <td
-                :class="[$style['product-date'], $style[getStateClass(product)]]"
-                @click="updateLastChange(product)"
+            <tr
+                :class="$style['product-entry-container']"
+                v-for="(product, index) in expiredProducts.value.get(category)"
+                v-if="category.showProducts"
+                :key="product.id"
             >
-              {{ getStateText(product) }}
-            </td>
-            <td :class="$style['product-newdate']">
-              <Datepicker
-                  v-model="product.expireDate"
-                  :month-picker="false"
-                  :enable-time-picker="false"
-                  :time-picker-inline="true"
-                  :min-date="new Date(Date.now())"
-                  :month-change-on-scroll="false"
-                  format="dd.MM.yyyy"
-                  locale="de"
-                  @update:model-value="() => ExpireProductService.updateExpireDate(product)"
-                  :dark="true"
-                  :class="$style['datepicker']"
-              />
-            </td>
-          </tr>
-        </template>
+              <td :class="$style['product-id']">#{{ product.productId }}</td>
+              <td :class="$style['product-name']">{{ product.name }}</td>
+              <td
+                  :class="[$style['product-date'], $style[getStateClass(product)]]"
+                  @click="updateLastChange(product)"
+              >
+                {{ getStateText(product) }}
+              </td>
+              <td :class="$style['product-newdate']">
+                <Datepicker
+                    v-model="product.expireDate"
+                    :month-picker="false"
+                    :enable-time-picker="false"
+                    :time-picker-inline="true"
+                    :min-date="new Date(Date.now())"
+                    :month-change-on-scroll="false"
+                    format="dd.MM.yyyy"
+                    locale="de"
+                    @update:model-value="() => ExpireProductService.updateExpireDate(product)"
+                    :dark="true"
+                    :class="$style['datepicker']"
+                />
+              </td>
+            </tr>
+          </template>
         </transition-group>
       </table>
     </div>
@@ -283,122 +283,123 @@ onMounted(async () => {
 
   <!-- Settings Menu -->
   <transition name="settings-menu">
-  <div v-if="settingsMenuOpen" :class="$style['settings-menu']">
-    <div :class="$style['settings-menu-header']">
-      <h2>Einstellungen</h2>
-      <button @click="settingsMenuOpen = false" :class="$style['close-button']">
-        <FontAwesomeIcon icon="times"/>
-      </button>
-    </div>
-
-    <div :class="$style['settings-menu-tabs']">
-      <button
-          :class="[$style['tab-button'], selectedSetting === 'products' ? $style['active-tab'] : '']"
-          @click="selectedSetting = 'products'">
-        Produkte
-      </button>
-      <button
-          :class="[$style['tab-button'], selectedSetting === 'categories' ? $style['active-tab'] : '']"
-          @click="selectedSetting = 'categories'">
-        Kategorien
-      </button>
-    </div>
-
-    <div :class="$style['settings-menu-content']">
-      <!-- Products Section -->
-      <div v-if="selectedSetting === 'products'">
-        <button @click="addProductDialogOpen = true" :class="$style['add-product-button']">
-          <FontAwesomeIcon icon="plus" :class="$style['add-product-icon']"/>
-          <span>Produkt hinzufügen</span>
+    <div v-if="settingsMenuOpen" :class="$style['settings-menu']">
+      <div :class="$style['settings-menu-header']">
+        <h2>Einstellungen</h2>
+        <button @click="settingsMenuOpen = false" :class="$style['close-button']">
+          <FontAwesomeIcon icon="times"/>
         </button>
+      </div>
 
-        <div :class="$style['search-bar-container']">
-          <FontAwesomeIcon icon="search" :class="$style['search-icon']"/>
-          <input
-              type="text"
-              v-model="searchInput"
-              :placeholder="'Produkt suchen...'"
-              :class="$style['search-input']"
-          />
-          <button v-if="searchInput" @click="clearProductSearch" :class="$style['clear-search-button']">
-            <FontAwesomeIcon icon="times"/>
+      <div :class="$style['settings-menu-tabs']">
+        <button
+            :class="[$style['tab-button'], selectedSetting === 'products' ? $style['active-tab'] : '']"
+            @click="selectedSetting = 'products'">
+          Produkte
+        </button>
+        <button
+            :class="[$style['tab-button'], selectedSetting === 'categories' ? $style['active-tab'] : '']"
+            @click="selectedSetting = 'categories'">
+          Kategorien
+        </button>
+      </div>
+
+      <div :class="$style['settings-menu-content']">
+        <!-- Products Section -->
+        <div v-if="selectedSetting === 'products'">
+          <button @click="addProductDialogOpen = true" :class="$style['add-product-button']">
+            <FontAwesomeIcon icon="plus" :class="$style['add-product-icon']"/>
+            <span>Produkt hinzufügen</span>
           </button>
-            <FontAwesomeIcon v-if="isProductLoading" icon="spinner" spin :class="$style['loading-spinner']" />
+
+          <div :class="$style['search-bar-container']">
+            <FontAwesomeIcon icon="search" :class="$style['search-icon']"/>
+            <input
+                type="text"
+                v-model="searchInput"
+                :placeholder="'Produkt suchen...'"
+                :class="$style['search-input']"
+            />
+            <button v-if="searchInput" @click="clearProductSearch" :class="$style['clear-search-button']">
+              <FontAwesomeIcon icon="times"/>
+            </button>
+            <FontAwesomeIcon v-if="isProductLoading" icon="spinner" spin :class="$style['loading-spinner']"/>
+          </div>
+
+          <!-- Table for Products -->
+          <table :class="$style['products-table']" v-if="displayedProducts.length > 0">
+            <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Reduce Time (Days)</th>
+              <th>Category</th>
+            </tr>
+            </thead>
+            <transition-group name="product-list" tag="tbody">
+              <tr v-for="product in displayedProducts" :key="product.id">
+                <td>{{ product.productId }}</td>
+                <td>
+                  <input type="text" v-model="product.name" @change="updateProduct(product)"
+                         :class="$style['editable-input']"/>
+                </td>
+                <td>
+                  <input type="number" v-model="product.reduceProductTime" @change="updateProduct(product)"
+                         :class="$style['editable-input']"/>
+                </td>
+                <td>
+                  <select v-model="product.category" @change="updateProduct(product)"
+                          :class="$style['editable-select']">
+                    <option v-for="category in allCategories" :key="category.id" :value="category">
+                      {{ category.name }}
+                    </option>
+                    <option :value="null">Andere</option>
+                  </select>
+                </td>
+              </tr>
+            </transition-group>
+          </table>
+          <div v-else-if="searchInput && !isProductLoading">
+            Keine passenden Produkte gefunden.
+          </div>
         </div>
 
-        <!-- Table for Products -->
-        <table :class="$style['products-table']" v-if="displayedProducts.length > 0">
-          <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Reduce Time (Days)</th>
-            <th>Category</th>
-          </tr>
-          </thead>
-          <transition-group name="product-list" tag="tbody">
-          <tr v-for="product in displayedProducts" :key="product.id">
-            <td>{{ product.productId }}</td>
-            <td>
-              <input type="text" v-model="product.name" @change="updateProduct(product)"
-                     :class="$style['editable-input']"/>
-            </td>
-            <td>
-              <input type="number" v-model="product.reduceProductTime" @change="updateProduct(product)"
-                     :class="$style['editable-input']"/>
-            </td>
-            <td>
-              <select v-model="product.category" @change="updateProduct(product)" :class="$style['editable-select']">
-                <option v-for="category in allCategories" :key="category.id" :value="category">
+        <!-- Categories Section -->
+        <div v-else-if="selectedSetting === 'categories'">
+          <button @click="addCategoryDialogOpen = true" :class="$style['add-category-button']">
+            <FontAwesomeIcon icon="plus" :class="$style['add-category-icon']"/>
+            <span>Kategorie hinzufügen</span>
+          </button>
+
+          <div :class="$style['search-bar-container']">
+            <FontAwesomeIcon icon="search" :class="$style['search-icon']"/>
+            <input
+                type="text"
+                v-model="categorySearchInput"
+                :placeholder="'Kategorie suchen...'"
+                :class="$style['search-input']"
+            />
+            <button v-if="categorySearchInput" @click="clearCategorySearch" :class="$style['clear-search-button']">
+              <FontAwesomeIcon icon="times"/>
+            </button>
+            <FontAwesomeIcon v-if="isCategoryLoading" icon="spinner" spin :class="$style['loading-spinner']"/>
+          </div>
+
+          <transition-group name="category-list" tag="div">
+            <div :class="$style['filtered-categories-list']" v-if="filteredCategories.length > 0">
+              <ul>
+                <li v-for="category in filteredCategories" :key="category.name">
                   {{ category.name }}
-                </option>
-                <option :value="null">Andere</option>
-              </select>
-            </td>
-          </tr>
+                </li>
+              </ul>
+            </div>
           </transition-group>
-        </table>
-        <div v-else-if="searchInput && !isProductLoading">
-          Keine passenden Produkte gefunden.
-        </div>
-      </div>
-
-      <!-- Categories Section -->
-      <div v-else-if="selectedSetting === 'categories'">
-        <button @click="addCategoryDialogOpen = true" :class="$style['add-category-button']">
-          <FontAwesomeIcon icon="plus" :class="$style['add-category-icon']"/>
-          <span>Kategorie hinzufügen</span>
-        </button>
-
-        <div :class="$style['search-bar-container']">
-          <FontAwesomeIcon icon="search" :class="$style['search-icon']"/>
-          <input
-              type="text"
-              v-model="categorySearchInput"
-              :placeholder="'Kategorie suchen...'"
-              :class="$style['search-input']"
-          />
-          <button v-if="categorySearchInput" @click="clearCategorySearch" :class="$style['clear-search-button']">
-            <FontAwesomeIcon icon="times"/>
-          </button>
-            <FontAwesomeIcon v-if="isCategoryLoading" icon="spinner" spin :class="$style['loading-spinner']" />
-        </div>
-
-        <transition-group name="category-list" tag="div">
-        <div :class="$style['filtered-categories-list']" v-if="filteredCategories.length > 0">
-          <ul>
-            <li v-for="category in filteredCategories" :key="category.name">
-              {{ category.name }}
-            </li>
-          </ul>
-        </div>
-        </transition-group>
-        <div v-if="categorySearchInput && !isCategoryLoading">
-          Keine passenden Kategorien gefunden.
+          <div v-if="categorySearchInput && !isCategoryLoading">
+            Keine passenden Kategorien gefunden.
+          </div>
         </div>
       </div>
     </div>
-  </div>
   </transition>
 
   <AddExpireProduct v-if="addProductDialogOpen" @close="addProductDialogOpen = false"/>
@@ -746,7 +747,7 @@ $border-design: 0.1vh solid #555;
         }
       }
 
-      .clear-search-button{
+      .clear-search-button {
         position: absolute;
         right: 10px;
         background: none;
@@ -839,8 +840,7 @@ $border-design: 0.1vh solid #555;
 .product-list-enter-active,
 .product-list-leave-active,
 .category-list-enter-active,
-.category-list-leave-active
-{
+.category-list-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
@@ -853,7 +853,7 @@ $border-design: 0.1vh solid #555;
 }
 
 .product-list-move,
-.category-list-move{
+.category-list-move {
   transition: transform 0.3s ease;
 }
 </style>
