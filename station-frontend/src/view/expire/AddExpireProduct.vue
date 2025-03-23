@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import {ref, defineEmits, onMounted, computed, watch} from 'vue';
+import {ref, defineEmits, onMounted, computed} from 'vue';
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import ExpireProductService, {ExpireProductCategory} from "@/service/ExpireProductService";
 import AddExpireProductCategory from "@/view/expire/AddExpireProductCategory.vue";
+import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+
 
 const emit = defineEmits(['close', 'product-added']);
 
@@ -35,6 +37,8 @@ onMounted(async () => {
   } catch (error) {
     console.error("Error fetching categories:", error);
   }
+    addProductSuccess.value = null; // Reset success/error when opening dialog
+    addProductError.value = null;
 });
 
 async function addProduct() {
@@ -73,13 +77,6 @@ async function handleCategoryAdded(newCategory: ExpireProductCategory) {
   selectedCategory.value = newCategory.id; // Select the newly added category
   addCategoryDialogOpen.value = false; // Close the add category dialog
 }
-
-watch(addCategoryDialogOpen, (isOpen) => {
-  if (isOpen) {
-    addProductSuccess.value = null; // Reset success/error when opening dialog
-    addProductError.value = null;
-  }
-});
 </script>
 
 <template>
@@ -121,12 +118,12 @@ watch(addCategoryDialogOpen, (isOpen) => {
 
         <transition name="fade">
           <div v-if="addProductSuccess" :class="$style['success-message']">
-            Produkt erfolgreich hinzugefügt!
+            <FontAwesomeIcon :icon="faCheck" :class="$style['success-icon']" />
           </div>
         </transition>
         <transition name="fade">
           <div v-if="addProductError" :class="$style['error-message']">
-            Fehler beim Hinzufügen des Produkts.
+            <FontAwesomeIcon :icon="faTimes" :class="$style['error-icon']" />
           </div>
         </transition>
 
@@ -265,11 +262,21 @@ $input-border: #555;
       .success-message {
         color: green;
         margin-bottom: 10px;
+        text-align: center;
+      }
+      .success-icon {
+        color: green;
+        font-size: 1.5rem;
       }
 
       .error-message {
         color: $accent;
         margin-bottom: 10px;
+        text-align: center;
+      }
+      .error-icon {
+        color: $accent;
+        font-size: 1.5rem;
       }
     }
   }
