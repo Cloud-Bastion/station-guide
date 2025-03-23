@@ -393,7 +393,7 @@ onMounted(async () => {
           </ul>
         </div>
         </transition-group>
-        <div v-else-if="categorySearchInput && !isCategoryLoading">
+        <div v-if="categorySearchInput && !isCategoryLoading">
           Keine passenden Kategorien gefunden.
         </div>
       </div>

@@ -16,6 +16,7 @@ interface StationExpireProductRepository : JpaRepository<StationExpireProductEnt
         LEFT JOIN StationExpireProductCategoryEntity category ON product.category.id = category.id
         WHERE product.expireDate <= CURRENT_DATE + (COALESCE(product.reduceProductTime, category.reduceProductTime, 0)) day
         OR product.expireDate IS NULL
+        ORDER BY category.name ASC, product.name ASC
     """
     )
     fun findAllWithInvalidExpireDate(): List<StationExpireProductEntity>

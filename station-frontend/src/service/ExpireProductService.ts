@@ -2,7 +2,8 @@ import settings from "./settings/Settings";
 import ExpireProductService from "@/service/ExpireProductService";
 
 const API_URL = "/v1/expire/products";
-const CATEGORY_API_URL = "/v1/expire/categories"
+const ALL_PRODUCTS_API_URL = "/v1/expire/all-products";
+const CATEGORY_API_URL = "/v1/expire/categories";
 
 export interface ExpireProductCategory {
     id?: string;
@@ -75,6 +76,11 @@ export default {
         }
 
         return ExpireProductState.REDUCE
+    },
+
+    async getAllProducts(): Promise<ExpireProduct[]> {
+        const response = await settings.apiClient.get<ExpireProduct[]>(ALL_PRODUCTS_API_URL);
+        return response.data;
     },
 
     async getAllCategories(): Promise<ExpireProductCategory[]> {

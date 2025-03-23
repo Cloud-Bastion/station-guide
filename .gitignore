@@ -71,3 +71,4 @@ out/
 
 ### Kotlin ###
 .kotlin
+.aider*

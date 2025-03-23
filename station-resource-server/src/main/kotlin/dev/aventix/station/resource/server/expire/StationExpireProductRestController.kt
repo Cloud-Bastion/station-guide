@@ -41,6 +41,11 @@ class StationExpireProductController(
         }
     }
 
+    @GetMapping("/all-products")
+    fun getAllProducts(): ResponseEntity<List<StationExpireProductDTO>> {
+        return ResponseEntity.ok(stationExpireProductService.getAllProductsSortedByName())
+    }
+
     @GetMapping("/categories")
     fun getAllCategories(): ResponseEntity<List<StationExpireProductCategoryDTO>> {
         return ResponseEntity.ok(stationExpireProductCategoryService.getAllCategories())

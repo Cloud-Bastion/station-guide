@@ -1,7 +1,8 @@
 import {createRouter, createWebHashHistory, RouteRecordRaw} from 'vue-router'
 import EmployeeManageView from "@/view/employee/EmployeeManageView.vue";
-import TaskManagementView from "@/view/TaskManagementView.vue";
+import TaskManagementView from "@/view/task/TaskManagementView.vue";
 import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
+import LoginView from "@/view/login/LoginView.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -18,6 +19,11 @@ const routes: Array<RouteRecordRaw> = [
         path: '/task-management',
         name: 'task-management',
         component: TaskManagementView
+    },
+    {
+        path: '/login',
+        name: 'login',
+        component: LoginView
     }
 ]
 

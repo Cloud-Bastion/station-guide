@@ -69,7 +69,7 @@ class StationExpireProductService(
 
         this.create(
             StationExpireProductCreateRequest(
-                777777, "Apfelkuchen", null, null, LocalDate.now()
+                777777, "Apfelkuchen", null, null, LocalDate.now().minusDays(1)
             )
         )
 
@@ -85,20 +85,23 @@ class StationExpireProductService(
             .forEach { product -> println("Sort out: ${product.name} with id: ${product.id}") }
     }
 
+    fun getAllProductsSortedByName(): MutableList<StationExpireProductDTO> {
+        return this.stationExpireProductRepository.findAll(Sort.by(Sort.Order.asc("name")))
+            .map(StationExpireProductEntity::toDTO).toCollection(
+                mutableListOf()
+            )
+    }
+
     fun getAllProductsSortedByCategory(): MutableList<StationExpireProductDTO> {
         return this.stationExpireProductRepository.findAll(
             Sort.by(Sort.Order.asc("category.name"), Sort.Order.asc("name"))
         ).map { entity ->
-            if (entity.reduceProductTime == null && entity.category != null && entity.category?.reduceProductTime != null) {
-                entity.reduceProductTime = entity.category?.reduceProductTime
-            }
             entity.toDTO()
         }.toCollection(mutableListOf())
     }
 
     fun getAllProductsExpiringOrReduce(): MutableList<StationExpireProductDTO> {
-        return this.stationExpireProductRepository.findAllWithInvalidExpireDate()
-            .map(StationExpireProductEntity::toDTO)
+        return this.stationExpireProductRepository.findAllWithInvalidExpireDate().map(StationExpireProductEntity::toDTO)
             .toCollection(mutableListOf())
     }
 
@@ -152,7 +155,8 @@ class StationExpireProductService(
             product.expireDate = it
         }
 
-        product.lastUpdateDate = LocalDate.now()
+        if (patchRequest.updateLastModifiedDate) product.lastUpdateDate = LocalDate.now()
+        else product.lastUpdateDate = null
 
         return this.stationExpireProductRepository.saveAndFlush(product).toDTO()
     }

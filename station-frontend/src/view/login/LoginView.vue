@@ -60,7 +60,7 @@ $border-radius: 10px;
 $transition-speed: 0.3s;
 $input-bg: #333;
 $input-border: #555;
-$input-focus: #3d0000; // Darker red focus
+$input-focus: #3d0000ire; // Darker red focus
 
 .parent {
   display: flex;

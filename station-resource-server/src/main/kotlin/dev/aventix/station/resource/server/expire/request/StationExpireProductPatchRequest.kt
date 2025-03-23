@@ -9,5 +9,6 @@ data class StationExpireProductPatchRequest(
     val name: String? = null,
     val categoryId: UUID? = null,
     val reduceProductTime: Long? = null,
-    val expireDate: LocalDate? = null
+    val expireDate: LocalDate? = null,
+    val updateLastModifiedDate: Boolean = true,
 )

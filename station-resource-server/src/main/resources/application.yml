@@ -1,9 +1,14 @@
 spring:
   jpa:
-    show-sql: true
+    show-sql: false
     hibernate:
       naming:
         implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl
       ddl-auto: update
   application:
     name: Station-Guide
+logging:
+  level:
+    org:
+      springframework:
+        security: trace
