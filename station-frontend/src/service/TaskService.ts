@@ -19,7 +19,7 @@ interface ScheduledTask {
 }
 
 // Interface for creating a scheduled task
-interface CreateScheduledTaskRequest {
+export interface CreateScheduledTaskRequest {
     permissionGroup?: string;
     startTime?: string;
     endTime?: string;
