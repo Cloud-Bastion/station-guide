@@ -17,12 +17,16 @@
           <div v-else-if="scheduledTasks.length === 0" :class="$style['no-tasks']">
             Keine geplanten Aufgaben vorhanden.
           </div>
-          <div v-else v-for="task in scheduledTasks" :key="task.id" :class="$style['task-item']" @click="selectTask(task)">
-            <div :class="$style['task-title']">{{ task.title }}</div>
-            <div :class="$style['task-description']">{{ task.description }}</div>
-            <div :class="$style['task-schedule']">Geplant für: {{ task.schedule }}</div>
-            <div :class="$style['task-priority']">Priorität: {{ task.priority }}</div>
-            <div :class="$style['task-completed']" v-if="task.completed">Abgeschlossen</div>
+          <div v-else v-for="task in scheduledTasks" :key="task.id" :class="[$style['task-item'], task.completed ? $style['task-completed'] : '']" @click="selectTask(task)">
+            <div :class="$style['task-left']">
+              <FontAwesomeIcon v-if="task.completed" icon="check-circle" :class="$style['completed-icon']" />
+              <FontAwesomeIcon v-else icon="circle" :class="$style['pending-icon']" />
+              <div :class="$style['task-title']">{{ task.title }}</div>
+            </div>
+            <div :class="$style['task-right']">
+              <div :class="$style['task-schedule']">{{ task.schedule }}</div>
+              <div :class="$style['task-priority']">Priorität: {{ task.priority }}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -91,28 +95,7 @@ onMounted(async () => {
     console.error("Error fetching scheduled tasks:", error);
     // Handle error (e.g., show an error message)
   } finally {
-    scheduledTasks.value.push({
-      id: 'test-task-id',
-      permissionGroup: 'test-group',
-      startTime: '2024-05-20T09:00:00',
-      endTime: '2024-05-20T17:00:00',
-      schedule: 'Täglich',
-      title: 'Test Aufgabe',
-      description: 'Dies ist eine Beispielaufgabe zur Überprüfung der Anzeige.',
-      subtasks: [
-        {id: 'subtask-1', title: 'Unteraufgabe 1'},
-        {id: 'subtask-2', title: 'Unteraufgabe 2'}
-      ],
-      files: ['file1.pdf', 'file2.docx'],
-      priority: 2,
-      createdBy: 'Max Mustermann',
-      completed: false,
-      templateTaskId: 'template-task-id'
-    });
-    // --- End Add Test Task ---
-
     loading.value = false;
-    // --- Add Test Task ---
   }
 });
 
@@ -208,7 +191,8 @@ $transition-speed: 0.3s;
 
     .task-item {
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
+      align-items: center; // Vertically center items
       background-color: $bg-light;
       padding: 15px;
       margin-bottom: 10px;
@@ -221,23 +205,45 @@ $transition-speed: 0.3s;
         background-color: darken($bg-light, 5%);
       }
 
-      .task-title {
-        font-size: 1.1rem;
-        font-weight: bold;
-        color: $text-color;
-        margin-bottom: 5px;
+      .task-left {
+        display: flex;
+        align-items: center;
+
+        .completed-icon {
+          color: green;
+          margin-right: 10px;
+          font-size: 1.2rem;
+        }
+
+        .pending-icon {
+          color: #aaa;
+          margin-right: 10px;
+          font-size: 1.2rem;
+        }
+
+        .task-title {
+          font-size: 1.1rem;
+          font-weight: bold;
+          color: $text-color;
+        }
       }
 
-      .task-description {
-        color: #ccc;
-        margin-bottom: 10px;
-      }
+      .task-right {
+        display: flex;
+        align-items: center;
+        gap: 15px; // Space between schedule and priority
 
-      .task-schedule,
-      .task-priority {
+        .task-schedule,
+        .task-priority {
+          color: #aaa;
+          font-size: 0.9rem;
+        }
+      }
+    }
+    .task-completed {
+      .task-title{
+        text-decoration: line-through;
         color: #aaa;
-        font-size: 0.9rem;
-        margin-bottom: 5px;
       }
     }
 
