@@ -45,10 +45,10 @@ class StationScheduledTaskService(
         // 3. Save templateTask first to generate its ID
         // Use saveAndFlush to ensure the ID is available immediately if needed,
         // although save() might be sufficient depending on transaction management.
-        val savedTemplateTask = taskRepository.save(templateTask)
+        val savedTemplateTask = taskRepository.saveAndFlush(templateTask)
 
         // 4. Save scheduledTask second. Hibernate should handle the relationship.
-        val savedScheduledTask = scheduledTaskRepository.save(scheduledTask)
+        val savedScheduledTask = scheduledTaskRepository.saveAndFlush(scheduledTask)
 
         // The relationship should now be correctly persisted in both tables.
         // No need to save templateTask again.
