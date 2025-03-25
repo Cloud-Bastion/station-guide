@@ -17,7 +17,7 @@
           <div v-else-if="scheduledTasks.length === 0" :class="$style['no-tasks']">
             Keine geplanten Aufgaben vorhanden.
           </div>
-          <div v-else v-for="task in scheduledTasks" :key="task.id" :class="[$style['task-item'], task.completed ? $style['task-completed'] : '']" @click="selectTask(task)">
+          <div v-else v-for="task in scheduledTasks" :key="task.id" :class="[$style['task-item'], task.completed ? $style['task-completed'] : '', isOverdue(task) ? $style['overdue-task'] : '']" @click="selectTask(task)">
             <div :class="$style['task-left']">
               <FontAwesomeIcon v-if="task.completed" icon="check-circle" :class="$style['completed-icon']" />
               <FontAwesomeIcon v-else icon="circle" :class="$style['pending-icon']" />
@@ -28,6 +28,7 @@
             </div>
             <div :class="$style['task-right']">
               <div :class="$style['task-schedule']">{{ task.schedule }}</div>
+              <div v-if="task.endTime" :class="$style['task-due-date']">Fällig: {{ task.endTime }}</div>
             </div>
           </div>
         </div>
@@ -47,6 +48,7 @@
           <div :class="$style['modal-body']">
             <p><strong>Beschreibung:</strong> {{ selectedTask.description }}</p>
             <p><strong>Geplant für:</strong> {{ selectedTask.schedule }}</p>
+            <p><strong>Fällig:</strong>{{selectedTask.endTime}}</p>
             <p><strong>Erstellt von:</strong> {{ selectedTask.createdBy }}</p>
             <p><strong>Dateien:</strong> {{ selectedTask.files.join(', ') }}</p>
             <p><strong>Subtasks:</strong></p>
@@ -82,7 +84,7 @@ interface ScheduledTask {
   id: string;
   permissionGroup: string;
   startTime: string; // Use string for dates initially
-  endTime: string;
+  endTime: string; // Added endTime for due date
   schedule: string;
   title: string;
   description: string;
@@ -110,9 +112,9 @@ onMounted(async () => {
       id: 'test-task-id',
       permissionGroup: 'test-group',
       startTime: '2024-05-20T09:00:00',
-      endTime: '2024-05-20T17:00:00',
+      endTime: '2024-05-18T17:00:00', // Overdue task
       schedule: 'Täglich',
-      title: 'Test Aufgabe',
+      title: 'Test Aufgabe (Overdue)',
       description: 'Dies ist eine Beispielaufgabe zur Überprüfung der Anzeige.',
       subtasks: [
         {id: 'subtask-1', title: 'Unteraufgabe 1', completed: false},
@@ -124,6 +126,24 @@ onMounted(async () => {
       completed: false,
       templateTaskId: 'template-task-id'
     });
+      scheduledTasks.value.push({
+          id: 'test-task-id-2',
+          permissionGroup: 'test-group',
+          startTime: '2024-05-20T09:00:00',
+          endTime: '2024-06-20T17:00:00', // Not overdue task
+          schedule: 'Täglich',
+          title: 'Test Aufgabe 2',
+          description: 'Dies ist eine weitere Beispielaufgabe.',
+          subtasks: [
+              {id: 'subtask-3', title: 'Unteraufgabe 3', completed: false},
+              {id: 'subtask-4', title: 'Unteraufgabe 4', completed: false}
+          ],
+          files: ['file3.pdf', 'file4.docx'],
+          priority: 3,
+          createdBy: 'Max Mustermann',
+          completed: false,
+          templateTaskId: 'template-task-id'
+      });
     loading.value = false;
   }
 });
@@ -172,6 +192,15 @@ const priorityLabel = (task: ScheduledTask) => {
         default: return { text: '', class: '' }; // Important: return empty string for default
     }
 };
+
+const isOverdue = (task: ScheduledTask) => {
+    if (!task.endTime) {
+        return false; // No due date, not overdue
+    }
+    const now = new Date();
+    const dueDate = new Date(task.endTime);
+    return dueDate < now;
+}
 </script>
 
 <style lang="scss" module>
@@ -325,6 +354,10 @@ $transition-speed: 0.3s;
           color: #aaa;
           font-size: 0.9rem;
         }
+        .task-due-date {
+          color: #aaa;
+          font-size: 0.9rem;
+        }
       }
     }
     .task-completed {
@@ -343,6 +376,16 @@ $transition-speed: 0.3s;
       color: #aaa;
       text-align: center;
       padding: 20px;
+    }
+    .overdue-task {
+      background-color: darken(red, 10%);
+      border: 1px solid darken(red, 20%);
+      .task-title {
+        color: white;
+      }
+      .task-due-date {
+        color: white;
+      }
     }
   }
 }
