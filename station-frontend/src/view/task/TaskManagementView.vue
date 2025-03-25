@@ -50,7 +50,7 @@
             <p><strong>Geplant für:</strong> {{ formatDateTime(selectedTask.startTime) }}</p>
             <p><strong>Fällig:</strong> {{ formatDateTime(selectedTask.endTime) }}</p>
             <p><strong>Erstellt von:</strong> {{ selectedTask.createdBy }}</p>
-            <p><strong>Dateien:</strong></p>
+            <!-- File List Container -->
             <div :class="$style['file-list']">
               <a v-for="file in selectedTask.files" :key="file" :href="file" :download="getFilenameFromUrl(file)" :class="$style['file-link']">
                 <FontAwesomeIcon icon="download" :class="$style['download-icon']"/>
