@@ -8,10 +8,10 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/scheduled")
+@RequestMapping("/api/v1/tasks")
 class StationScheduledTaskController(private val scheduledTaskService: StationScheduledTaskService) {
 
-    @PostMapping
+    @PostMapping("/scheduled")
     fun createScheduledTask(@RequestBody request: StationScheduledTaskCreateRequest): ResponseEntity<StationScheduledTaskDTO> {
         val createdTask = scheduledTaskService.create(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTask)
