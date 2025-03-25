@@ -48,7 +48,7 @@
           <div :class="$style['modal-body']">
             <!-- File List Container - Moved above description -->
             <p :class="$style['modal-description']">{{ selectedTask.description }}</p>
-            
+
             <p><strong>Geplant für:</strong> {{ formatDateTime(selectedTask.startTime) }}</p>
             <p><strong>Fällig:</strong> {{ formatDateTime(selectedTask.endTime) }}</p>
             <p><strong>Erstellt von:</strong> {{ selectedTask.createdBy }}</p>
@@ -79,6 +79,7 @@
       </div>
     </div>
   </div>
+  <CreateTaskDialog v-if="showCreateTaskDialog" @close="closeCreateTaskDialog" @task-created="handleTaskCreated" />
 </template>
 
 <script setup lang="ts">
@@ -86,6 +87,7 @@ import SidebarComponent from "@/components/sidebar/SidebarComponent.vue";
 import {ref, onMounted, computed} from 'vue';
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import TaskService from "@/service/TaskService"; // Import the service
+import CreateTaskDialog from "@/components/task/CreateTaskDialog.vue";
 
 // Define the type for the Scheduled Task (matching the backend DTO)
 interface ScheduledTask {
@@ -107,59 +109,35 @@ interface ScheduledTask {
 const scheduledTasks = ref<ScheduledTask[]>([]);
 const loading = ref(true);
 const selectedTask = ref<ScheduledTask | null>(null);
+const showCreateTaskDialog = ref(false);
 
 onMounted(async () => {
+  await loadTasks();
+});
+
+async function loadTasks() {
   try {
     scheduledTasks.value = await TaskService.getScheduledTasks();
   } catch (error) {
     console.error("Error fetching scheduled tasks:", error);
     // Handle error (e.g., show an error message)
   } finally {
-    // --- Add Test Task ---
-    scheduledTasks.value.push({
-      id: 'test-task-id',
-      permissionGroup: 'test-group',
-      startTime: '2024-05-20T09:00:00',
-      endTime: '2024-05-18T17:30:00', // Overdue task
-      schedule: 'Täglich',
-      title: 'Test Aufgabe (Overdue)',
-      description: 'Dies ist eine Beispielaufgabe zur Überprüfung der Anzeige.',
-      subtasks: [
-        {id: 'subtask-1', title: 'Unteraufgabe 1', completed: false},
-        {id: 'subtask-2', title: 'Unteraufgabe 2', completed: false}
-      ],
-      files: ['/path/to/file1.pdf', '/path/to/file2.docx'], // Example file URLs
-      priority: 2,
-      createdBy: 'Max Mustermann',
-      completed: false,
-      templateTaskId: 'template-task-id'
-    });
-      scheduledTasks.value.push({
-          id: 'test-task-id-2',
-          permissionGroup: 'test-group',
-          startTime: '2024-05-20T10:00:00',
-          endTime: '2024-06-20T17:00:00', // Not overdue task
-          schedule: 'Täglich',
-          title: 'Test Aufgabe 2',
-          description: 'Dies ist eine weitere Beispielaufgabe.',
-          subtasks: [
-              {id: 'subtask-3', title: 'Unteraufgabe 3', completed: false},
-              {id: 'subtask-4', title: 'Unteraufgabe 4', completed: false}
-          ],
-          files: ['/path/to/file3.pdf', '/path/to/file4.docx'], // More example URLs
-          priority: 3,
-          createdBy: 'Max Mustermann',
-          completed: false,
-          templateTaskId: 'template-task-id'
-      });
     loading.value = false;
   }
-});
+}
 
 const openCreateTaskDialog = () => {
-  // Placeholder for opening a task creation dialog (future implementation)
-  alert('Hier wird ein Dialog zum Erstellen einer Aufgabe geöffnet.');
+  showCreateTaskDialog.value = true;
 };
+
+const closeCreateTaskDialog = () => {
+  showCreateTaskDialog.value = false;
+};
+
+const handleTaskCreated = async () => {
+    closeCreateTaskDialog();
+    await loadTasks();
+}
 
 const selectTask = (task: ScheduledTask) => {
   selectedTask.value = task;
@@ -192,43 +170,43 @@ const canCompleteTask = computed(() => {
 
 // Corrected computed property: Use this.$style to access CSS Module classes
 const priorityLabel = (task: ScheduledTask) => {
-    switch (task.priority) {
-        case 1: return { text: 'Niedrig', class: 'priority-low' };
-        case 2: return { text: 'Normal', class: 'priority-medium' };
-        case 3: return { text: 'Hoch', class: 'priority-high' };
-        case 4: return { text: 'Sehr hoch', class: 'priority-very-high' };
-        default: return { text: '', class: '' }; // Important: return empty string for default
-    }
+  switch (task.priority) {
+    case 1: return { text: 'Niedrig', class: 'priority-low' };
+    case 2: return { text: 'Normal', class: 'priority-medium' };
+    case 3: return { text: 'Hoch', class: 'priority-high' };
+    case 4: return { text: 'Sehr hoch', class: 'priority-very-high' };
+    default: return { text: '', class: '' }; // Important: return empty string for default
+  }
 };
 
 const isOverdue = (task: ScheduledTask) => {
-    if (!task.endTime) {
-        return false; // No due date, not overdue
-    }
-    const now = new Date();
-    const dueDate = new Date(task.endTime);
-    return dueDate < now;
+  if (!task.endTime) {
+    return false; // No due date, not overdue
+  }
+  const now = new Date();
+  const dueDate = new Date(task.endTime);
+  return dueDate < now;
 }
 
 const formatDateTime = (dateTimeString: string | undefined) => {
-    if (!dateTimeString) {
-        return '';
-    }
-    const date = new Date(dateTimeString);
-    const formattedDate = date.toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-    });
-    const formattedTime = date.toLocaleTimeString('de-DE', {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-    return `${formattedDate} - ${formattedTime}`;
+  if (!dateTimeString) {
+    return '';
+  }
+  const date = new Date(dateTimeString);
+  const formattedDate = date.toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+  const formattedTime = date.toLocaleTimeString('de-DE', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  return `${formattedDate} - ${formattedTime}`;
 };
 
 const getFilenameFromUrl = (url: string) => {
-    return url.substring(url.lastIndexOf('/') + 1);
+  return url.substring(url.lastIndexOf('/') + 1);
 }
 </script>
 
