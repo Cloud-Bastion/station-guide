@@ -48,12 +48,7 @@
           <div :class="$style['modal-body']">
             <!-- File List Container - Moved above description -->
             <p :class="$style['modal-description']">{{ selectedTask.description }}</p>
-            <div v-if="selectedTask.files.length > 0" :class="$style['file-list']">
-              <a v-for="file in selectedTask.files" :key="file" :href="file" :download="getFilenameFromUrl(file)" :class="$style['file-link']">
-                <FontAwesomeIcon icon="download" :class="$style['download-icon']"/>
-                <span>{{ getFilenameFromUrl(file) }}</span>
-              </a>
-            </div>
+            
             <p><strong>Geplant für:</strong> {{ formatDateTime(selectedTask.startTime) }}</p>
             <p><strong>Fällig:</strong> {{ formatDateTime(selectedTask.endTime) }}</p>
             <p><strong>Erstellt von:</strong> {{ selectedTask.createdBy }}</p>
@@ -70,6 +65,12 @@
               </li>
             </ul>
             <p><strong>Status:</strong> <span :class="selectedTask.completed ? $style['completed'] : $style['pending']">{{ selectedTask.completed ? 'Abgeschlossen' : 'Ausstehend' }}</span></p>
+            <div v-if="selectedTask.files.length > 0" :class="$style['file-list']">
+              <a v-for="file in selectedTask.files" :key="file" :href="file" :download="getFilenameFromUrl(file)" :class="$style['file-link']">
+                <FontAwesomeIcon icon="download" :class="$style['download-icon']"/>
+                <span>{{ getFilenameFromUrl(file) }}</span>
+              </a>
+            </div>
             <button @click="toggleCompletion" :class="$style['complete-button']" :disabled="!canCompleteTask">
               {{ selectedTask.completed ? 'Als ausstehend markieren' : 'Als abgeschlossen markieren' }}
             </button>
