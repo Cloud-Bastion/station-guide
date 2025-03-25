@@ -33,8 +33,8 @@ interface CreateScheduledTaskRequest {
 }
 
 export default {
-    async getScheduledTasks(): Promise<ScheduledTask[]> {
-        const response = await settings.apiClient.get<ScheduledTask[]>(`${API_URL}/scheduled`); // Added /scheduled
+    async getOpenPlannedTasks(): Promise<ScheduledTask[]> {
+        const response = await settings.apiClient.get<ScheduledTask[]>(`${API_URL}/open-planned`);
         return response.data;
     },
 
