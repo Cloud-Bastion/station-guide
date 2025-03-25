@@ -22,10 +22,10 @@
               <FontAwesomeIcon v-if="task.completed" icon="check-circle" :class="$style['completed-icon']" />
               <FontAwesomeIcon v-else icon="circle" :class="$style['pending-icon']" />
               <div :class="$style['task-title']">{{ task.title }}</div>
+              <div :class="[$style['task-priority-label'], priorityLabel(task).class]">{{ priorityLabel(task).text }}</div>
             </div>
             <div :class="$style['task-right']">
               <div :class="$style['task-schedule']">{{ task.schedule }}</div>
-              <div :class="$style['task-priority']">Priorität: {{ task.priority }}</div>
             </div>
           </div>
         </div>
@@ -36,6 +36,7 @@
         <div :class="$style['modal-content']">
           <div :class="$style['modal-header']">
             <h2>{{ selectedTask.title }}</h2>
+            <div :class="[$style['modal-priority-label'], priorityLabel(selectedTask).class]">{{ priorityLabel(selectedTask).text }}</div>
             <button @click="closeDetails" :class="$style['close-button']">
               <FontAwesomeIcon icon="times"/>
             </button>
@@ -43,7 +44,6 @@
           <div :class="$style['modal-body']">
             <p><strong>Beschreibung:</strong> {{ selectedTask.description }}</p>
             <p><strong>Geplant für:</strong> {{ selectedTask.schedule }}</p>
-            <p><strong>Priorität:</strong> {{ selectedTask.priority }}</p>
             <p><strong>Erstellt von:</strong> {{ selectedTask.createdBy }}</p>
             <p><strong>Dateien:</strong> {{ selectedTask.files.join(', ') }}</p>
             <p><strong>Subtasks:</strong></p>
@@ -159,6 +159,15 @@ const canCompleteTask = computed(() => {
   return selectedTask.value && (selectedTask.value.completed || selectedTask.value.subtasks.every(st => st.completed));
 });
 
+const priorityLabel = (task: ScheduledTask) => {
+    switch (task.priority) {
+        case 1: return { text: 'Niedrig', class: 'priority-low' };
+        case 2: return { text: 'Normal', class: 'priority-medium' };
+        case 3: return { text: 'Hoch', class: 'priority-high' };
+        case 4: return { text: 'Sehr hoch', class: 'priority-very-high' };
+        default: return { text: 'Unbekannt', class: '' };
+    }
+};
 </script>
 
 <style lang="scss" module>
@@ -248,7 +257,8 @@ $transition-speed: 0.3s;
 
       .task-left {
         display: flex;
-        align-items: center;
+        flex-direction: column; /* Stack title and priority vertically */
+        align-items: flex-start; /* Align to the left */
 
         .completed-icon {
           color: green;
@@ -266,6 +276,25 @@ $transition-speed: 0.3s;
           font-size: 1.1rem;
           font-weight: bold;
           color: $text-color;
+          margin-bottom: 5px; /* Space between title and priority */
+        }
+        .task-priority-label {
+            font-size: 0.8rem;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            &.priority-low {
+                background-color: green;
+            }
+            &.priority-medium {
+                background-color: orange;
+            }
+            &.priority-high {
+                background-color: red;
+            }
+            &.priority-very-high {
+                background-color: darkred;
+            }
         }
       }
 
@@ -323,14 +352,36 @@ $transition-speed: 0.3s;
 
     .modal-header {
       display: flex;
+      flex-direction: column; /* Stack title and priority vertically */
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start; /* Align to the left */
       margin-bottom: 15px;
 
       h2 {
         color: $text-color;
         font-size: 1.5rem;
         margin: 0;
+        margin-bottom: 5px;
+      }
+      .modal-priority-label {
+        font-size: 0.9rem;
+        padding: 3px 8px;
+        border-radius: 10px; /* More rounded */
+        color: white;
+        margin-bottom: 10px;
+
+        &.priority-low {
+          background-color: green;
+        }
+        &.priority-medium {
+          background-color: orange;
+        }
+        &.priority-high {
+          background-color: red;
+        }
+        &.priority-very-high {
+          background-color: darkred;
+        }
       }
 
       .close-button {
@@ -340,6 +391,9 @@ $transition-speed: 0.3s;
         cursor: pointer;
         font-size: 1.2rem;
         transition: color $transition-speed ease;
+        position: absolute;
+        top: 10px;
+        right: 10px;
 
         &:hover {
           color: $text-color;
