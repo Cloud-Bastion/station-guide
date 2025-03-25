@@ -18,10 +18,28 @@ interface ScheduledTask {
     templateTaskId: string;
 }
 
+// Interface for creating a scheduled task
+interface CreateScheduledTaskRequest {
+    permissionGroup?: string;
+    startTime?: string;
+    endTime?: string;
+    recurring: boolean;
+    recurrenceRule?: string;
+    title?: string;
+    description?: string;
+    files: string[];
+    priority: number;
+    createdBy?: string; // You might want to get this from the logged-in user context
+}
+
 export default {
     async getScheduledTasks(): Promise<ScheduledTask[]> {
         const response = await settings.apiClient.get<ScheduledTask[]>(`${API_URL}/scheduled`); // Added /scheduled
         return response.data;
     },
-    // Add other methods (create, update, etc.) as needed
+
+    async createScheduledTask(taskData: CreateScheduledTaskRequest): Promise<ScheduledTask> {
+        const response = await settings.apiClient.post<ScheduledTask>(`${API_URL}/scheduled`, taskData);
+        return response.data;
+    },
 };
