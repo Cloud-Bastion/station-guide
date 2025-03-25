@@ -17,18 +17,18 @@
           <div v-else-if="scheduledTasks.length === 0" :class="$style['no-tasks']">
             Keine geplanten Aufgaben vorhanden.
           </div>
-          <div v-else v-for="task in scheduledTasks" :key="task.id" :class="[$style['task-item'], task.completed ? $style['task-completed'] : '', isOverdue(task) ? $style['overdue-task'] : '']" @click="selectTask(task)">
+          <div v-else v-for="task in scheduledTasks" :key="task.id" :class="[$style['task-item'], task.completed ? $style['task-completed'] : '']" @click="selectTask(task)">
             <div :class="$style['task-left']">
               <FontAwesomeIcon v-if="task.completed" icon="check-circle" :class="$style['completed-icon']" />
               <FontAwesomeIcon v-else icon="circle" :class="$style['pending-icon']" />
               <div :class="$style['task-title-wrapper']">
-                <div :class="$style['task-title']">{{ task.title }}</div>
+                <div :class="$style['task-title']" :style="{ color: isOverdue(task) ? 'red' : '' }">{{ task.title }}</div>
                 <div :class="[$style['task-priority-label'], $style[priorityLabel(task).class]]">{{ priorityLabel(task).text }}</div>
               </div>
             </div>
             <div :class="$style['task-right']">
               <div :class="$style['task-schedule']">{{ task.schedule }}</div>
-              <div v-if="task.endTime" :class="$style['task-due-date']">Fällig: {{ task.endTime }}</div>
+              <div v-if="task.endTime" :class="$style['task-due-date']" :style="{ color: isOverdue(task) ? 'red' : '' }">Fällig: {{ task.endTime }}</div>
             </div>
           </div>
         </div>
@@ -376,16 +376,6 @@ $transition-speed: 0.3s;
       color: #aaa;
       text-align: center;
       padding: 20px;
-    }
-    .overdue-task {
-      background-color: darken(red, 10%);
-      border: 1px solid darken(red, 20%);
-      .task-title {
-        color: white;
-      }
-      .task-due-date {
-        color: white;
-      }
     }
   }
 }
