@@ -1,8 +1,10 @@
 package dev.aventix.station.resource.server.task.scheduled
 
+import dev.aventix.station.resource.server.task.StationTaskEntity
 import dev.aventix.station.resource.server.task.StationTaskRepository
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 class StationScheduledTaskService(
@@ -11,10 +13,16 @@ class StationScheduledTaskService(
 ) {
 
     fun create(request: StationScheduledTaskCreateRequest): StationScheduledTaskDTO {
-        val templateTask = request.templateTaskId?.let {
-            taskRepository.findById(it)
-                .orElseThrow { EntityNotFoundException("Template task with ID $it not found") }
+        // Create the template task first
+        val templateTask = StationTaskEntity().apply {
+            this.permissionGroup = request.permissionGroup
+            this.endTime = request.endTime
+            this.isTemplate = true // Mark as a template
+            this.scheduledTask = null // Initially not associated with a scheduled task
+            this.completed = false;
         }
+        val savedTemplateTask = taskRepository.save(templateTask)
+
 
         val entity = StationScheduledTaskEntity().apply {
             this.permissionGroup = request.permissionGroup
@@ -27,9 +35,15 @@ class StationScheduledTaskService(
             this.files = request.files
             this.priority = request.priority
             this.createdBy = request.createdBy
-            this.templateTask = templateTask
+            this.templateTask = savedTemplateTask // Associate with the created template task
         }
 
-        return scheduledTaskRepository.saveAndFlush(entity).toDto()
+        val savedScheduledTask = scheduledTaskRepository.saveAndFlush(entity)
+
+        //now update the template task with the scheduled task
+        savedTemplateTask.scheduledTask = savedScheduledTask
+        taskRepository.save(savedTemplateTask)
+
+        return savedScheduledTask.toDto()
     }
 }
