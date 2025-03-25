@@ -87,6 +87,28 @@ const selectedTask = ref<ScheduledTask | null>(null);
 onMounted(async () => {
   try {
     scheduledTasks.value = await TaskService.getScheduledTasks();
+
+    // --- Add Test Task ---
+    scheduledTasks.value.push({
+      id: 'test-task-id',
+      permissionGroup: 'test-group',
+      startTime: '2024-05-20T09:00:00',
+      endTime: '2024-05-20T17:00:00',
+      schedule: 'Täglich',
+      title: 'Test Aufgabe',
+      description: 'Dies ist eine Beispielaufgabe zur Überprüfung der Anzeige.',
+      subtasks: [
+        {id: 'subtask-1', title: 'Unteraufgabe 1'},
+        {id: 'subtask-2', title: 'Unteraufgabe 2'}
+      ],
+      files: ['file1.pdf', 'file2.docx'],
+      priority: 2,
+      createdBy: 'Max Mustermann',
+      completed: false,
+      templateTaskId: 'template-task-id'
+    });
+    // --- End Add Test Task ---
+
   } catch (error) {
     console.error("Error fetching scheduled tasks:", error);
     // Handle error (e.g., show an error message)
