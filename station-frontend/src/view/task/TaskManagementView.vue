@@ -21,8 +21,10 @@
             <div :class="$style['task-left']">
               <FontAwesomeIcon v-if="task.completed" icon="check-circle" :class="$style['completed-icon']" />
               <FontAwesomeIcon v-else icon="circle" :class="$style['pending-icon']" />
-              <div :class="$style['task-title']">{{ task.title }}</div>
-              <div :class="[$style['task-priority-label'], priorityLabel(task).class]">{{ priorityLabel(task).text }}</div>
+              <div :class="$style['task-title-wrapper']">
+                <div :class="$style['task-title']">{{ task.title }}</div>
+                <div :class="[$style['task-priority-label'], priorityLabel(task).class]">{{ priorityLabel(task).text }}</div>
+              </div>
             </div>
             <div :class="$style['task-right']">
               <div :class="$style['task-schedule']">{{ task.schedule }}</div>
@@ -257,8 +259,8 @@ $transition-speed: 0.3s;
 
       .task-left {
         display: flex;
-        flex-direction: column; /* Stack title and priority vertically */
-        align-items: flex-start; /* Align to the left */
+        //flex-direction: column; /* Stack title and priority vertically */
+        align-items: center; /* Align to the left */
 
         .completed-icon {
           color: green;
@@ -271,30 +273,41 @@ $transition-speed: 0.3s;
           margin-right: 10px;
           font-size: 1.2rem;
         }
+        .task-title-wrapper {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 10px;
 
-        .task-title {
-          font-size: 1.1rem;
-          font-weight: bold;
-          color: $text-color;
-          margin-bottom: 5px; /* Space between title and priority */
-        }
-        .task-priority-label {
+          .task-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: $text-color;
+            //margin-bottom: 5px; /* Space between title and priority */
+          }
+
+          .task-priority-label {
             font-size: 0.8rem;
-            padding: 2px 5px;
-            border-radius: 3px;
+            padding: 3px 8px;
+            border-radius: 10px; /* More rounded */
             color: white;
+
             &.priority-low {
-                background-color: green;
+              background-color: green;
             }
+
             &.priority-medium {
-                background-color: orange;
+              background-color: orange;
             }
+
             &.priority-high {
-                background-color: red;
+              background-color: red;
             }
+
             &.priority-very-high {
-                background-color: darkred;
+              background-color: darkred;
             }
+          }
         }
       }
 
