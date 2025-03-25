@@ -11,7 +11,7 @@ data class StationScheduledTaskCreateRequest(
     val recurrenceRule: String?,
     val title: String?,
     val description: String?,
-    val files: List<String>,
+    val files: List<String>?, // Changed to nullable
     val priority: Int,
     val createdBy: String?,
     val templateTaskId: UUID?

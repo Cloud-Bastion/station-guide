@@ -32,7 +32,7 @@ class StationScheduledTaskService(
             this.recurrenceRule = request.recurrenceRule
             this.title = request.title
             this.description = request.description
-            this.files = request.files
+            this.files = request.files ?: listOf() // Use empty list if request.files is null
             this.priority = request.priority
             this.createdBy = request.createdBy
             this.templateTask = savedTemplateTask // Associate with the created template task
