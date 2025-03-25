@@ -11,13 +11,45 @@
           </button>
         </div>
         <div :class="$style['task-list']">
-          <div v-for="task in tasks" :key="task.id" :class="$style['task-item']">
+          <div v-if="loading" :class="$style['loading']">
+            Lade Aufgaben...
+          </div>
+          <div v-else-if="scheduledTasks.length === 0" :class="$style['no-tasks']">
+            Keine geplanten Aufgaben vorhanden.
+          </div>
+          <div v-else v-for="task in scheduledTasks" :key="task.id" :class="$style['task-item']" @click="selectTask(task)">
             <div :class="$style['task-title']">{{ task.title }}</div>
             <div :class="$style['task-description']">{{ task.description }}</div>
-            <div :class="$style['task-due-date']">Fällig am: {{ task.dueDate }}</div>
+            <div :class="$style['task-schedule']">Geplant für: {{ task.schedule }}</div>
+            <div :class="$style['task-priority']">Priorität: {{ task.priority }}</div>
+            <div :class="$style['task-completed']" v-if="task.completed">Abgeschlossen</div>
           </div>
-          <div v-if="tasks.length === 0" :class="$style['no-tasks']">
-            Keine Aufgaben vorhanden.
+        </div>
+      </div>
+
+      <!-- Task Details Modal -->
+      <div v-if="selectedTask" :class="$style['task-details-modal']">
+        <div :class="$style['modal-content']">
+          <div :class="$style['modal-header']">
+            <h2>{{ selectedTask.title }}</h2>
+            <button @click="closeDetails" :class="$style['close-button']">
+              <FontAwesomeIcon icon="times"/>
+            </button>
+          </div>
+          <div :class="$style['modal-body']">
+            <p><strong>Beschreibung:</strong> {{ selectedTask.description }}</p>
+            <p><strong>Geplant für:</strong> {{ selectedTask.schedule }}</p>
+            <p><strong>Priorität:</strong> {{ selectedTask.priority }}</p>
+            <p><strong>Erstellt von:</strong> {{ selectedTask.createdBy }}</p>
+            <p><strong>Dateien:</strong> {{ selectedTask.files.join(', ') }}</p>
+            <p><strong>Subtasks:</strong></p>
+            <ul>
+              <li v-for="subtask in selectedTask.subtasks" :key="subtask.id">{{ subtask.title }}</li>
+            </ul>
+            <p><strong>Status:</strong> <span :class="selectedTask.completed ? $style['completed'] : $style['pending']">{{ selectedTask.completed ? 'Abgeschlossen' : 'Ausstehend' }}</span></p>
+            <button @click="toggleCompletion" :class="$style['complete-button']">
+              {{ selectedTask.completed ? 'Als ausstehend markieren' : 'Als abgeschlossen markieren' }}
+            </button>
           </div>
         </div>
       </div>
@@ -27,19 +59,60 @@
 
 <script setup lang="ts">
 import SidebarComponent from "@/components/sidebar/SidebarComponent.vue";
-import {ref} from 'vue';
+import {ref, onMounted, computed} from 'vue';
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import TaskService from "@/service/TaskService"; // Import the service
 
-// Placeholder data for tasks
-const tasks = ref([
-  {id: 1, title: 'Inventur überprüfen', description: 'Überprüfen Sie die neuesten Inventurdaten.', dueDate: '2024-05-15'},
-  {id: 2, title: 'Mitarbeitergespräche führen', description: 'Planen und führen Sie Mitarbeitergespräche.', dueDate: '2024-05-20'},
-  {id: 3, title: 'Bestellungen aufgeben', description: 'Geben Sie die wöchentlichen Bestellungen auf.', dueDate: '2024-05-22'},
-]);
+// Define the type for the Scheduled Task (matching the backend DTO)
+interface ScheduledTask {
+  id: string;
+  permissionGroup: string;
+  startTime: string; // Use string for dates initially
+  endTime: string;
+  schedule: string;
+  title: string;
+  description: string;
+  subtasks: { id: string; title: string }[]; // Simplified subtask
+  files: string[];
+  priority: number;
+  createdBy: string;
+  completed: boolean;
+  templateTaskId: string;
+}
+
+const scheduledTasks = ref<ScheduledTask[]>([]);
+const loading = ref(true);
+const selectedTask = ref<ScheduledTask | null>(null);
+
+onMounted(async () => {
+  try {
+    scheduledTasks.value = await TaskService.getScheduledTasks();
+  } catch (error) {
+    console.error("Error fetching scheduled tasks:", error);
+    // Handle error (e.g., show an error message)
+  } finally {
+    loading.value = false;
+  }
+});
 
 const openCreateTaskDialog = () => {
-  // Placeholder for opening a task creation dialog
+  // Placeholder for opening a task creation dialog (future implementation)
   alert('Hier wird ein Dialog zum Erstellen einer Aufgabe geöffnet.');
+};
+
+const selectTask = (task: ScheduledTask) => {
+  selectedTask.value = task;
+};
+
+const closeDetails = () => {
+  selectedTask.value = null;
+};
+
+const toggleCompletion = () => {
+  if (selectedTask.value) {
+    selectedTask.value.completed = !selectedTask.value.completed;
+    //  Here, you would also call the backend to update the task's status.
+  }
 };
 </script>
 
@@ -120,6 +193,12 @@ $transition-speed: 0.3s;
       margin-bottom: 10px;
       border-radius: $border-radius;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: background-color $transition-speed ease;
+
+      &:hover {
+        background-color: darken($bg-light, 5%);
+      }
 
       .task-title {
         font-size: 1.1rem;
@@ -133,9 +212,11 @@ $transition-speed: 0.3s;
         margin-bottom: 10px;
       }
 
-      .task-due-date {
+      .task-schedule,
+      .task-priority {
         color: #aaa;
         font-size: 0.9rem;
+        margin-bottom: 5px;
       }
     }
 
@@ -143,6 +224,93 @@ $transition-speed: 0.3s;
       color: #aaa;
       text-align: center;
       padding: 20px;
+    }
+    .loading{
+      color: #aaa;
+      text-align: center;
+      padding: 20px;
+    }
+  }
+}
+
+.task-details-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+
+  .modal-content {
+    background-color: $bg-medium;
+    border-radius: $border-radius;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    width: 80%;
+    max-width: 600px;
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+
+      h2 {
+        color: $text-color;
+        font-size: 1.5rem;
+        margin: 0;
+      }
+
+      .close-button {
+        background: none;
+        border: none;
+        color: #aaa;
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: color $transition-speed ease;
+
+        &:hover {
+          color: $text-color;
+        }
+      }
+    }
+
+    .modal-body {
+      color: $text-color;
+
+      p {
+        margin-bottom: 10px;
+      }
+
+      ul {
+        padding-left: 20px;
+        margin-bottom: 10px;
+      }
+      .completed{
+        color: green;
+      }
+      .pending{
+        color: $accent;
+      }
+
+      .complete-button {
+        padding: 10px 15px;
+        background-color: $accent;
+        color: $text-color;
+        border: none;
+        border-radius: $border-radius;
+        cursor: pointer;
+        transition: background-color $transition-speed ease;
+        margin-top: 15px;
+
+        &:hover {
+          background-color: $accent-hover;
+        }
+      }
     }
   }
 }
