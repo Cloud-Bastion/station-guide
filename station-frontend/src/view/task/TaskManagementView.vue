@@ -50,7 +50,13 @@
             <p><strong>Geplant für:</strong> {{ formatDateTime(selectedTask.startTime) }}</p>
             <p><strong>Fällig:</strong> {{ formatDateTime(selectedTask.endTime) }}</p>
             <p><strong>Erstellt von:</strong> {{ selectedTask.createdBy }}</p>
-            <p><strong>Dateien:</strong> {{ selectedTask.files.join(', ') }}</p>
+            <p><strong>Dateien:</strong></p>
+            <div :class="$style['file-list']">
+              <a v-for="file in selectedTask.files" :key="file" :href="file" :download="getFilenameFromUrl(file)" :class="$style['file-link']">
+                <FontAwesomeIcon icon="download" :class="$style['download-icon']"/>
+                <span>{{ getFilenameFromUrl(file) }}</span>
+              </a>
+            </div>
             <p><strong>Subtasks:</strong></p>
             <ul>
               <li v-for="subtask in selectedTask.subtasks" :key="subtask.id" :class="$style['subtask-item']">
@@ -120,7 +126,7 @@ onMounted(async () => {
         {id: 'subtask-1', title: 'Unteraufgabe 1', completed: false},
         {id: 'subtask-2', title: 'Unteraufgabe 2', completed: false}
       ],
-      files: ['file1.pdf', 'file2.docx'],
+      files: ['/path/to/file1.pdf', '/path/to/file2.docx'], // Example file URLs
       priority: 2,
       createdBy: 'Max Mustermann',
       completed: false,
@@ -138,7 +144,7 @@ onMounted(async () => {
               {id: 'subtask-3', title: 'Unteraufgabe 3', completed: false},
               {id: 'subtask-4', title: 'Unteraufgabe 4', completed: false}
           ],
-          files: ['file3.pdf', 'file4.docx'],
+          files: ['/path/to/file3.pdf', '/path/to/file4.docx'], // More example URLs
           priority: 3,
           createdBy: 'Max Mustermann',
           completed: false,
@@ -218,6 +224,10 @@ const formatDateTime = (dateTimeString: string | undefined) => {
     });
     return `${formattedDate} - ${formattedTime}`;
 };
+
+const getFilenameFromUrl = (url: string) => {
+    return url.substring(url.lastIndexOf('/') + 1);
+}
 </script>
 
 <style lang="scss" module>
@@ -534,6 +544,36 @@ $transition-speed: 0.3s;
         &:disabled {
           background-color: #7d1f00;
           cursor: not-allowed;
+        }
+      }
+      .file-list {
+        display: flex;
+        flex-wrap: wrap; /* Allow wrapping to multiple lines */
+        gap: 10px; /* Spacing between items */
+        margin-bottom: 10px;
+
+        .file-link {
+          display: inline-flex; /* Use inline-flex for proper alignment */
+          align-items: center;
+          color: $accent;
+          text-decoration: none;
+          padding: 5px 10px;
+          border-radius: $border-radius;
+          background-color: $bg-light;
+          transition: background-color $transition-speed ease, color $transition-speed ease;
+
+          &:hover {
+            background-color: darken($bg-light, 10%);
+            color: $accent-hover;
+          }
+
+          .download-icon {
+            margin-right: 5px;
+            font-size: 1rem;
+          }
+          span{
+            font-size: small;
+          }
         }
       }
     }
