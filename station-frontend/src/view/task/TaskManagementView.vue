@@ -87,8 +87,10 @@ const selectedTask = ref<ScheduledTask | null>(null);
 onMounted(async () => {
   try {
     scheduledTasks.value = await TaskService.getScheduledTasks();
-
-    // --- Add Test Task ---
+  } catch (error) {
+    console.error("Error fetching scheduled tasks:", error);
+    // Handle error (e.g., show an error message)
+  } finally {
     scheduledTasks.value.push({
       id: 'test-task-id',
       permissionGroup: 'test-group',
@@ -109,11 +111,8 @@ onMounted(async () => {
     });
     // --- End Add Test Task ---
 
-  } catch (error) {
-    console.error("Error fetching scheduled tasks:", error);
-    // Handle error (e.g., show an error message)
-  } finally {
     loading.value = false;
+    // --- Add Test Task ---
   }
 });
 
