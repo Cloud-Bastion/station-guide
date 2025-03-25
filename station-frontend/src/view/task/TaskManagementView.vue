@@ -23,7 +23,7 @@
               <FontAwesomeIcon v-else icon="circle" :class="$style['pending-icon']" />
               <div :class="$style['task-title-wrapper']">
                 <div :class="$style['task-title']">{{ task.title }}</div>
-                <div :class="[$style['task-priority-label'], priorityLabel(task).class]">{{ priorityLabel(task).text }}</div>
+                <div :class="[$style['task-priority-label'], $style[priorityLabel(task).class]]">{{ priorityLabel(task).text }}</div>
               </div>
             </div>
             <div :class="$style['task-right']">
@@ -163,11 +163,11 @@ const canCompleteTask = computed(() => {
 
 const priorityLabel = (task: ScheduledTask) => {
     switch (task.priority) {
-        case 1: return { text: 'Niedrig', class: this.$style['priority-low'] };
-        case 2: return { text: 'Normal', class: this.$style['priority-medium'] };
-        case 3: return { text: 'Hoch', class: this.$style['priority-high'] };
-        case 4: return { text: 'Sehr hoch', class: this.$style['priority-very-high'] };
-        default: return { text: 'Unbekannt', class: '' };
+        case 1: return { text: 'Niedrig', class: 'priority-low' };
+        case 2: return { text: 'Normal', class: 'priority-medium' };
+        case 3: return { text: 'Hoch', class: 'priority-high' };
+        case 4: return { text: 'Sehr hoch', class: 'priority-very-high' };
+        default: return { text: '', class: '' };
     }
 };
 </script>
