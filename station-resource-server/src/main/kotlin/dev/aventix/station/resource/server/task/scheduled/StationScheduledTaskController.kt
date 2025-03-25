@@ -19,16 +19,4 @@ class StationScheduledTaskController(private val scheduledTaskService: StationSc
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTask)
     }
 
-    @PostConstruct
-    fun createTestTask() {
-        val testTaskRequest = StationScheduledTaskCreateRequest(
-            title = "Test Task",
-            description = "This is a test task created at startup.",
-            startTime = Instant.now(),
-            recurring = false, // Set to true for recurring task testing
-            priority = 1,
-            files = listOf()
-        )
-        scheduledTaskService.create(testTaskRequest)
-    }
 }
