@@ -14,20 +14,21 @@
           <div v-if="loading" :class="$style['loading']">
             Lade Aufgaben...
           </div>
-          <div v-else-if="scheduledTasks.length === 0" :class="$style['no-tasks']">
-            Keine geplanten Aufgaben vorhanden.
+          <div v-else-if="tasks.length === 0" :class="$style['no-tasks']">
+            Keine Aufgaben vorhanden.
           </div>
-          <div v-else v-for="task in scheduledTasks" :key="task.id" :class="[$style['task-item'], task.completed ? $style['task-completed'] : '']" @click="selectTask(task)">
+          <div v-else v-for="task in tasks" :key="task.id" :class="[$style['task-item'], task.completed ? $style['task-completed'] : '']" @click="selectTask(task)">
             <div :class="$style['task-left']">
               <FontAwesomeIcon v-if="task.completed" icon="check-circle" :class="$style['completed-icon']" />
               <FontAwesomeIcon v-else icon="circle" :class="$style['pending-icon']" />
               <div :class="$style['task-title-wrapper']">
-                <div :class="$style['task-title']" :style="{ color: isOverdue(task) ? 'red' : '' }">{{ task.title }}</div>
+                <div :class="$style['task-title']" :style="{ color: isOverdue(task) ? 'red' : '' }">{{ task.title || 'Unbenannte Aufgabe' }}</div>
                 <div :class="[$style['task-priority-label'], $style[priorityLabel(task).class]]">{{ priorityLabel(task).text }}</div>
               </div>
             </div>
             <div :class="$style['task-right']">
-              <div :class="$style['task-schedule']">{{ task.schedule }}</div>
+              <!-- Display scheduled task ID if available -->
+              <div v-if="task.scheduledTaskId" :class="$style['task-schedule']">Scheduled Task ID: {{ task.scheduledTaskId }}</div>
               <div v-if="task.endTime" :class="$style['task-due-date']" :style="{ color: isOverdue(task) ? 'red' : '' }">Fällig: {{ formatDateTime(task.endTime) }}</div>
             </div>
           </div>
@@ -38,40 +39,21 @@
       <div v-if="selectedTask" :class="$style['task-details-modal']">
         <div :class="$style['modal-content']">
           <div :class="$style['modal-header']">
-            <h2>{{ selectedTask.title }}</h2>
-            <!-- Corrected dynamic class binding in modal -->
+            <h2>{{ selectedTask.title || 'Unbenannte Aufgabe' }}</h2>
             <div :class="[$style['modal-priority-label'], $style[priorityLabel(selectedTask).class]]">{{ priorityLabel(selectedTask).text }}</div>
             <button @click="closeDetails" :class="$style['close-button']">
               <FontAwesomeIcon icon="times"/>
             </button>
           </div>
           <div :class="$style['modal-body']">
-            <!-- File List Container - Moved above description -->
             <p :class="$style['modal-description']">{{ selectedTask.description }}</p>
 
-            <p><strong>Geplant für:</strong> {{ formatDateTime(selectedTask.startTime) }}</p>
-            <p><strong>Fällig:</strong> {{ formatDateTime(selectedTask.endTime) }}</p>
-            <p><strong>Erstellt von:</strong> {{ selectedTask.createdBy }}</p>
-
-            <p><strong>Subtasks:</strong></p>
-            <ul>
-              <li v-for="subtask in selectedTask.subtasks" :key="subtask.id" :class="$style['subtask-item']">
-                <FontAwesomeIcon v-if="subtask.completed" icon="check-circle" :class="$style['subtask-completed-icon']" />
-                <FontAwesomeIcon v-else icon="circle" :class="$style['subtask-pending-icon']" />
-                <span>{{ subtask.title }}</span>
-                <button @click="toggleSubtaskCompletion(subtask)" :class="$style['subtask-complete-button']">
-                  {{ subtask.completed ? 'Als ausstehend markieren' : 'Als abgeschlossen markieren' }}
-                </button>
-              </li>
-            </ul>
+            <!-- Display scheduled task ID if available -->
+            <p v-if="selectedTask.scheduledTaskId"><strong>Scheduled Task ID:</strong> {{ selectedTask.scheduledTaskId }}</p>
+            <p v-if="selectedTask.endTime"><strong>Fällig:</strong> {{ formatDateTime(selectedTask.endTime) }}</p>
             <p><strong>Status:</strong> <span :class="selectedTask.completed ? $style['completed'] : $style['pending']">{{ selectedTask.completed ? 'Abgeschlossen' : 'Ausstehend' }}</span></p>
-            <div v-if="selectedTask.files.length > 0" :class="$style['file-list']">
-              <a v-for="file in selectedTask.files" :key="file" :href="file" :download="getFilenameFromUrl(file)" :class="$style['file-link']">
-                <FontAwesomeIcon icon="download" :class="$style['download-icon']"/>
-                <span>{{ getFilenameFromUrl(file) }}</span>
-              </a>
-            </div>
-            <button @click="toggleCompletion" :class="$style['complete-button']" :disabled="!canCompleteTask">
+
+            <button @click="toggleCompletion" :class="$style['complete-button']">
               {{ selectedTask.completed ? 'Als ausstehend markieren' : 'Als abgeschlossen markieren' }}
             </button>
           </div>
@@ -84,31 +66,27 @@
 
 <script setup lang="ts">
 import SidebarComponent from "@/components/sidebar/SidebarComponent.vue";
-import {ref, onMounted, computed} from 'vue';
-import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import { ref, onMounted, computed } from 'vue';
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import TaskService from "@/service/TaskService"; // Import the service
 import CreateTaskDialog from "@/components/task/CreateTaskDialog.vue";
 
-// Define the type for the Scheduled Task (matching the backend DTO)
-interface ScheduledTask {
+// --- Interface for OpenPlannedTask (matches StationTaskDTO) ---
+interface OpenPlannedTask {
   id: string;
-  permissionGroup: string;
-  startTime: string; // Use string for dates initially
-  endTime: string; // Added endTime for due date
-  schedule: string;
-  title: string;
-  description: string;
-  subtasks: { id: string; title: string, completed: boolean }[]; // Subtask with completion status
-  files: string[];
-  priority: number;
-  createdBy: string;
+  permissionGroup: string | null;
+  endTime: string | null;
+  isTemplate: boolean;
+  scheduledTaskId: string | null;
   completed: boolean;
-  templateTaskId: string;
+  title?: string; // Add title, description, etc.
+  description?: string;
+  priority?: number;
 }
 
-const scheduledTasks = ref<ScheduledTask[]>([]);
+const tasks = ref<OpenPlannedTask[]>([]); // Use OpenPlannedTask
 const loading = ref(true);
-const selectedTask = ref<ScheduledTask | null>(null);
+const selectedTask = ref<OpenPlannedTask | null>(null); // Use OpenPlannedTask
 const showCreateTaskDialog = ref(false);
 
 onMounted(async () => {
@@ -117,10 +95,10 @@ onMounted(async () => {
 
 async function loadTasks() {
   try {
-    scheduledTasks.value = await TaskService.getScheduledTasks();
+    // --- Fetch ALL open tasks ---
+    tasks.value = await TaskService.getAllOpenTasks();
   } catch (error) {
-    console.error("Error fetching scheduled tasks:", error);
-    // Handle error (e.g., show an error message)
+    console.error("Error fetching tasks:", error);
   } finally {
     loading.value = false;
   }
@@ -139,7 +117,7 @@ const handleTaskCreated = async () => {
     await loadTasks();
 }
 
-const selectTask = (task: ScheduledTask) => {
+const selectTask = (task: OpenPlannedTask) => { // Use OpenPlannedTask
   selectedTask.value = task;
 };
 
@@ -149,65 +127,45 @@ const closeDetails = () => {
 
 const toggleCompletion = () => {
   if (selectedTask.value) {
-    if (!selectedTask.value.completed && selectedTask.value.subtasks.some(st => !st.completed)) {
-      alert('Alle Unteraufgaben müssen abgeschlossen sein, bevor die Hauptaufgabe abgeschlossen werden kann.');
-      return;
-    }
     selectedTask.value.completed = !selectedTask.value.completed;
-    //  Here, you would also call the backend to update the task's status.
+    // TODO: Call backend to update task status
   }
 };
 
-const toggleSubtaskCompletion = (subtask: { id: string; title: string; completed: boolean }) => {
-  subtask.completed = !subtask.completed;
-  // Here you would also call the backend to update the subtask's status
-};
-
-// Computed property to check if the main task can be completed
-const canCompleteTask = computed(() => {
-  return selectedTask.value && (selectedTask.value.completed || selectedTask.value.subtasks.every(st => st.completed));
-});
-
-// Corrected computed property: Use this.$style to access CSS Module classes
-const priorityLabel = (task: ScheduledTask) => {
+// --- Priority Label Logic (Adjust as needed) ---
+const priorityLabel = (task: OpenPlannedTask) => {
   switch (task.priority) {
     case 1: return { text: 'Niedrig', class: 'priority-low' };
     case 2: return { text: 'Normal', class: 'priority-medium' };
     case 3: return { text: 'Hoch', class: 'priority-high' };
     case 4: return { text: 'Sehr hoch', class: 'priority-very-high' };
-    default: return { text: '', class: '' }; // Important: return empty string for default
+    default: return { text: 'Keine Priorität', class: '' }; // Handle undefined priority
   }
 };
 
-const isOverdue = (task: ScheduledTask) => {
+const isOverdue = (task: OpenPlannedTask) => {
   if (!task.endTime) {
-    return false; // No due date, not overdue
+    return false;
   }
   const now = new Date();
   const dueDate = new Date(task.endTime);
   return dueDate < now;
-}
+};
 
-const formatDateTime = (dateTimeString: string | undefined) => {
+const formatDateTime = (dateTimeString: string | null | undefined) => {
   if (!dateTimeString) {
     return '';
   }
   const date = new Date(dateTimeString);
-  const formattedDate = date.toLocaleDateString('de-DE', {
+  return date.toLocaleString('de-DE', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-  });
-  const formattedTime = date.toLocaleTimeString('de-DE', {
     hour: '2-digit',
     minute: '2-digit',
   });
-  return `${formattedDate} - ${formattedTime}`;
 };
 
-const getFilenameFromUrl = (url: string) => {
-  return url.substring(url.lastIndexOf('/') + 1);
-}
 </script>
 
 <style lang="scss" module>
