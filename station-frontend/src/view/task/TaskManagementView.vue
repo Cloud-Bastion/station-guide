@@ -28,7 +28,7 @@
             </div>
             <div :class="$style['task-right']">
               <div :class="$style['task-schedule']">{{ task.schedule }}</div>
-              <div v-if="task.endTime" :class="$style['task-due-date']" :style="{ color: isOverdue(task) ? 'red' : '' }">Fällig: {{ task.endTime }}</div>
+              <div v-if="task.endTime" :class="$style['task-due-date']" :style="{ color: isOverdue(task) ? 'red' : '' }">Fällig: {{ formatDateTime(task.endTime) }}</div>
             </div>
           </div>
         </div>
@@ -47,8 +47,8 @@
           </div>
           <div :class="$style['modal-body']">
             <p><strong>Beschreibung:</strong> {{ selectedTask.description }}</p>
-            <p><strong>Geplant für:</strong> {{ selectedTask.schedule }}</p>
-            <p><strong>Fällig:</strong>{{selectedTask.endTime}}</p>
+            <p><strong>Geplant für:</strong> {{ formatDateTime(selectedTask.startTime) }}</p>
+            <p><strong>Fällig:</strong> {{ formatDateTime(selectedTask.endTime) }}</p>
             <p><strong>Erstellt von:</strong> {{ selectedTask.createdBy }}</p>
             <p><strong>Dateien:</strong> {{ selectedTask.files.join(', ') }}</p>
             <p><strong>Subtasks:</strong></p>
@@ -112,7 +112,7 @@ onMounted(async () => {
       id: 'test-task-id',
       permissionGroup: 'test-group',
       startTime: '2024-05-20T09:00:00',
-      endTime: '2024-05-18T17:00:00', // Overdue task
+      endTime: '2024-05-18T17:30:00', // Overdue task
       schedule: 'Täglich',
       title: 'Test Aufgabe (Overdue)',
       description: 'Dies ist eine Beispielaufgabe zur Überprüfung der Anzeige.',
@@ -129,7 +129,7 @@ onMounted(async () => {
       scheduledTasks.value.push({
           id: 'test-task-id-2',
           permissionGroup: 'test-group',
-          startTime: '2024-05-20T09:00:00',
+          startTime: '2024-05-20T10:00:00',
           endTime: '2024-06-20T17:00:00', // Not overdue task
           schedule: 'Täglich',
           title: 'Test Aufgabe 2',
@@ -201,6 +201,23 @@ const isOverdue = (task: ScheduledTask) => {
     const dueDate = new Date(task.endTime);
     return dueDate < now;
 }
+
+const formatDateTime = (dateTimeString: string | undefined) => {
+    if (!dateTimeString) {
+        return '';
+    }
+    const date = new Date(dateTimeString);
+    const formattedDate = date.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
+    const formattedTime = date.toLocaleTimeString('de-DE', {
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+    return `${formattedDate} - ${formattedTime}`;
+};
 </script>
 
 <style lang="scss" module>
