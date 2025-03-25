@@ -9,15 +9,11 @@ import java.util.UUID
 @Table(name = "station_task")
 class StationTaskEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(nullable = false, unique = true)
-    lateinit var id: UUID
+    @GeneratedValue(strategy = GenerationType.UUID)
+    var id: UUID = UUID.randomUUID()
 
-    var permissionGroup: String? = null // Or a more complex type if needed
-
-    @Temporal(TemporalType.TIMESTAMP)
+    var permissionGroup: String? = null
     var endTime: Instant? = null
-
     var isTemplate: Boolean = false
 
     @ManyToOne
