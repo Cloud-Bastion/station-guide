@@ -16,27 +16,25 @@ class StationScheduledTaskEntity {
     //Permission group defined
     var permissionGroup: String? = null // Or a more complex type
 
-    //Start time
+    //Start time (for the first occurrence or the general schedule)
     @Temporal(TemporalType.TIMESTAMP)
     var startTime: Instant? = null
 
-    //End time
+    //End time (optional, for tasks with a defined end date)
     @Temporal(TemporalType.TIMESTAMP)
     var endTime: Instant? = null
 
-    //scheduled day,week, month
-    var schedule: String? = null // Could be a cron expression or a custom format
+    //Indicates if the task is recurring
+    var recurring: Boolean = false
+
+    //Recurrence rule (e.g., "daily", "weekly", "monthly", or a CRON expression)
+    var recurrenceRule: String? = null
 
     //title
     var title: String? = null
 
     //description
     var description: String? = null
-
-    //sublist <Tasks>
-    @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
-    @JoinColumn(name = "scheduled_task_id")
-    var subtasks: MutableList<StationTaskEntity> = mutableListOf()
 
     //file list to download
     // Assuming a simple list of file URLs.  Could be a more complex type.
@@ -49,9 +47,6 @@ class StationScheduledTaskEntity {
     //created by
     var createdBy: String? = null // Or a User entity
 
-    //completed
-    var completed: Boolean = false
-
     //use station task as template
     @ManyToOne
     @JoinColumn(name = "template_task_id")
@@ -63,14 +58,13 @@ class StationScheduledTaskEntity {
             permissionGroup = this.permissionGroup,
             startTime = this.startTime,
             endTime = this.endTime,
-            schedule = this.schedule,
+            recurring = this.recurring,
+            recurrenceRule = this.recurrenceRule,
             title = this.title,
             description = this.description,
-            subtasks = this.subtasks.map { it.toDto() },
             files = this.files,
             priority = this.priority,
             createdBy = this.createdBy,
-            completed = this.completed,
             templateTaskId = this.templateTask?.id
         )
     }

@@ -1,5 +1,6 @@
 package dev.aventix.station.resource.server.task
 
+import dev.aventix.station.resource.server.task.scheduled.StationScheduledTaskEntity
 import jakarta.persistence.*
 import java.time.Instant
 import java.util.UUID
@@ -19,12 +20,17 @@ class StationTaskEntity {
 
     var isTemplate: Boolean = false
 
+    @ManyToOne
+    @JoinColumn(name = "scheduled_task_id")
+    var scheduledTask: StationScheduledTaskEntity? = null
+
     fun toDto(): StationTaskDTO {
         return StationTaskDTO(
             id = this.id,
             permissionGroup = this.permissionGroup,
             endTime = this.endTime,
-            isTemplate = this.isTemplate
+            isTemplate = this.isTemplate,
+            scheduledTaskId = this.scheduledTask?.id
         )
     }
 }

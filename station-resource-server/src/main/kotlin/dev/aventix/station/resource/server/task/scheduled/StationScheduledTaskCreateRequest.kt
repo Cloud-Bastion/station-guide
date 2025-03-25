@@ -7,10 +7,10 @@ data class StationScheduledTaskCreateRequest(
     val permissionGroup: String?,
     val startTime: Instant?,
     val endTime: Instant?,
-    val schedule: String?,
+    val recurring: Boolean,
+    val recurrenceRule: String?,
     val title: String?,
     val description: String?,
-    val subtaskIds: List<UUID>, // IDs of existing tasks to use as subtasks
     val files: List<String>,
     val priority: Int,
     val createdBy: String?,
