@@ -118,7 +118,7 @@ onMounted(async () => {
         {id: 'subtask-2', title: 'Unteraufgabe 2', completed: false}
       ],
       files: ['file1.pdf', 'file2.docx'],
-      priority: 1,
+      priority: 2,
       createdBy: 'Max Mustermann',
       completed: false,
       templateTaskId: 'template-task-id'
@@ -163,10 +163,10 @@ const canCompleteTask = computed(() => {
 
 const priorityLabel = (task: ScheduledTask) => {
     switch (task.priority) {
-        case 1: return { text: 'Niedrig', class: 'priority-low' };
-        case 2: return { text: 'Normal', class: 'priority-medium' };
-        case 3: return { text: 'Hoch', class: 'priority-high' };
-        case 4: return { text: 'Sehr hoch', class: 'priority-very-high' };
+        case 1: return { text: 'Niedrig', class: this.$style['priority-low'] };
+        case 2: return { text: 'Normal', class: this.$style['priority-medium'] };
+        case 3: return { text: 'Hoch', class: this.$style['priority-high'] };
+        case 4: return { text: 'Sehr hoch', class: this.$style['priority-very-high'] };
         default: return { text: 'Unbekannt', class: '' };
     }
 };
