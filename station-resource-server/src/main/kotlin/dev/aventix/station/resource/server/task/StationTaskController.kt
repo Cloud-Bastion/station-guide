@@ -14,4 +14,11 @@ class StationTaskController(private val taskService: StationTaskService) {
         val openTasks = taskService.findOpenPlannedTasks()
         return ResponseEntity.ok(openTasks)
     }
+
+    // New endpoint for ALL open tasks
+    @GetMapping("/open")
+    fun getAllOpenTasks(): ResponseEntity<List<StationTaskDTO>> {
+        val openTasks = taskService.findAllOpenTasks()
+        return ResponseEntity.ok(openTasks)
+    }
 }
