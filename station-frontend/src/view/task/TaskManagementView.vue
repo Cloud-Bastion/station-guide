@@ -47,14 +47,13 @@
           </div>
           <div :class="$style['modal-body']">
             <!-- File List Container - Moved above description -->
+            <p :class="$style['modal-description']">{{ selectedTask.description }}</p>
             <div v-if="selectedTask.files.length > 0" :class="$style['file-list']">
               <a v-for="file in selectedTask.files" :key="file" :href="file" :download="getFilenameFromUrl(file)" :class="$style['file-link']">
                 <FontAwesomeIcon icon="download" :class="$style['download-icon']"/>
                 <span>{{ getFilenameFromUrl(file) }}</span>
               </a>
             </div>
-
-            <p><strong>Beschreibung:</strong> {{ selectedTask.description }}</p>
             <p><strong>Geplant für:</strong> {{ formatDateTime(selectedTask.startTime) }}</p>
             <p><strong>Fällig:</strong> {{ formatDateTime(selectedTask.endTime) }}</p>
             <p><strong>Erstellt von:</strong> {{ selectedTask.createdBy }}</p>
@@ -481,6 +480,11 @@ $transition-speed: 0.3s;
 
     .modal-body {
       color: $text-color;
+
+      .modal-description {
+        text-align: left;
+        margin-bottom: 10px;
+      }
 
       p {
         margin-bottom: 10px;
