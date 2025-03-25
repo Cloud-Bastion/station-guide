@@ -118,7 +118,7 @@ onMounted(async () => {
         {id: 'subtask-2', title: 'Unteraufgabe 2', completed: false}
       ],
       files: ['file1.pdf', 'file2.docx'],
-      priority: 2,
+      priority: 1,
       createdBy: 'Max Mustermann',
       completed: false,
       templateTaskId: 'template-task-id'
