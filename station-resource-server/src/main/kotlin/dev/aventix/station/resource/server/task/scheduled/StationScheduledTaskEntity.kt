@@ -68,4 +68,12 @@ class StationScheduledTaskEntity {
             templateTaskId = this.templateTask?.id
         )
     }
+
+    fun isCompletable(): Boolean {
+        return this.templateTask?.let {
+            it.toDto().scheduledTaskId
+            //TODO: Add logic to check subtasks
+            true
+        } ?: true
+    }
 }

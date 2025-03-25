@@ -48,10 +48,17 @@
             <p><strong>Dateien:</strong> {{ selectedTask.files.join(', ') }}</p>
             <p><strong>Subtasks:</strong></p>
             <ul>
-              <li v-for="subtask in selectedTask.subtasks" :key="subtask.id">{{ subtask.title }}</li>
+              <li v-for="subtask in selectedTask.subtasks" :key="subtask.id" :class="$style['subtask-item']">
+                <FontAwesomeIcon v-if="subtask.completed" icon="check-circle" :class="$style['subtask-completed-icon']" />
+                <FontAwesomeIcon v-else icon="circle" :class="$style['subtask-pending-icon']" />
+                <span>{{ subtask.title }}</span>
+                <button @click="toggleSubtaskCompletion(subtask)" :class="$style['subtask-complete-button']">
+                  {{ subtask.completed ? 'Als ausstehend markieren' : 'Als abgeschlossen markieren' }}
+                </button>
+              </li>
             </ul>
             <p><strong>Status:</strong> <span :class="selectedTask.completed ? $style['completed'] : $style['pending']">{{ selectedTask.completed ? 'Abgeschlossen' : 'Ausstehend' }}</span></p>
-            <button @click="toggleCompletion" :class="$style['complete-button']">
+            <button @click="toggleCompletion" :class="$style['complete-button']" :disabled="!canCompleteTask">
               {{ selectedTask.completed ? 'Als ausstehend markieren' : 'Als abgeschlossen markieren' }}
             </button>
           </div>
@@ -76,7 +83,7 @@ interface ScheduledTask {
   schedule: string;
   title: string;
   description: string;
-  subtasks: { id: string; title: string }[]; // Simplified subtask
+  subtasks: { id: string; title: string, completed: boolean }[]; // Subtask with completion status
   files: string[];
   priority: number;
   createdBy: string;
@@ -95,27 +102,7 @@ onMounted(async () => {
     console.error("Error fetching scheduled tasks:", error);
     // Handle error (e.g., show an error message)
   } finally {
-    // --- Add Test Task ---
-    scheduledTasks.value.push({
-      id: 'test-task-id',
-      permissionGroup: 'test-group',
-      startTime: '2024-05-20T09:00:00',
-      endTime: '2024-05-20T17:00:00',
-      schedule: 'Täglich',
-      title: 'Test Aufgabe',
-      description: 'Dies ist eine Beispielaufgabe zur Überprüfung der Anzeige.',
-      subtasks: [
-        {id: 'subtask-1', title: 'Unteraufgabe 1'},
-        {id: 'subtask-2', title: 'Unteraufgabe 2'}
-      ],
-      files: ['file1.pdf', 'file2.docx'],
-      priority: 2,
-      createdBy: 'Max Mustermann',
-      completed: false,
-      templateTaskId: 'template-task-id'
-    });
     loading.value = false;
-    // --- End Add Test Task ---
   }
 });
 
@@ -134,10 +121,25 @@ const closeDetails = () => {
 
 const toggleCompletion = () => {
   if (selectedTask.value) {
+    if (!selectedTask.value.completed && selectedTask.value.subtasks.some(st => !st.completed)) {
+      alert('Alle Unteraufgaben müssen abgeschlossen sein, bevor die Hauptaufgabe abgeschlossen werden kann.');
+      return;
+    }
     selectedTask.value.completed = !selectedTask.value.completed;
     //  Here, you would also call the backend to update the task's status.
   }
 };
+
+const toggleSubtaskCompletion = (subtask: { id: string; title: string; completed: boolean }) => {
+  subtask.completed = !subtask.completed;
+  // Here you would also call the backend to update the subtask's status
+};
+
+// Computed property to check if the main task can be completed
+const canCompleteTask = computed(() => {
+  return selectedTask.value && (selectedTask.value.completed || selectedTask.value.subtasks.every(st => st.completed));
+});
+
 </script>
 
 <style lang="scss" module>
@@ -336,7 +338,40 @@ $transition-speed: 0.3s;
       ul {
         padding-left: 20px;
         margin-bottom: 10px;
+        list-style: none;
       }
+
+      .subtask-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+
+        .subtask-completed-icon {
+          color: green;
+          margin-right: 5px;
+        }
+
+        .subtask-pending-icon {
+          color: #aaa;
+          margin-right: 5px;
+        }
+        .subtask-complete-button{
+          margin-left: auto;
+          padding: 4px 8px;
+          background-color: $accent;
+          color: $text-color;
+          border: none;
+          border-radius: $border-radius;
+          cursor: pointer;
+          transition: background-color $transition-speed ease;
+          font-size: 0.8rem;
+
+          &:hover {
+            background-color: $accent-hover;
+          }
+        }
+      }
+
       .completed{
         color: green;
       }
@@ -356,6 +391,10 @@ $transition-speed: 0.3s;
 
         &:hover {
           background-color: $accent-hover;
+        }
+        &:disabled {
+          background-color: #7d1f00;
+          cursor: not-allowed;
         }
       }
     }

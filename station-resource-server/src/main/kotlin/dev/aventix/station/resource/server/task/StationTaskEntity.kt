@@ -24,13 +24,16 @@ class StationTaskEntity {
     @JoinColumn(name = "scheduled_task_id")
     var scheduledTask: StationScheduledTaskEntity? = null
 
+    var completed: Boolean = false
+
     fun toDto(): StationTaskDTO {
         return StationTaskDTO(
             id = this.id,
             permissionGroup = this.permissionGroup,
             endTime = this.endTime,
             isTemplate = this.isTemplate,
-            scheduledTaskId = this.scheduledTask?.id
+            scheduledTaskId = this.scheduledTask?.id,
+            completed = this.completed
         )
     }
 }

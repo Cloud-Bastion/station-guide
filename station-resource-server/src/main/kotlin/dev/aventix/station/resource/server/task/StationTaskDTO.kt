@@ -8,5 +8,6 @@ data class StationTaskDTO(
     val permissionGroup: String?,
     val endTime: Instant?,
     val isTemplate: Boolean,
-    val scheduledTaskId: UUID?
+    val scheduledTaskId: UUID?,
+    val completed: Boolean
 )

@@ -10,7 +10,7 @@ interface ScheduledTask {
     schedule: string;
     title: string;
     description: string;
-    subtasks: { id: string; title: string }[];
+    subtasks: { id: string; title: string, completed: boolean }[]; // Updated subtask
     files: string[];
     priority: number;
     createdBy: string;
