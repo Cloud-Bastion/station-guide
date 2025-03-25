@@ -291,6 +291,8 @@ $transition-speed: 0.3s;
             padding: 3px 8px;
             border-radius: 10px; /* More rounded */
             color: white;
+            //Button Design
+            border: none;
 
             &.priority-low {
               background-color: green;
@@ -382,6 +384,8 @@ $transition-speed: 0.3s;
         border-radius: 10px; /* More rounded */
         color: white;
         margin-bottom: 10px;
+        //Button Design
+        border: none;
 
         &.priority-low {
           background-color: green;
