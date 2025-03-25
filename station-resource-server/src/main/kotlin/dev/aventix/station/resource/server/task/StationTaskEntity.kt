@@ -12,14 +12,11 @@ class StationTaskEntity {
     @Column(nullable = false, unique = true)
     lateinit var id: UUID
 
-    //Permission group defined
     var permissionGroup: String? = null // Or a more complex type if needed
 
-    //Time to end
     @Temporal(TemporalType.TIMESTAMP)
     var endTime: Instant? = null
 
-    //is template?
     var isTemplate: Boolean = false
 
     fun toDto(): StationTaskDTO {
