@@ -366,12 +366,12 @@ $transition-speed: 0.3s;
     padding: 20px;
     width: 80%;
     max-width: 600px;
+    position: relative;
 
     .modal-header {
       display: flex;
-      flex-direction: column; /* Stack title and priority vertically */
       justify-content: space-between;
-      align-items: flex-start; /* Align to the left */
+      align-items: center;
       margin-bottom: 15px;
 
       h2 {
@@ -410,9 +410,6 @@ $transition-speed: 0.3s;
         cursor: pointer;
         font-size: 1.2rem;
         transition: color $transition-speed ease;
-        position: absolute;
-        top: 10px;
-        right: 10px;
 
         &:hover {
           color: $text-color;
