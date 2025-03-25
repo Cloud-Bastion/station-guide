@@ -9,9 +9,9 @@ import java.util.UUID
 @Table(name = "station_scheduled_task")
 class StationScheduledTaskEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, unique = true)
-    lateinit var id: UUID
+    var id: UUID = UUID.randomUUID() // Initialize the UUID immediately
 
     //Permission group defined
     var permissionGroup: String? = null // Or a more complex type

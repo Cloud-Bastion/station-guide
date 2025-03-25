@@ -21,7 +21,7 @@ class StationScheduledTaskService(
             this.scheduledTask = null // Initially not associated with a scheduled task
             this.completed = false;
         }
-        val savedTemplateTask = taskRepository.save(templateTask)
+        val savedTemplateTask = taskRepository.save(templateTask) // Save the template task
 
 
         val entity = StationScheduledTaskEntity().apply {
@@ -38,11 +38,11 @@ class StationScheduledTaskService(
             this.templateTask = savedTemplateTask // Associate with the created template task
         }
 
-        val savedScheduledTask = scheduledTaskRepository.saveAndFlush(entity)
+        val savedScheduledTask = scheduledTaskRepository.save(entity) // Use save() instead of saveAndFlush()
 
         //now update the template task with the scheduled task
         savedTemplateTask.scheduledTask = savedScheduledTask
-        taskRepository.save(savedTemplateTask)
+        taskRepository.save(savedTemplateTask) // Only need to save once
 
         return savedScheduledTask.toDto()
     }
