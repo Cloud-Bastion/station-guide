@@ -17,6 +17,7 @@
           <div v-else-if="tasks.length === 0" :class="$style['no-tasks']">
             Keine Aufgaben vorhanden.
           </div>
+          <!-- Task Item Loop -->
           <div v-else v-for="task in tasks" :key="task.id" :class="[$style['task-item'], task.completed ? $style['task-completed'] : '']" @click="selectTask(task)">
             <div :class="$style['task-left']">
               <FontAwesomeIcon v-if="task.completed" icon="check-circle" :class="$style['completed-icon']" />
@@ -26,10 +27,18 @@
                 <div :class="[$style['task-priority-label'], $style[priorityLabel(task).class]]">{{ priorityLabel(task).text }}</div>
               </div>
             </div>
+            <div :class="$style['task-middle']">
+                <div :class="$style['task-created-by']" v-if="task.createdBy">Erstellt von: {{ task.createdBy }}</div>
+                <div :class="$style['task-permission-group']" v-if="task.permissionGroup">Gruppe: {{ task.permissionGroup }}</div>
+            </div>
             <div :class="$style['task-right']">
-              <div :class="$style['task-due-date']" :style="{ color: isOverdue(task) ? 'red' : '' }">Fällig: {{ task.endTime ? formatDateTime(task.endTime) : "Keine Fälligkeit" }}</div>
+              <div :class="$style['task-time-info']">
+                <div :class="$style['task-start-time']">Start: {{ task.startTime ? formatDateTime(task.startTime) : "Kein Start" }}</div>
+                <div :class="$style['task-due-date']" :style="{ color: isOverdue(task) ? 'red' : '' }">Fällig: {{ task.endTime ? formatDateTime(task.endTime) : "Keine Fälligkeit" }}</div>
+              </div>
             </div>
           </div>
+          <!-- End Task Item Loop -->
         </div>
       </div>
 
@@ -44,17 +53,24 @@
             </button>
           </div>
           <div :class="$style['modal-body']">
-            <p :class="$style['modal-description']">{{ selectedTask.description }}</p>
-
-            <p ><strong>Fällig:</strong> {{ selectTask.endTime ? formatDateTime(selectTask.endTime) : "Keine Fälligkeit" }}</p>
+            <p :class="$style['modal-description']">{{ selectedTask.description || 'Keine Beschreibung vorhanden.' }}</p>
+            <hr :class="$style['modal-divider']">
+            <p><strong>Erstellt von:</strong> {{ selectedTask.createdBy || 'Unbekannt' }}</p>
+            <p><strong>Berechtigungsgruppe:</strong> {{ selectedTask.permissionGroup || 'Keine' }}</p>
+            <p><strong>Startzeit:</strong> {{ selectedTask.startTime ? formatDateTime(selectedTask.startTime) : "Keine Startzeit" }}</p>
+            <p><strong>Fällig:</strong> {{ selectedTask.endTime ? formatDateTime(selectedTask.endTime) : "Keine Fälligkeit" }}</p>
             <p><strong>Status:</strong> <span :class="selectedTask.completed ? $style['completed'] : $style['pending']">{{ selectedTask.completed ? 'Abgeschlossen' : 'Ausstehend' }}</span></p>
-
+            <p><strong>Vorlage:</strong> {{ selectedTask.isTemplate ? 'Ja' : 'Nein' }}</p>
+            <hr :class="$style['modal-divider']">
             <button @click="toggleCompletion" :class="$style['complete-button']">
               {{ selectedTask.completed ? 'Als ausstehend markieren' : 'Als abgeschlossen markieren' }}
             </button>
+            <!-- TODO: Add file list display -->
+            <!-- TODO: Add subtask display -->
           </div>
         </div>
       </div>
+      <!-- End Task Details Modal -->
     </div>
   </div>
   <CreateTaskDialog v-if="showCreateTaskDialog" @close="closeCreateTaskDialog" @task-created="handleTaskCreated" />
@@ -67,9 +83,9 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import TaskService, {Task} from "@/service/TaskService"; // Import the service
 import CreateTaskDialog from "@/components/task/CreateTaskDialog.vue";
 
-const tasks = ref<Task[]>([]); // Use OpenPlannedTask
+const tasks = ref<Task[]>([]); // Use Task interface
 const loading = ref(true);
-const selectedTask = ref<Task | null>(null); // Use OpenPlannedTask
+const selectedTask = ref<Task | null>(null); // Use Task interface
 const showCreateTaskDialog = ref(false);
 
 onMounted(async () => {
@@ -77,11 +93,13 @@ onMounted(async () => {
 });
 
 async function loadTasks() {
+  loading.value = true; // Set loading to true when starting to load
   try {
     // --- Fetch ALL open tasks ---
     tasks.value = await TaskService.getAllOpenTasks();
   } catch (error) {
     console.error("Error fetching tasks:", error);
+    tasks.value = []; // Clear tasks on error
   } finally {
     loading.value = false;
   }
@@ -97,7 +115,7 @@ const closeCreateTaskDialog = () => {
 
 const handleTaskCreated = async () => {
     closeCreateTaskDialog();
-    await loadTasks();
+    await loadTasks(); // Reload tasks after creation
 }
 
 const selectTask = (task: Task) => {
@@ -112,22 +130,28 @@ const toggleCompletion = () => {
   if (selectedTask.value) {
     selectedTask.value.completed = !selectedTask.value.completed;
     // TODO: Call backend to update task status
+    // Example: await TaskService.updateTaskStatus(selectedTask.value.id, selectedTask.value.completed);
+    // Consider updating the list visually immediately or after backend confirmation
+    // For now, just closing the modal to reflect change on next open
+    closeDetails();
+    // Optionally reload tasks: await loadTasks();
   }
 };
 
-// --- Priority Label Logic (Adjust as needed) ---
+// --- Priority Label Logic ---
 const priorityLabel = (task: Task) => {
   switch (task.priority) {
     case 1: return { text: 'Niedrig', class: 'priority-low' };
     case 2: return { text: 'Normal', class: 'priority-medium' };
     case 3: return { text: 'Hoch', class: 'priority-high' };
     case 4: return { text: 'Sehr hoch', class: 'priority-very-high' };
-    default: return { text: 'Keine Priorität', class: '' }; // Handle undefined priority
+    default: return { text: 'Prio?', class: 'priority-unknown' }; // Handle unknown/default priority
   }
 };
 
-const isOverdue = (task: Task) => {
-  if (!task.endTime) {
+// --- Check if Task is Overdue ---
+const isOverdue = (task: Task): boolean => {
+  if (!task.endTime || task.completed) { // Don't show overdue if completed
     return false;
   }
   const now = new Date();
@@ -135,18 +159,28 @@ const isOverdue = (task: Task) => {
   return dueDate < now;
 };
 
-const formatDateTime = (dateTimeString: string | null | undefined) => {
+// --- Format Date/Time ---
+const formatDateTime = (dateTimeString: string | null | undefined): string => {
   if (!dateTimeString) {
     return '';
   }
-  const date = new Date(dateTimeString);
-  return date.toLocaleString('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  try {
+    const date = new Date(dateTimeString);
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+        return "Ungültiges Datum";
+    }
+    return date.toLocaleString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch (e) {
+    console.error("Error formatting date:", dateTimeString, e);
+    return "Fehler Datum"; // Indicate error during formatting
+  }
 };
 
 </script>
@@ -156,10 +190,18 @@ $bg-dark: #121212;
 $bg-medium: #1e1e1e;
 $bg-light: #2a2a2a;
 $text-color: #f1f1f1;
+$text-color-light: #b0b0b0; // Lighter text for secondary info
 $accent: #ff4500; // Red accent
 $accent-hover: #b83200; // Darker red for hover
 $border-radius: 5px;
 $transition-speed: 0.3s;
+$priority-low: #2ecc71; // Green
+$priority-medium: #f39c12; // Orange
+$priority-high: #e74c3c; // Red
+$priority-very-high: #c0392b; // Darker Red
+$completed-color: #27ae60; // Green for completed
+$pending-color: $accent; // Accent for pending
+$overdue-color: $priority-high; // Red for overdue
 
 .top-level-container {
   display: flex;
@@ -171,6 +213,7 @@ $transition-speed: 0.3s;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  overflow-y: auto; // Allow scrolling if content overflows
 }
 
 .task-management-container {
@@ -188,9 +231,11 @@ $transition-speed: 0.3s;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid $bg-light; // Separator line
 
     .title {
-      font-size: 1.5rem;
+      font-size: 1.8rem; // Slightly larger title
       font-weight: bold;
       color: $text-color;
     }
@@ -205,6 +250,7 @@ $transition-speed: 0.3s;
       border-radius: $border-radius;
       cursor: pointer;
       transition: background-color $transition-speed ease;
+      font-size: 0.9rem;
 
       &:hover {
         background-color: $accent-hover;
@@ -219,122 +265,136 @@ $transition-speed: 0.3s;
   .task-list {
     display: flex;
     flex-direction: column;
+    gap: 12px; // Space between task items
 
     .task-item {
       display: flex;
       justify-content: space-between;
-      align-items: center; // Vertically center items
+      align-items: center;
       background-color: $bg-light;
-      padding: 15px;
-      margin-bottom: 10px;
+      padding: 12px 18px; // Adjusted padding
       border-radius: $border-radius;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
       cursor: pointer;
-      transition: background-color $transition-speed ease;
+      transition: background-color $transition-speed ease, transform 0.2s ease;
 
       &:hover {
         background-color: darken($bg-light, 5%);
+        transform: translateY(-2px); // Slight lift on hover
       }
 
       .task-left {
         display: flex;
-        //flex-direction: column; /* Stack title and priority vertically */
-        align-items: center; /* Align to the left */
+        align-items: center;
+        gap: 12px; // Space between icon and title wrapper
+        flex-shrink: 0; // Prevent shrinking
 
-        .completed-icon {
-          color: green;
-          margin-right: 10px;
-          font-size: 1.2rem;
+        .completed-icon, .pending-icon {
+          font-size: 1.3rem; // Slightly larger icons
         }
+        .completed-icon { color: $completed-color; }
+        .pending-icon { color: $text-color-light; }
 
-        .pending-icon {
-          color: #aaa;
-          margin-right: 10px;
-          font-size: 1.2rem;
-        }
         .task-title-wrapper {
           display: flex;
-          flex-direction: row;
           align-items: center;
           gap: 10px;
 
           .task-title {
             font-size: 1.1rem;
-            font-weight: bold;
+            font-weight: 600; // Slightly bolder
             color: $text-color;
-            //margin-bottom: 5px; /* Space between title and priority */
           }
 
           .task-priority-label {
-            font-size: 0.8rem;
-            padding: 3px 8px;
-            border-radius: 10px; /* More rounded */
+            font-size: 0.75rem; // Smaller priority label
+            padding: 2px 8px;
+            border-radius: 10px;
             color: white;
-            //Button Design
-            border: none;
+            font-weight: 500;
+            white-space: nowrap; // Prevent wrapping
 
-            &.priority-low {
-              background-color: green;
-            }
-
-            &.priority-medium {
-              background-color: orange;
-            }
-
-            &.priority-high {
-              background-color: red;
-            }
-
-            &.priority-very-high {
-              background-color: darkred;
-            }
+            &.priority-low { background-color: $priority-low; }
+            &.priority-medium { background-color: $priority-medium; }
+            &.priority-high { background-color: $priority-high; }
+            &.priority-very-high { background-color: $priority-very-high; }
+            &.priority-unknown { background-color: $text-color-light; color: $bg-dark; }
           }
         }
       }
+
+      .task-middle {
+          display: flex;
+          flex-direction: column; // Stack createdBy and permissionGroup
+          align-items: flex-start; // Align text to the start
+          gap: 2px; // Small gap between lines
+          margin: 0 15px; // Add horizontal margin
+          flex-grow: 1; // Allow middle section to grow
+          min-width: 100px; // Ensure some minimum width
+          overflow: hidden; // Hide overflow
+
+          .task-created-by, .task-permission-group {
+              font-size: 0.8rem;
+              color: $text-color-light;
+              white-space: nowrap; // Prevent wrapping
+              overflow: hidden; // Hide overflow
+              text-overflow: ellipsis; // Add ellipsis if text is too long
+          }
+      }
+
 
       .task-right {
         display: flex;
         align-items: center;
-        gap: 15px; // Space between schedule and priority
+        gap: 15px;
+        flex-shrink: 0; // Prevent shrinking
 
-        .task-schedule,
-        .task-priority {
-          color: #aaa;
-          font-size: 0.9rem;
-        }
-        .task-due-date {
-          color: #aaa;
-          font-size: 0.9rem;
+        .task-time-info {
+            display: flex;
+            flex-direction: column; // Stack start and due date
+            align-items: flex-end; // Align dates to the right
+            gap: 2px; // Small gap between dates
+
+            .task-start-time, .task-due-date {
+              color: $text-color-light;
+              font-size: 0.8rem; // Smaller font for dates
+              white-space: nowrap; // Prevent wrapping
+            }
+            .task-due-date[style*="color: red"] { // More specific selector for overdue
+                color: $overdue-color !important; // Ensure overdue color overrides
+                font-weight: 600;
+            }
         }
       }
     }
     .task-completed {
+      background-color: darken($bg-light, 3%); // Slightly different background for completed
       .task-title{
         text-decoration: line-through;
-        color: #aaa;
+        color: $text-color-light; // Dim completed task title
+      }
+      &:hover {
+         background-color: darken($bg-light, 7%);
       }
     }
 
-    .no-tasks {
-      color: #aaa;
+    .no-tasks, .loading {
+      color: $text-color-light;
       text-align: center;
-      padding: 20px;
-    }
-    .loading{
-      color: #aaa;
-      text-align: center;
-      padding: 20px;
+      padding: 30px;
+      font-size: 1.1rem;
     }
   }
 }
 
+// --- Task Details Modal ---
 .task-details-modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.6); // Slightly darker overlay
   display: flex;
   justify-content: center;
   align-items: center;
@@ -343,54 +403,54 @@ $transition-speed: 0.3s;
   .modal-content {
     background-color: $bg-medium;
     border-radius: $border-radius;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    padding: 20px;
-    width: 80%;
-    max-width: 600px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    padding: 25px 30px; // More padding
+    width: 90%;
+    max-width: 650px; // Wider modal
     position: relative;
+    display: flex;
+    flex-direction: column;
 
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid $bg-light;
 
       h2 {
         color: $text-color;
-        font-size: 1.5rem;
+        font-size: 1.6rem; // Larger title
         margin: 0;
-        margin-bottom: 5px;
+        flex-grow: 1; // Allow title to take space
+        margin-right: 15px; // Space before priority label
       }
       .modal-priority-label {
-        font-size: 0.9rem;
-        padding: 3px 8px;
-        border-radius: 10px; /* More rounded */
+        font-size: 0.85rem;
+        padding: 4px 10px;
+        border-radius: 12px;
         color: white;
-        margin-bottom: 10px;
-        //Button Design
-        border: none;
+        font-weight: 500;
+        white-space: nowrap;
+        flex-shrink: 0; // Prevent shrinking
 
-        &.priority-low {
-          background-color: green;
-        }
-        &.priority-medium {
-          background-color: orange;
-        }
-        &.priority-high {
-          background-color: red;
-        }
-        &.priority-very-high {
-          background-color: darkred;
-        }
+        &.priority-low { background-color: $priority-low; }
+        &.priority-medium { background-color: $priority-medium; }
+        &.priority-high { background-color: $priority-high; }
+        &.priority-very-high { background-color: $priority-very-high; }
+        &.priority-unknown { background-color: $text-color-light; color: $bg-dark; }
       }
 
       .close-button {
         background: none;
         border: none;
-        color: #aaa;
+        color: $text-color-light;
         cursor: pointer;
-        font-size: 1.2rem;
+        font-size: 1.5rem; // Larger close icon
         transition: color $transition-speed ease;
+        padding: 5px; // Easier to click
+        margin-left: 15px; // Space after priority label
 
         &:hover {
           color: $text-color;
@@ -400,109 +460,105 @@ $transition-speed: 0.3s;
 
     .modal-body {
       color: $text-color;
+      flex-grow: 1; // Allow body to take remaining space
+      overflow-y: auto; // Add scroll if content overflows
+      max-height: 60vh; // Limit modal height
 
       .modal-description {
         text-align: left;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
+        line-height: 1.5; // Better readability
+        color: $text-color-light; // Slightly lighter description
       }
 
       p {
-        margin-bottom: 10px;
+        margin-bottom: 12px; // Consistent spacing
+        font-size: 0.95rem;
+        strong {
+            color: $text-color;
+            margin-right: 5px;
+        }
+        color: $text-color-light; // Lighter text for details
       }
 
-      ul {
-        padding-left: 20px;
-        margin-bottom: 10px;
-        list-style: none;
-      }
-
-      .subtask-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 5px;
-
-        .subtask-completed-icon {
-          color: green;
-          margin-right: 5px;
-        }
-
-        .subtask-pending-icon {
-          color: #aaa;
-          margin-right: 5px;
-        }
-        .subtask-complete-button{
-          margin-left: auto;
-          padding: 4px 8px;
-          background-color: $accent;
-          color: $text-color;
+      .modal-divider {
           border: none;
-          border-radius: $border-radius;
-          cursor: pointer;
-          transition: background-color $transition-speed ease;
-          font-size: 0.8rem;
-
-          &:hover {
-            background-color: $accent-hover;
-          }
-        }
+          height: 1px;
+          background-color: $bg-light;
+          margin: 15px 0;
       }
 
-      .completed{
-        color: green;
-      }
-      .pending{
-        color: $accent;
-      }
+      .completed{ color: $completed-color; font-weight: bold; }
+      .pending{ color: $pending-color; font-weight: bold; }
 
       .complete-button {
-        padding: 10px 15px;
+        padding: 10px 18px;
         background-color: $accent;
         color: $text-color;
         border: none;
         border-radius: $border-radius;
         cursor: pointer;
         transition: background-color $transition-speed ease;
-        margin-top: 15px;
+        margin-top: 20px; // More space above button
+        font-size: 0.95rem;
 
         &:hover {
           background-color: $accent-hover;
         }
         &:disabled {
-          background-color: #7d1f00;
+          background-color: darken($accent, 20%);
           cursor: not-allowed;
         }
       }
-      .file-list {
-        display: flex;
-        flex-wrap: wrap; /* Allow wrapping to multiple lines */
-        gap: 10px; /* Spacing between items */
-        margin-bottom: 10px;
-
-        .file-link {
-          display: inline-flex; /* Use inline-flex for proper alignment */
-          align-items: center;
-          color: $accent;
-          text-decoration: none;
-          padding: 5px 10px;
-          border-radius: $border-radius;
-          background-color: $bg-light;
-          transition: background-color $transition-speed ease, color $transition-speed ease;
-
-          &:hover {
-            background-color: darken($bg-light, 10%);
-            color: $accent-hover;
-          }
-
-          .download-icon {
-            margin-right: 5px;
-            font-size: 1rem;
-          }
-          span{
-            font-size: small;
-          }
-        }
+      // Placeholder styles for files/subtasks if added later
+      .file-list, .subtask-list {
+          margin-top: 15px;
+          padding-top: 15px;
+          border-top: 1px solid $bg-light;
+          // Add specific styles here
       }
     }
   }
 }
+
+// --- Media Query for smaller screens ---
+@media (max-width: 768px) {
+    .task-management-container {
+        margin: 15px;
+        padding: 15px;
+        .header-container {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            .title { font-size: 1.5rem; }
+            .add-task-button { align-self: flex-end; }
+        }
+        .task-list .task-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px 12px;
+            .task-left { gap: 8px; }
+            .task-middle { margin: 5px 0; } // Adjust margin for column layout
+            .task-right {
+                width: 100%; // Take full width
+                .task-time-info {
+                    width: 100%;
+                    flex-direction: row; // Side-by-side dates on small screens
+                    justify-content: space-between; // Space them out
+                    align-items: center;
+                }
+            }
+        }
+    }
+    .task-details-modal .modal-content {
+        max-width: 95%;
+        padding: 20px;
+        .modal-header {
+            h2 { font-size: 1.4rem; }
+            .modal-priority-label { font-size: 0.8rem; padding: 3px 8px; }
+        }
+    }
+}
+
 </style>
