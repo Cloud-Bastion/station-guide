@@ -2,7 +2,9 @@ package dev.aventix.station.authserver.controller
 
 import dev.aventix.station.authserver.authenticate.LoginRequest
 import dev.aventix.station.authserver.authenticate.TokenService
+import dev.aventix.station.authserver.provider.google.GoogleProfileDetailsService
 import dev.aventix.station.authserver.user.UserAuthenticateResponse
+import dev.aventix.station.authserver.user.UserService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AuthenticationManager
@@ -20,6 +22,8 @@ import kotlin.jvm.Throws
 class LoginRegistrationController(
     private val authenticationManager: AuthenticationManager,
     private val tokenService: TokenService,
+    private val userService: UserService,
+    private val googleProfileDetailsService: GoogleProfileDetailsService
 ) {
 
     @PostMapping("/login")
@@ -34,6 +38,21 @@ class LoginRegistrationController(
             return ResponseEntity.ok(UserAuthenticateResponse(tokenService.generateToken(authentication)))
         } catch (error: Error) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(UserAuthenticateResponse(null, error))
+        }
+    }
+
+    @GetMapping("/login/oauth2/callback/google")
+    fun oauth2LoginGoogle(@RequestParam("code") code: String,
+                          @RequestParam("scope") scope: String,
+                          @RequestParam("authuser") authUser: String,
+                          @RequestParam("prompt") prompt: String): Unit {
+        val accessToken = googleProfileDetailsService.oAuthAccessToken(code)
+        val details = googleProfileDetailsService.getUserDetails(accessToken)
+
+        if (userService.findByEmail(details.email).isPresent) {
+            println("USER EXISTS, CONNECT TO GOOGLE ACCOUNT")
+        } else {
+            println("USER NOT EXISTS, CREATE NEW ACCOUNT!")
         }
     }
 

@@ -1,5 +1,6 @@
 package dev.aventix.station.authserver.user
 
+import dev.aventix.station.authserver.provider.AuthProvider
 import dev.aventix.station.authserver.user.authority.UserAuthorityDto
 import java.util.UUID
 
