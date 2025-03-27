@@ -9,8 +9,8 @@ spring:
       client:
         registration:
           google:
-            client-id: 158421481211-6vp5a7oq3lbd60s16f43r3fs3ic66s7r.apps.googleusercontent.com
-            client-secret: classpath:secret/google_auth.txt
+            client-id: classpath:secret/google_client_id.txt
+            client-secret: classpath:secret/google_client_secret.txt
           github:
             client-id: Ov23liQKGMY4YHaZVfEs
             client-secret: e96263017c02351e2b153c7e7fa84f1142e56965
