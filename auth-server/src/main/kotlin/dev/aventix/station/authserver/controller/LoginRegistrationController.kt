@@ -67,10 +67,10 @@ class LoginRegistrationController(
 
     }
 
-    @GetMapping("/jwt/public-key")
+    /*@GetMapping("/jwt/public-key")
     fun exposePublicKey(jwkSource: JWKSource<SecurityContext>): ResponseEntity<Map<String, List<JWK>>> {
         return ResponseEntity.ok(mapOf("keys" to jwkSource(null, null)))
-    }
+    }*/
 
     @PostMapping("/register")
     fun register() {
