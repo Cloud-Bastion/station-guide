@@ -6,5 +6,5 @@ import java.util.UUID
 
 @Repository
 interface TaskRepository : JpaRepository<TaskEntity, UUID> {
-    fun findAllByIsTemplate(template: Boolean): MutableList<TaskEntity>
+    fun findAllByIsTemplateAndCompleted(isTemplate: Boolean, completed: Boolean): MutableList<TaskEntity>
 }

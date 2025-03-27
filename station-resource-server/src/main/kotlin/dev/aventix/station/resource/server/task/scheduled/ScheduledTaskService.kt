@@ -1,34 +1,18 @@
 package dev.aventix.station.resource.server.task.scheduled
 
-import dev.aventix.station.resource.server.task.TaskDTO
 import dev.aventix.station.resource.server.task.TaskEntity
-import dev.aventix.station.resource.server.task.TaskRepository
 import dev.aventix.station.resource.server.task.TaskService
 import dev.aventix.station.resource.server.task.scheduled.request.ScheduledTaskCreateRequest
-import jakarta.annotation.PostConstruct
 import org.springframework.stereotype.Service
 import java.time.LocalTime
 
 @Service
 class ScheduledTaskService(
     private val scheduledTaskRepository: ScheduledTaskRepository,
-    private val taskRepository: TaskRepository,
-    private val testService: TaskService,
+    private val taskService: TaskService,
 ) {
-    @PostConstruct
-    fun init() {
-        this.create(
-            ScheduledTaskCreateRequest(
-                TaskDTO(
-                    null, "Test-Titel", "Test-Beschreibung", 2, null, null, null, null, false, true
-                ), "WEEKLY", listOf(1, 4), listOf(), LocalTime.MIN, null, 0, null
-            )
-        )
-        this.testService.checkTask()
-    }
-
     fun create(request: ScheduledTaskCreateRequest): ScheduledTaskDTO {
-        return this.scheduledTaskRepository.saveAndFlush(ScheduledTaskEntity().apply {
+        val dto = this.scheduledTaskRepository.saveAndFlush(ScheduledTaskEntity().apply {
             this.template = TaskEntity().apply {
                 this.title = request.template.title
                 request.template.description?.let { this.description = it }
@@ -48,5 +32,7 @@ class ScheduledTaskService(
             this.endTimeDaysAdd = request.endTimeDaysAdd ?: 0
             this.lastCreatedTask = null
         }).toDTO()
+        this.taskService.checkTask()
+        return dto
     }
 }

@@ -1,13 +1,15 @@
 package dev.aventix.station.resource.server.task
 
+import dev.aventix.station.resource.server.task.request.CloseOrOpenTaskRequest
+import dev.aventix.station.resource.server.task.request.TaskCreateRequest
 import dev.aventix.station.resource.server.task.scheduled.ScheduledTaskEntity
 import dev.aventix.station.resource.server.task.scheduled.ScheduledTaskRepository
-import org.jetbrains.annotations.Async.Schedule
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.concurrent.TimeUnit
+import kotlin.jvm.optionals.getOrNull
 
 @Service
 class TaskService(
@@ -15,10 +17,32 @@ class TaskService(
     private val taskRepository: TaskRepository,
 ) {
     fun getAllOpenTasks(): MutableList<TaskDTO> {
-        return this.taskRepository.findAllByIsTemplate(false).map(TaskEntity::toDTO).toCollection(mutableListOf())
+        return this.taskRepository.findAllByIsTemplateAndCompleted(isTemplate = false, completed = false)
+            .map(TaskEntity::toDTO).toCollection(mutableListOf())
     }
 
-    //every 30 minutes
+    @Throws(EntityNotFoundException::class)
+    fun closeOrOpenTask(request: CloseOrOpenTaskRequest): TaskDTO {
+        val taskEntity = this.taskRepository.findById(request.id).getOrNull()
+            ?: throw EntityNotFoundException("Task with id " + request.id + " not found")
+        taskEntity.completed = request.state
+        return this.taskRepository.saveAndFlush(taskEntity).toDTO()
+    }
+
+    fun createTask(request: TaskCreateRequest): TaskDTO {
+        return this.taskRepository.saveAndFlush(TaskEntity().apply {
+            this.title = request.title
+            request.description?.let { this.description = it }
+            this.priority = request.priority ?: 0
+            request.permissionGroup?.let { this.permissionGroup = it }
+            request.createdBy?.let { this.createdBy = it }
+            request.startTime?.let { this.startTime = it }
+            request.endTime?.let { this.endTime = it }
+            this.completed = false
+            this.isTemplate = false
+        }).toDTO()
+    }
+
     @Scheduled(fixedRate = 1000 * 60 * 30, initialDelay = 0)
     fun checkTask() {
         this.scheduledTaskRepository.findAll().forEach {

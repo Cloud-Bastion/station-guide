@@ -126,15 +126,10 @@ const closeDetails = () => {
   selectedTask.value = null;
 };
 
-const toggleCompletion = () => {
+const toggleCompletion = async () => {
   if (selectedTask.value) {
     selectedTask.value.completed = !selectedTask.value.completed;
-    // TODO: Call backend to update task status
-    // Example: await TaskService.updateTaskStatus(selectedTask.value.id, selectedTask.value.completed);
-    // Consider updating the list visually immediately or after backend confirmation
-    // For now, just closing the modal to reflect change on next open
-    closeDetails();
-    // Optionally reload tasks: await loadTasks();
+    await TaskService.closeOrOpenTask(selectedTask.value.id, selectedTask.value.completed)
   }
 };
 
