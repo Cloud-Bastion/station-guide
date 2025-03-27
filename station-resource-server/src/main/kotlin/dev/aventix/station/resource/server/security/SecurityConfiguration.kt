@@ -14,7 +14,7 @@ class SecurityConfiguration {
     @Throws(Exception::class)
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http.authorizeHttpRequests { auth ->
-            auth.anyRequest().authenticated()
+            auth.anyRequest().permitAll()
         }.oauth2ResourceServer { resourceServer ->
             resourceServer.jwt {
 
