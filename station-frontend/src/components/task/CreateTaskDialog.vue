@@ -9,18 +9,20 @@
       </div>
       <div :class="$style['modal-body']">
 
-        <!-- Task Type Selection -->
+        <!-- Task Type Selection (Tabs) -->
         <div :class="$style['form-group']">
           <label :class="$style['label-bold']">Aufgabentyp:</label>
-          <div :class="$style['radio-group']">
-            <label :class="$style['radio-label']">
-              <input type="radio" value="single" v-model="taskType" :class="$style['radio']"/>
-              <span :class="$style['radio-text']">Einmalig</span>
-            </label>
-            <label :class="$style['radio-label']">
-              <input type="radio" value="recurring" v-model="taskType" :class="$style['radio']"/>
-              <span :class="$style['radio-text']">Wiederkehrend</span>
-            </label>
+          <div :class="$style['task-type-tabs']">
+            <button
+                :class="[$style['tab-button'], taskType === 'single' ? $style['active-tab'] : '']"
+                @click="taskType = 'single'">
+              Einmalig
+            </button>
+            <button
+                :class="[$style['tab-button'], taskType === 'recurring' ? $style['active-tab'] : '']"
+                @click="taskType = 'recurring'">
+              Wiederkehrend
+            </button>
           </div>
         </div>
 
@@ -421,34 +423,47 @@ $required-color: $accent;
             padding-right: 40px; // Make space for the custom arrow
         }
 
-        // --- Radio Button Group ---
-        .radio-group {
+        // --- Task Type Tabs ---
+        .task-type-tabs {
             display: flex;
-            gap: 25px; // More space
-            padding: 10px;
             background-color: $input-bg;
             border: 1px solid $input-border;
             border-radius: $border-radius;
+            overflow: hidden; // Clip the button borders inside
 
-            .radio-label {
-                display: flex;
-                align-items: center;
-                gap: 8px;
+            .tab-button {
+                flex: 1; // Each button takes equal width
+                padding: 10px 15px;
+                background: none;
+                border: none;
+                color: $text-color-light;
                 cursor: pointer;
-                color: $text-color;
+                transition: background-color $transition-speed ease, color $transition-speed ease;
                 font-size: 0.95rem;
+                text-align: center;
+
+                // Add a subtle border between tabs
+                &:not(:last-child) {
+                    border-right: 1px solid $input-border;
+                }
+
+                &:hover {
+                    background-color: darken($input-bg, 5%);
+                    color: $text-color;
+                }
             }
-            .radio {
-                 accent-color: $accent; // Basic styling
-                 cursor: pointer;
-                 width: 16px;
-                 height: 16px;
-                 // For more custom radios, more complex CSS or SVG is needed
-            }
-            .radio-text {
-                user-select: none;
+
+            .active-tab {
+                background-color: $accent;
+                color: white;
+                font-weight: 600;
+
+                &:hover {
+                    background-color: $accent-hover;
+                }
             }
         }
+
 
          // --- Checkbox Group ---
         .checkbox-group {
@@ -588,6 +603,7 @@ $required-color: $accent;
             gap: 15px; // Reduce gap slightly
             .form-group {
                 .input, .textarea, .select { padding: 10px 12px; }
+                .task-type-tabs .tab-button { font-size: 0.9rem; padding: 8px 10px; } // Adjust tab button size
             }
             .create-button { padding: 10px 20px; font-size: 0.95rem; }
         }
