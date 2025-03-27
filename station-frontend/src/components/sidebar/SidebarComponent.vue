@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {ref, onMounted, computed} from 'vue';
+import EmployeeManageView from "@/view/employee/EmployeeManageView.vue";
+import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
 
 const props = defineProps<{
   site: string;
@@ -54,17 +56,17 @@ onMounted(() => {
       <img src="/logo.png" alt="circle k logo" :class="$style['logo']">
 
       <div :class="$style['workprogramms-container']">
-        <router-link to="employee-management"
+        <router-link to="/employee/management"
                      :class="[$style['workprogramms-entity'], props.site === 'employee-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'id-badge']" size="lg" :class="$style['icon']"/>
           <span>Mitarbeiter-Management</span>
         </router-link>
-        <router-link to="product-expire-management"
+        <router-link to="/expire/management"
                      :class="[$style['workprogramms-entity'], props.site === 'product-expire-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'lemon']" size="lg" :class="$style['icon']"/>
           <span>MHD-Tool</span>
         </router-link>
-        <router-link to="task-management"
+        <router-link to="/tasks"
                      :class="[$style['workprogramms-entity'], props.site === 'task-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'fa-rectangle-list']" size="lg" :class="$style['icon']"/>
           <span>Task-Manager</span>

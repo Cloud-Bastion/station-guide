@@ -1,12 +1,4 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-
-const router = useRouter();
-
-const goHome = () => {
-  router.push('/'); // Navigiert zur Startseite (oder Login, da '/' dorthin führt)
-};
 </script>
 
 <template>
@@ -19,9 +11,11 @@ const goHome = () => {
         Entschuldigung, die von Ihnen angeforderte Seite konnte nicht gefunden werden.
         Möglicherweise wurde sie verschoben, gelöscht oder existiert nicht.
       </p>
-      <button @click="goHome" :class="$style['home-button']">
-        Zurück zur Startseite
-      </button>
+      <router-link to="/">
+        <button :class="$style['home-button']">
+          Zurück zur Startseite
+        </button>
+      </router-link>
     </div>
   </div>
 </template>

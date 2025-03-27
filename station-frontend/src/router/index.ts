@@ -1,24 +1,20 @@
-import {createRouter, createWebHashHistory, RouteRecordRaw} from 'vue-router'
+import {createRouter, createWebHashHistory, createWebHistory, RouteRecordRaw} from 'vue-router'
 import EmployeeManageView from "@/view/employee/EmployeeManageView.vue";
 import TaskManagementView from "@/view/task/TaskManagementView.vue";
 import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
 import LoginView from "@/view/login/LoginView.vue";
+import NotFoundView from "@/view/error/NotFoundView.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
-        path: '/employee-management',
-        name: 'employee-managment',
-        component: EmployeeManageView
+        path: '/:pathMatch(.*)*',
+        name: '404',
+        component: NotFoundView
     },
     {
-        path: '/product-expire-management',
-        name: 'product-expire-management',
-        component: ProductExpireManageView
-    },
-    {
-        path: '/task-management',
-        name: 'task-management',
-        component: TaskManagementView
+        path: '/',
+        name: 'home',
+        component: LoginView
     },
     {
         path: '/login',
@@ -26,20 +22,44 @@ const routes: Array<RouteRecordRaw> = [
         component: LoginView
     },
     {
-        path: '/profile',
-        name: 'profile',
-        component: LoginView //TODO: Add correct view
+        path: '/employee/management',
+        name: 'employee-management',
+        component: EmployeeManageView,
+        meta: {
+            requiresAuth: true
+        }
     },
     {
-        path: '/settings',
-        name: 'settings',
-        component: LoginView //TODO: Add correct view
+        path: '/expire/management',
+        name: 'expire/management',
+        component: ProductExpireManageView,
+        meta: {
+            requiresAuth: true
+        }
     },
+    {
+        path: '/tasks',
+        name: 'tasks',
+        component: TaskManagementView,
+        meta: {
+            requiresAuth: true
+        }
+    }
 ]
 
 const router = createRouter({
-    history: createWebHashHistory(),
+    history: createWebHistory(),
     routes
 })
+
+router.beforeEach((to, from, next) => {
+    const isAuthenticated = true
+
+    if (to.meta.requiresAuth && !isAuthenticated) {
+        next('/login');
+    } else {
+        next();
+    }
+});
 
 export default router
