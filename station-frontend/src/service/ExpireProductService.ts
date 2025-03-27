@@ -3,7 +3,7 @@ import ExpireProductService from "@/service/ExpireProductService";
 
 const API_URL = "/v1/expire/products";
 const ALL_PRODUCTS_API_URL = "/v1/expire/all-products";
-const CATEGORY_API_URL = "/v1/expire/categories";
+const CATEGORY_API_URL = "/v1/expire/category";
 
 export interface ExpireProductCategory {
     id?: string;
@@ -40,18 +40,41 @@ export default {
     },
 
     async updateLastChange(product: ExpireProduct) {
-        const response = await settings.apiClient.patch(API_URL + "/" + product.id, {
+        await settings.apiClient.patch(API_URL + "/" + product.id, {
             id: product.id
         })
     },
 
     async updateExpireDate(product: ExpireProduct) {
-        console.log("LOGGING FOR JAN")
-        const response = await settings.apiClient.patch(API_URL + "/" + product.id, {
+        await settings.apiClient.patch(API_URL + "/" + product.id, {
             id: product.id,
             expireDate: product?.expireDate,
             updateLastModifiedDate: false
         })
+    },
+
+    async updateProduct(product: ExpireProduct) {
+        await settings.apiClient.patch(API_URL + "/" + product.id, {
+            id: product.id,
+            productId: product.productId,
+            name: product.name, // Now sending the name
+            reduceProductTime: product.reduceProductTime,
+            categoryId: product.category?.id, // Send only the category ID
+            updateLastModifiedDate: false
+        })
+    },
+
+    async updateCategory(category: ExpireProductCategory) {
+        //TODO: implement
+    },
+
+    async createProduct(product: { productId: number; name: string; reduceProductTime?: number; productCategoryId?: string | null }) {
+        await settings.apiClient.post(API_URL, { // Changed to post
+            productId: product.productId,
+            name: product.name, // Added name
+            reduceProductTime: product.reduceProductTime,
+            productCategoryId: product.productCategoryId, // Changed to productCategoryId
+        });
     },
 
     compareDates(date: Date, secondDate: Date): boolean {

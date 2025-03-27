@@ -4,6 +4,7 @@ import dev.aventix.station.resource.server.expire.category.request.StationExpire
 import dev.aventix.station.resource.server.expire.category.request.StationExpireProductCategoryDeleteRequest
 import dev.aventix.station.resource.server.expire.category.request.StationExpireProductCategoryPatchRequest
 import jakarta.persistence.EntityExistsException
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import java.util.*
 import kotlin.NoSuchElementException
@@ -44,6 +45,6 @@ class StationExpireProductCategoryService(
     }
 
     fun getAllCategories(): List<StationExpireProductCategoryDTO> {
-        return stationExpireItemCategoryRepository.findAll().map { it.toDTO() }
+        return stationExpireItemCategoryRepository.findAll(Sort.by(Sort.Order.asc("name"))).map { it.toDTO() }
     }
 }

@@ -32,6 +32,8 @@ const selectedSetting = ref('products'); // Add selected setting
 const isProductLoading = ref(false); // Loading indicator for products
 const isCategoryLoading = ref(false); // Loading indicator for categories
 const displayedProducts = ref<ExpireProduct[]>([]); // New ref for displayed products
+const changesMade = ref(false); // Track changes
+const isSaving = ref(false); // Add a saving indicator
 
 
 const updateLastChange = (product: ExpireProduct): void => {
@@ -155,53 +157,73 @@ function clearCategorySearch() {
 }
 
 async function updateProduct(product: ExpireProduct) {
-  await ExpireProductService.updateExpireDate(product);
+  changesMade.value = true; // Set changesMade to true
 }
 
 async function updateCategory(category: ExpireProductCategory) {
-  //TODO: Add update category
+  await ExpireProductService.updateCategory(category);
 }
 
 const allCategories = computed(() => {
-  return [otherCategorie, ...Array.from(categories.value.values())];
+  return [...Array.from(categories.value.values())];
 });
 
-onMounted(async () => {
+async function saveChanges() {
+  isSaving.value = true; // Show loading indicator
   try {
-    const products = await ExpireProductService.getExpiringItems();
-    allProducts.value = await ExpireProductService.getAllProducts();
-
-    products.forEach(product => {
-      if (product.category === undefined || product.category === null) {
-        product.category = otherCategorie
-      }
-
-      if (!categories.value.has(product.category.name)) {
-        product.category.showProducts = true
-        categories.value.set(product.category.name, product.category)
-      }
-
-      if (!expiredProducts.value.has(categories.value.get(product.category.name)!)) {
-        expiredProducts.value.set(categories.value.get(product.category.name)!, []);
-      }
-
-      expiredProducts.value.get(categories.value.get(product.category.name)!)!.push(product)
-    });
-
-    for (let value of expiredProducts.value.keys()) {
-      console.log(value.name + " registered as category")
+    for (const product of displayedProducts.value) {
+        await ExpireProductService.updateProduct(product);
     }
+    changesMade.value = false; // Reset changesMade
+    await loadData(); // Reload data to reflect changes
 
-    let allCategories = await ExpireProductService.getAllCategories();
-    allCategories.forEach(category => {
-      categories.value.set(category.name, category);
-    })
-
-    displayedProducts.value = [];
-  } catch (error) {
-    console.error("Fehler beim Laden der Artikel:", error)
+  } finally {
+     isSaving.value = false; // Hide loading indicator
   }
-})
+}
+
+async function loadData() {
+    try {
+        const products = await ExpireProductService.getExpiringItems();
+        allProducts.value = await ExpireProductService.getAllProducts();
+        categories.value.clear();
+        expiredProducts.value.clear();
+
+        products.forEach(product => {
+            if (product.category === undefined || product.category === null) {
+                product.category = otherCategorie
+            }
+
+            if (!categories.value.has(product.category.name)) {
+                product.category.showProducts = true
+                categories.value.set(product.category.name, product.category)
+            }
+
+            if (!expiredProducts.value.has(categories.value.get(product.category.name)!)) {
+                expiredProducts.value.set(categories.value.get(product.category.name)!, []);
+            }
+
+            expiredProducts.value.get(categories.value.get(product.category.name)!)!.push(product)
+        });
+
+        for (let value of expiredProducts.value.keys()) {
+            console.log(value.name + " registered as category")
+        }
+
+        let allCategories = await ExpireProductService.getAllCategories();
+        allCategories.forEach(category => {
+            categories.value.set(category.name, category);
+        })
+
+        displayedProducts.value = [];
+    } catch (error) {
+        console.error("Fehler beim Laden der Artikel:", error)
+    }
+}
+
+onMounted(async () => {
+  await loadData();
+});
 </script>
 
 <template>
@@ -338,22 +360,24 @@ onMounted(async () => {
             </thead>
             <transition-group name="product-list" tag="tbody">
               <tr v-for="product in displayedProducts" :key="product.id">
-                <td>{{ product.productId }}</td>
                 <td>
-                  <input type="text" v-model="product.name" @change="updateProduct(product)"
+                  <input type="text" v-model="product.productId" @input="updateProduct(product)"
                          :class="$style['editable-input']"/>
                 </td>
                 <td>
-                  <input type="number" v-model="product.reduceProductTime" @change="updateProduct(product)"
+                  <input type="text" v-model="product.name" @input="updateProduct(product)"
                          :class="$style['editable-input']"/>
                 </td>
                 <td>
-                  <select v-model="product.category" @change="updateProduct(product)"
+                  <input type="number" v-model="product.reduceProductTime" @input="updateProduct(product)"
+                         :class="$style['editable-input']"/>
+                </td>
+                <td>
+                  <select v-model="product.category" @input="updateProduct(product)"
                           :class="$style['editable-select']">
                     <option v-for="category in allCategories" :key="category.id" :value="category">
                       {{ category.name }}
                     </option>
-                    <option :value="null">Andere</option>
                   </select>
                 </td>
               </tr>
@@ -362,6 +386,12 @@ onMounted(async () => {
           <div v-else-if="searchInput && !isProductLoading">
             Keine passenden Produkte gefunden.
           </div>
+
+          <!-- Save Changes Button -->
+          <button v-if="changesMade" @click="saveChanges" :class="$style['save-changes-button']" :disabled="isSaving">
+            <FontAwesomeIcon v-if="isSaving" icon="spinner" spin :class="$style['loading-spinner']"/>
+            <span v-else>Änderungen speichern</span>
+          </button>
         </div>
 
         <!-- Categories Section -->
@@ -413,7 +443,7 @@ onMounted(async () => {
     </div>
   </transition>
 
-  <AddExpireProduct v-if="addProductDialogOpen" @close="addProductDialogOpen = false"/>
+  <AddExpireProduct v-if="addProductDialogOpen" @close="addProductDialogOpen = false" @product-added="loadData"/>
   <AddExpireProductCategory v-if="addCategoryDialogOpen" @close="addCategoryDialogOpen = false"/>
 </template>
 
@@ -833,6 +863,23 @@ $border-design: 0.1vh solid #555;
         }
       }
     }
+      .save-changes-button {
+        padding: 10px 15px;
+        background-color: $accent;
+        color: $text-color;
+        border: none;
+        border-radius: $border-radius;
+        cursor: pointer;
+        transition: background-color $transition-speed ease;
+        margin-top: 10px;
+
+        &:hover:not(:disabled) {
+          background-color: $accent-hover;
+        }
+        &:disabled {
+            background-color: #7d1f00;
+        }
+      }
   }
 }
 

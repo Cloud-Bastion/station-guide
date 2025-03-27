@@ -241,7 +241,6 @@ $transition-speed: 0.3s;
     border: $border-design;
     border-radius: $border-radius;
     width: 90%;
-    overflow-x: auto;
 
     .schedule-header-container {
       font-weight: bold;

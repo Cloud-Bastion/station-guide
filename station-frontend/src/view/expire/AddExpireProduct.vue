@@ -3,8 +3,10 @@ import {ref, defineEmits, onMounted, computed} from 'vue';
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import ExpireProductService, {ExpireProductCategory} from "@/service/ExpireProductService";
 import AddExpireProductCategory from "@/view/expire/AddExpireProductCategory.vue";
+import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
-const emit = defineEmits(['close']);
+
+const emit = defineEmits(['close', 'product-added']);
 
 const productName = ref('');
 const productNumber = ref('');
@@ -13,6 +15,13 @@ const reduceTime = ref('');
 const selectedCategory = ref<string | null>(null); // Holds category ID or null
 const categories = ref<ExpireProductCategory[]>([]);
 const addCategoryDialogOpen = ref(false);
+const addProductSuccess = ref<boolean | null>(null); // null = no message, true = success, false = error
+const addProductError = ref<boolean | null>(null);
+
+// Validation refs
+const productNumberError = ref('');
+const productNameError = ref('');
+const reduceTimeError = ref('');
 
 const otherCategory: ExpireProductCategory = {
   name: "Andere",
@@ -33,26 +42,85 @@ onMounted(async () => {
   } catch (error) {
     console.error("Error fetching categories:", error);
   }
+    addProductSuccess.value = null; // Reset success/error when opening dialog
+    addProductError.value = null;
 });
 
-function addProduct() {
-  // Send category ID (or null for "Other")
-  const categoryId = selectedCategory.value;
+async function addProduct() {
+  if (!validateInput()) {
+    return; // Stop if validation fails
+  }
 
-  console.log('Adding product:', {
-    name: productName.value,
-    number: productNumber.value,
-    expireDate: expireDate.value,
-    reduceTime: reduceTime.value,
-    categoryId: categoryId
-  });
-  emit('close'); // Close the modal after adding
+  try {
+    // Send category ID (or null for "Other")
+    const categoryId = selectedCategory.value;
+
+    await ExpireProductService.createProduct({
+      name: productName.value,
+      productId: parseInt(productNumber.value), // Ensure productId is a number
+      expireDate: null, // You're not setting expireDate on creation
+      reduceProductTime: reduceTime.value ? parseInt(reduceTime.value) : undefined, // Number or undefined
+      productCategoryId: categoryId, // Send category ID
+    });
+    addProductSuccess.value = true;
+    addProductError.value = false;
+    emit('product-added');
+    setTimeout(() => {
+      emit('close'); // Close the modal after adding
+      addProductSuccess.value = null; // Reset success for next time
+    }, 1500);
+
+  } catch (error) {
+    console.error("Error adding product:", error);
+    addProductSuccess.value = false;
+    addProductError.value = true;
+    // Optionally show an error message to the user
+    setTimeout(() => {
+      addProductError.value = null;
+    }, 1500)
+  }
 }
 
 async function handleCategoryAdded(newCategory: ExpireProductCategory) {
   categories.value = await ExpireProductService.getAllCategories(); // Refresh categories
   selectedCategory.value = newCategory.id; // Select the newly added category
   addCategoryDialogOpen.value = false; // Close the add category dialog
+}
+
+function validateInput() {
+  let isValid = true;
+
+  // Reset error messages
+  productNumberError.value = '';
+  productNameError.value = '';
+  reduceTimeError.value = '';
+
+  // Product Number validation
+  if (!productNumber.value) {
+    productNumberError.value = 'Artikelnummer ist erforderlich.';
+    isValid = false;
+  } else if (isNaN(parseInt(productNumber.value))) {
+    productNumberError.value = 'Artikelnummer muss eine Zahl sein.';
+    isValid = false;
+  }
+
+  // Product Name validation
+  if (!productName.value) {
+    productNameError.value = 'Produktname ist erforderlich.';
+    isValid = false;
+  }
+
+  // Reduce Time validation (optional, but must be a number if provided)
+  if (reduceTime.value && isNaN(parseInt(reduceTime.value))) {
+    reduceTimeError.value = 'Reduzierzeit muss eine Zahl sein.';
+    isValid = false;
+  }
+    if (reduceTime.value && parseInt(reduceTime.value) < 0) {
+        reduceTimeError.value = 'Reduzierzeit muss positiv sein.';
+        isValid = false;
+    }
+
+  return isValid;
 }
 </script>
 
@@ -69,10 +137,12 @@ async function handleCategoryAdded(newCategory: ExpireProductCategory) {
         <div :class="$style['input-group']">
           <label for="product-number">Artikelnummer:</label>
           <input id="product-number" type="number" v-model="productNumber" :class="$style['input']"/>
+          <div v-if="productNumberError" :class="$style['error-message']">{{ productNumberError }}</div>
         </div>
         <div :class="$style['input-group']">
           <label for="product-name">Produktname:</label>
           <input id="product-name" type="text" v-model="productName" :class="$style['input']"/>
+          <div v-if="productNameError" :class="$style['error-message']">{{ productNameError }}</div>
         </div>
         <div :class="$style['input-group']">
           <label for="category">Kategorie:</label>
@@ -91,7 +161,20 @@ async function handleCategoryAdded(newCategory: ExpireProductCategory) {
         <div :class="$style['input-group']">
           <label for="reduce-time">Reduzierzeit (Tage):</label>
           <input id="reduce-time" type="number" v-model="reduceTime" :class="$style['input']"/>
+          <div v-if="reduceTimeError" :class="$style['error-message']">{{ reduceTimeError }}</div>
         </div>
+
+        <transition name="fade">
+          <div v-if="addProductSuccess" :class="$style['success-message']">
+            <FontAwesomeIcon :icon="faCheck" :class="$style['success-icon']" />
+          </div>
+        </transition>
+        <transition name="fade">
+          <div v-if="addProductError" :class="$style['error-message']">
+            <FontAwesomeIcon :icon="faTimes" :class="$style['error-icon']" />
+          </div>
+        </transition>
+
         <button @click="addProduct" :class="$style['add-button']">Hinzufügen</button>
       </div>
     </div>
@@ -224,7 +307,36 @@ $input-border: #555;
           background-color: $accent-hover;
         }
       }
+      .success-message {
+        color: green;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+      .success-icon {
+        color: green;
+        font-size: 1.5rem;
+      }
+
+      .error-message {
+        color: $accent;
+        margin-bottom: 10px;
+        text-align: center;
+        font-size: 0.8rem;
+      }
+      .error-icon {
+        color: $accent;
+        font-size: 1.5rem;
+      }
     }
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

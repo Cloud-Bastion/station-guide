@@ -16,75 +16,6 @@ class StationExpireProductService(
     private val stationExpireProductRepository: StationExpireProductRepository,
     private val stationExpireProductCategoryService: dev.aventix.station.resource.server.expire.category.StationExpireProductCategoryService,
 ) {
-
-    @PostConstruct
-    fun init() {
-        val categoryB = this.stationExpireProductCategoryService.create(
-            StationExpireProductCategoryCreateRequest(
-                "B", 5
-            )
-        )
-
-        val categoryA = this.stationExpireProductCategoryService.create(
-            StationExpireProductCategoryCreateRequest(
-                "A", 3
-            )
-        )
-
-        this.create(
-            StationExpireProductCreateRequest(
-                111111, "Dosenbier", categoryB.id, null, LocalDate.now().plusDays(6)
-            )
-        )
-
-        this.create(
-            StationExpireProductCreateRequest(
-                555555, "Flaschenbier", categoryB.id, 6, LocalDate.now().plusDays(7)
-            )
-        )
-
-        this.create(
-            StationExpireProductCreateRequest(
-                222222, "Birnenbier", categoryB.id, null, LocalDate.now().plusDays(7)
-            )
-        )
-
-        this.create(
-            StationExpireProductCreateRequest(
-                333333, "Coca-Cola 250ml", categoryB.id, null, LocalDate.now().plusDays(3)
-            )
-        )
-
-        this.create(
-            StationExpireProductCreateRequest(
-                444444, "Apfelsaft", categoryA.id, null, LocalDate.now().plusDays(2)
-            )
-        )
-
-        this.create(
-            StationExpireProductCreateRequest(
-                666666, "Ananassaft", categoryA.id, 4, LocalDate.now().plusDays(1)
-            )
-        )
-
-        this.create(
-            StationExpireProductCreateRequest(
-                777777, "Apfelkuchen", null, null, LocalDate.now().minusDays(1)
-            )
-        )
-
-        this.create(
-            StationExpireProductCreateRequest(
-                888888, "Torte", null, null, null
-            )
-        )
-
-
-        getAllProductsSortedByCategory().forEach { product -> println("Registered: ${product.name} with id: ${product.id}") }
-        this.getAllProductsExpiringOrReduce()
-            .forEach { product -> println("Sort out: ${product.name} with id: ${product.id}") }
-    }
-
     fun getAllProductsSortedByName(): MutableList<StationExpireProductDTO> {
         return this.stationExpireProductRepository.findAll(Sort.by(Sort.Order.asc("name")))
             .map(StationExpireProductEntity::toDTO).toCollection(
@@ -94,7 +25,7 @@ class StationExpireProductService(
 
     fun getAllProductsSortedByCategory(): MutableList<StationExpireProductDTO> {
         return this.stationExpireProductRepository.findAll(
-            Sort.by(Sort.Order.asc("category.name"), Sort.Order.asc("name"))
+            Sort.by(Sort.Order.desc("category.name"), Sort.Order.asc("name"))
         ).map { entity ->
             entity.toDTO()
         }.toCollection(mutableListOf())

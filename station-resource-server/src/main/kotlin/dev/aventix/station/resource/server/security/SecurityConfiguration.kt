@@ -20,6 +20,7 @@ class SecurityConfiguration {
                     addAllowedMethod(HttpMethod.POST)
                     addAllowedMethod(HttpMethod.PATCH)
                     addAllowedMethod(HttpMethod.DELETE)
+                    addAllowedOrigin("https://dashboard.cakmak-station.de")
                     addAllowedOrigin("http://localhost:5173")
                 })
             })
