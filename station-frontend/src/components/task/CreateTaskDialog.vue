@@ -37,7 +37,8 @@
         <!-- Optional: Add Recurrence Rule input if recurring is checked -->
         <div :class="$style['form-group']" v-if="newTask.recurring">
           <label for="task-recurrence-rule">Wiederholungsregel (z.B. Cron):</label>
-          <input type="text" id="task-recurrence-rule" v-model="newTask.recurrenceRule" :class="$style['input']" placeholder="z.B. 0 0 * * * *"/>
+          <input type="text" id="task-recurrence-rule" v-model="newTask.recurrenceRule" :class="$style['input']"
+                 placeholder="z.B. 0 0 * * * *"/>
         </div>
         <div :class="$style['form-group']">
           <label for="task-files">Dateien:</label>
@@ -185,12 +186,12 @@ $input-border: #555; // Input border
           background-color: $input-bg;
           color: $text-color;
           box-sizing: border-box; // Include padding and border in width
-           transition: border-color $transition-speed ease;
+          transition: border-color $transition-speed ease;
 
-           &:focus {
-             border-color: $accent;
-             outline: none;
-           }
+          &:focus {
+            border-color: $accent;
+            outline: none;
+          }
         }
 
         .textarea {
@@ -200,21 +201,21 @@ $input-border: #555; // Input border
 
         // Style for checkbox group
         &.form-group-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 10px; // Space between checkbox and label
+          display: flex;
+          align-items: center;
+          gap: 10px; // Space between checkbox and label
 
-            label {
-                margin-bottom: 0; // Remove bottom margin for checkbox label
-                cursor: pointer;
-            }
+          label {
+            margin-bottom: 0; // Remove bottom margin for checkbox label
+            cursor: pointer;
+          }
 
-            .checkbox {
-                width: 18px; // Adjust size as needed
-                height: 18px;
-                accent-color: $accent; // Use accent color for the check
-                cursor: pointer;
-            }
+          .checkbox {
+            width: 18px; // Adjust size as needed
+            height: 18px;
+            accent-color: $accent; // Use accent color for the check
+            cursor: pointer;
+          }
         }
       }
 
@@ -237,3 +238,4 @@ $input-border: #555; // Input border
     }
   }
 }
+</style>

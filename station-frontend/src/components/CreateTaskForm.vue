@@ -37,8 +37,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, ref } from 'vue';
-import TaskService, { CreateScheduledTaskRequest } from '../service/TaskService';
+import {defineComponent, reactive, ref} from 'vue';
+import TaskService, {CreateScheduledTaskRequest} from '../service/TaskService';
 
 export default defineComponent({
   name: 'CreateTaskForm',

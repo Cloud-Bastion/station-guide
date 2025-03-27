@@ -21,6 +21,7 @@ class SecurityConfiguration {
                     addAllowedMethod(HttpMethod.PATCH)
                     addAllowedMethod(HttpMethod.DELETE)
                     addAllowedOrigin("https://dashboard.cakmak-station.de")
+                    addAllowedOrigin("http://localhost:5173")
                 })
             })
         }.csrf {
