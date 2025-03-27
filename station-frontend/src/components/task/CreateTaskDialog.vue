@@ -74,12 +74,16 @@
              <h3 :class="$style['section-title']">Wiederkehrende Aufgabe Details</h3>
             <div :class="$style['form-group']">
               <label for="task-frequency">Frequenz <span :class="$style['required']">*</span></label>
-              <!-- TODO: Consider using a select dropdown for predefined frequencies -->
-              <input type="text" id="task-frequency" v-model="newTask.frequency" placeholder="z.B. DAILY, WEEKLY, MONTHLY" :class="$style['input']" required/>
-               <small>Gültige Werte: DAILY, WEEKLY, MONTHLY, YEARLY</small>
+              <select id="task-frequency" v-model="newTask.frequency" :class="$style['select']" required>
+                <option value="DAILY">Täglich</option>
+                <option value="WEEKLY">Wöchentlich</option>
+                <option value="MONTHLY">Monatlich</option>
+                <!-- <option value="YEARLY">Jährlich</option> --> {/* Removed YEARLY as per request */}
+              </select>
             </div>
-            <div :class="$style['form-group']">
-              <label>Tage der Woche (wenn Frequenz WEEKLY)</label>
+            <!-- Show Days of Week only if frequency is WEEKLY -->
+            <div :class="$style['form-group']" v-if="newTask.frequency === 'WEEKLY'">
+              <label>Tage der Woche</label>
               <div :class="$style['checkbox-group']">
                 <label v-for="day in weekDays" :key="day.value" :class="$style['checkbox-label']">
                   <input type="checkbox" :value="day.value" v-model="newTask.daysOfWeek" :class="$style['checkbox-inline']"/>
@@ -88,8 +92,9 @@
                 </label>
               </div>
             </div>
-            <div :class="$style['form-group']">
-              <label>Tage des Monats (wenn Frequenz MONTHLY)</label>
+            <!-- Show Days of Month only if frequency is MONTHLY -->
+            <div :class="$style['form-group']" v-if="newTask.frequency === 'MONTHLY'">
+              <label>Tage des Monats</label>
                <div :class="$style['checkbox-group']">
                    <label v-for="day in monthDays" :key="day.value" :class="$style['checkbox-label']">
                        <input type="checkbox" :value="day.value" v-model="newTask.daysOfMonth" :class="$style['checkbox-inline']"/>
@@ -155,7 +160,7 @@ const newTask = reactive({
   endTime: '',   // For datetime-local input
 
   // Recurring Task fields
-  frequency: '',
+  frequency: 'DAILY', // Default frequency to DAILY
   daysOfWeek: [] as number[],
   daysOfMonth: [] as number[],
   scheduleStartTime: '', // For time input "HH:mm"
@@ -248,10 +253,10 @@ const submitTask = async () => {
           permissionGroup: newTask.permissionGroup || null,
           // createdBy will likely be set by the backend
         },
-        frequency: newTask.frequency.toUpperCase(), // Ensure frequency is uppercase
-        // Ensure arrays are not empty before sending, or send null/undefined based on backend expectation
-        daysOfWeek: newTask.daysOfWeek.length > 0 ? newTask.daysOfWeek.sort((a, b) => a - b) : null,
-        daysOfMonth: newTask.daysOfMonth.length > 0 ? newTask.daysOfMonth.sort((a, b) => a - b) : null,
+        frequency: newTask.frequency, // Already uppercase from select value
+        // Send days only if relevant for the frequency
+        daysOfWeek: newTask.frequency === 'WEEKLY' && newTask.daysOfWeek.length > 0 ? newTask.daysOfWeek.sort((a, b) => a - b) : null,
+        daysOfMonth: newTask.frequency === 'MONTHLY' && newTask.daysOfMonth.length > 0 ? newTask.daysOfMonth.sort((a, b) => a - b) : null,
         startTime: formatTime(newTask.scheduleStartTime), // Format to HH:mm:ss
         endTime: formatTime(newTask.scheduleEndTime),     // Format to HH:mm:ss
         endTimeDaysAdd: newTask.endTimeDaysAdd,
