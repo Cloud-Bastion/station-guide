@@ -23,4 +23,12 @@ export default {
         });
         return response.data;
     },
+
+    async getGoogleAuth(username: string, password: string): Promise<UserAuthentication> {
+        const response = await apiClient.post<UserAuthentication>("login", {
+            username: username,
+            password: password,
+        });
+        return response.data;
+    },
 }

@@ -1,4 +1,4 @@
-package dev.aventix.station.authserver.user
+package dev.aventix.station.authserver.provider
 
 enum class AuthProvider {
     GOOGLE,

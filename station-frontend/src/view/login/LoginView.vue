@@ -11,6 +11,12 @@ const submitLogin = async () => {
   console.log(authentication.token);
 };
 
+const googleLogin = async () => {
+  const CLIENT_ID = encodeURIComponent("158421481211-6vp5a7oq3lbd60s16f43r3fs3ic66s7r.apps.googleusercontent.com")
+  const REDIRECT_URI = encodeURIComponent("http://localhost:5173/google-callback")
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?redirect_uri=${REDIRECT_URI}&response_type=code&client_id=${CLIENT_ID}&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+openid&access_type=offline`
+};
+
 </script>
 
 <template>
@@ -49,7 +55,7 @@ const submitLogin = async () => {
             <FontAwesomeIcon :icon="['fab', 'apple']" size="lg" :class="$style['icon']"/>
             <span>Login mit Apple</span>
           </button>
-          <button :class="$style['login-third-party-button']">
+          <button :class="$style['login-third-party-button']" @click="googleLogin()">
             <FontAwesomeIcon :icon="['fab', 'google']" size="lg" :class="$style['icon']" />
             <span>Login mit Google</span>
           </button>

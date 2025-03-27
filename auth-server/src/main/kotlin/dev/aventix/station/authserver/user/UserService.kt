@@ -1,6 +1,7 @@
 package dev.aventix.station.authserver.user
 
 import dev.aventix.station.authserver.config.ApplicationConfigProperties
+import dev.aventix.station.authserver.provider.AuthProvider
 import dev.aventix.station.authserver.user.authority.UserAuthority
 import dev.aventix.station.authserver.user.authority.UserAuthorityCreateRequest
 import dev.aventix.station.authserver.user.authority.UserAuthorityDto
@@ -12,7 +13,8 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
-import java.util.UUID
+import java.util.*
+import kotlin.NoSuchElementException
 
 @Service
 class UserService(
@@ -34,6 +36,8 @@ class UserService(
             )
         )
     }
+
+    fun findByEmail(email: String): Optional<UserDto> = userRepository.findByEmail(email).map { u -> u.toDto() }
 
     fun createAuthority(request: UserAuthorityCreateRequest): UserAuthorityDto {
         val entity = UserAuthority().apply {
