@@ -36,6 +36,7 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.testcontainers:postgresql")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     "developmentOnly"("org.springframework.boot:spring-boot-devtools")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     runtimeOnly("org.postgresql:postgresql")

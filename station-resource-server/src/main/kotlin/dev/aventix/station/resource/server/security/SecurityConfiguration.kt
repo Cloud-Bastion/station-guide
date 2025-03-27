@@ -13,7 +13,13 @@ class SecurityConfiguration {
     @Bean
     @Throws(Exception::class)
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
-        return http.cors {
+        return http.authorizeHttpRequests { auth ->
+            auth.anyRequest().authenticated()
+        }.oauth2ResourceServer { resourceServer ->
+            resourceServer.jwt {
+
+            }
+        }.cors {
             it.configurationSource(UrlBasedCorsConfigurationSource().apply {
                 registerCorsConfiguration("/**", CorsConfiguration().applyPermitDefaultValues().apply {
                     addAllowedMethod(HttpMethod.OPTIONS)
@@ -26,8 +32,6 @@ class SecurityConfiguration {
             })
         }.csrf {
             it.disable()
-        }.authorizeHttpRequests { auth ->
-            auth.anyRequest().permitAll()
         }.build()
     }
 

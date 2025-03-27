@@ -8,7 +8,7 @@ const password: Ref<string> = new Ref("");
 
 const submitLogin = async () => {
   const authentication = await AuthUserService.getUserAuth(email.value, password.value);
-  console.log(authentication.token);
+  localStorage.setItem("auth_token", authentication.token)
 };
 
 const googleLogin = async () => {

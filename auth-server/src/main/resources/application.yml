@@ -4,6 +4,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+  datasource:
+    url: "jdbc:postgresql://localhost:5432/test"
+    username: "aventica"
+    password: "aventica"
+    driver-class-name: org.postgresql.Driver
   security:
     oauth2:
       client:
@@ -36,10 +41,6 @@ station:
           client-id: Ov23liQKGMY4YHaZVfEs
           client-secret: e96263017c02351e2b153c7e7fa84f1142e56965
           redirect-uri: "http://localhost:8090/v1/auth/login/oauth2/callback/github"
-
-
-debug: true
-
 
 server:
   port: 8081

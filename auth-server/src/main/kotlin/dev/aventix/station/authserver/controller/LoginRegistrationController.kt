@@ -1,7 +1,11 @@
 package dev.aventix.station.authserver.controller
 
+import com.nimbusds.jose.jwk.JWK
+import com.nimbusds.jose.jwk.source.JWKSource
+import com.nimbusds.jose.proc.SecurityContext
 import dev.aventix.station.authserver.authenticate.LoginRequest
 import dev.aventix.station.authserver.authenticate.TokenService
+import dev.aventix.station.authserver.config.ApplicationConfigProperties
 import dev.aventix.station.authserver.provider.google.GoogleProfileDetailsService
 import dev.aventix.station.authserver.user.UserAuthenticateResponse
 import dev.aventix.station.authserver.user.UserService
@@ -23,7 +27,9 @@ class LoginRegistrationController(
     private val authenticationManager: AuthenticationManager,
     private val tokenService: TokenService,
     private val userService: UserService,
-    private val googleProfileDetailsService: GoogleProfileDetailsService
+    private val googleProfileDetailsService: GoogleProfileDetailsService,
+    private val applicationConfig: ApplicationConfigProperties,
+    private val jwkSource: JWKSource<SecurityContext>,
 ) {
 
     @PostMapping("/login")
@@ -34,10 +40,10 @@ class LoginRegistrationController(
             )
         )
 
-        try {
-            return ResponseEntity.ok(UserAuthenticateResponse(tokenService.generateToken(authentication)))
+        return try {
+            ResponseEntity.ok(UserAuthenticateResponse(tokenService.generateToken(authentication)))
         } catch (error: Error) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(UserAuthenticateResponse(null, error))
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(UserAuthenticateResponse(null, error))
         }
     }
 
@@ -59,6 +65,11 @@ class LoginRegistrationController(
     @PostMapping("/login/oauth2/callback/github")
     fun oauth2LoginGitHub(@RequestParam oAuthId: String) {
 
+    }
+
+    @GetMapping("/jwt/public-key")
+    fun exposePublicKey(jwkSource: JWKSource<SecurityContext>): ResponseEntity<Map<String, List<JWK>>> {
+        return ResponseEntity.ok(mapOf("keys" to jwkSource(null, null)))
     }
 
     @PostMapping("/register")
