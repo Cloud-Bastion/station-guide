@@ -83,6 +83,7 @@
               <div :class="$style['checkbox-group']">
                 <label v-for="day in weekDays" :key="day.value" :class="$style['checkbox-label']">
                   <input type="checkbox" :value="day.value" v-model="newTask.daysOfWeek" :class="$style['checkbox-inline']"/>
+                  <span :class="$style['checkbox-custom']"></span>
                   <span :class="$style['checkbox-text']">{{ day.label }}</span>
                 </label>
               </div>
@@ -92,6 +93,7 @@
                <div :class="$style['checkbox-group']">
                    <label v-for="day in monthDays" :key="day.value" :class="$style['checkbox-label']">
                        <input type="checkbox" :value="day.value" v-model="newTask.daysOfMonth" :class="$style['checkbox-inline']"/>
+                       <span :class="$style['checkbox-custom']"></span>
                        <span :class="$style['checkbox-text']">{{ day.label }}</span>
                    </label>
                </div>
@@ -285,6 +287,7 @@ $input-bg: #333;
 $input-border: #555;
 $input-focus-border: $accent;
 $required-color: $accent;
+$checkbox-size: 18px; // Size for custom checkbox
 
 // --- Scrollbar ---
 ::-webkit-scrollbar {
@@ -404,9 +407,28 @@ $required-color: $accent;
           }
         }
 
-        // Specific styles for different input types if needed
+        // --- Date/Time Input Styling ---
         input[type="datetime-local"], input[type="time"] {
-            // Potentially add specific styling if needed, e.g., for the calendar icon
+            // Basic appearance matching other inputs
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+
+            // Style the calendar/clock icon for WebKit browsers
+            &::-webkit-calendar-picker-indicator {
+                background-color: $text-color-light; // Use a light color for the icon
+                border-radius: 3px;
+                padding: 3px;
+                cursor: pointer;
+                opacity: 0.7;
+                transition: opacity $transition-speed ease;
+
+                &:hover {
+                    opacity: 1;
+                }
+            }
+            // Try to make the icon visible in dark mode (might not work perfectly)
+             color-scheme: dark; // Hint for browser styling
         }
 
         .textarea {
@@ -465,7 +487,7 @@ $required-color: $accent;
         }
 
 
-         // --- Checkbox Group ---
+         // --- Custom Checkbox Group ---
         .checkbox-group {
             display: grid; // Use grid for better alignment
             grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); // Responsive columns
@@ -476,20 +498,69 @@ $required-color: $accent;
             border: 1px solid $input-border;
 
             .checkbox-label {
-                display: flex;
+                display: inline-flex; // Use inline-flex for alignment
                 align-items: center;
-                gap: 6px;
+                gap: 8px; // Gap between custom checkbox and text
                 cursor: pointer;
                 color: $text-color;
                 font-size: 0.9rem;
+                position: relative; // Needed for absolute positioning of ::before/::after
             }
+
+            // Hide the default checkbox visually but keep it accessible
             .checkbox-inline {
-                 accent-color: $accent; // Basic styling
+                 position: absolute;
+                 opacity: 0;
                  cursor: pointer;
-                 width: 16px;
-                 height: 16px;
-                 // For more custom checkboxes, more complex CSS or SVG is needed
+                 height: 0;
+                 width: 0;
             }
+
+            // The custom checkbox box
+            .checkbox-custom {
+                display: inline-block;
+                width: $checkbox-size;
+                height: $checkbox-size;
+                background-color: $input-bg;
+                border: 1px solid $input-border;
+                border-radius: 4px;
+                transition: background-color $transition-speed ease, border-color $transition-speed ease;
+                position: relative; // For checkmark positioning
+                flex-shrink: 0; // Prevent shrinking
+            }
+
+            // Style the custom checkbox when the hidden input is focused (for accessibility)
+            .checkbox-inline:focus + .checkbox-custom {
+                outline: none;
+                box-shadow: 0 0 0 2px rgba($input-focus-border, 0.4);
+                border-color: $input-focus-border;
+            }
+
+            // Style the custom checkbox when checked
+            .checkbox-inline:checked + .checkbox-custom {
+                background-color: $accent;
+                border-color: $accent;
+            }
+
+            // The checkmark using ::after pseudo-element
+            .checkbox-custom::after {
+                content: "";
+                position: absolute;
+                display: none; // Hidden by default
+                left: 5px; // Position checkmark
+                top: 1px; // Position checkmark
+                width: 5px;
+                height: 10px;
+                border: solid white;
+                border-width: 0 2px 2px 0;
+                transform: rotate(45deg);
+            }
+
+            // Show the checkmark when checked
+            .checkbox-inline:checked + .checkbox-custom::after {
+                display: block;
+            }
+
             .checkbox-text {
                 user-select: none;
             }
@@ -604,6 +675,10 @@ $required-color: $accent;
             .form-group {
                 .input, .textarea, .select { padding: 10px 12px; }
                 .task-type-tabs .tab-button { font-size: 0.9rem; padding: 8px 10px; } // Adjust tab button size
+                .checkbox-group {
+                    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)); // Adjust columns for smaller screens
+                    gap: 8px 12px;
+                }
             }
             .create-button { padding: 10px 20px; font-size: 0.95rem; }
         }
