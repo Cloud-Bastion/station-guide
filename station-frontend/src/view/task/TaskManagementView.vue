@@ -27,9 +27,7 @@
               </div>
             </div>
             <div :class="$style['task-right']">
-              <!-- Display scheduled task ID if available -->
-              <div v-if="task.scheduledTaskId" :class="$style['task-schedule']">Scheduled Task ID: {{ task.scheduledTaskId }}</div>
-              <div v-if="task.endTime" :class="$style['task-due-date']" :style="{ color: isOverdue(task) ? 'red' : '' }">Fällig: {{ formatDateTime(task.endTime) }}</div>
+              <div :class="$style['task-due-date']" :style="{ color: isOverdue(task) ? 'red' : '' }">Fällig: {{ task.endTime ? formatDateTime(task.endTime) : "Keine Fälligkeit" }}</div>
             </div>
           </div>
         </div>
@@ -48,9 +46,7 @@
           <div :class="$style['modal-body']">
             <p :class="$style['modal-description']">{{ selectedTask.description }}</p>
 
-            <!-- Display scheduled task ID if available -->
-            <p v-if="selectedTask.scheduledTaskId"><strong>Scheduled Task ID:</strong> {{ selectedTask.scheduledTaskId }}</p>
-            <p v-if="selectedTask.endTime"><strong>Fällig:</strong> {{ formatDateTime(selectedTask.endTime) }}</p>
+            <p ><strong>Fällig:</strong> {{ selectTask.endTime ? formatDateTime(selectTask.endTime) : "Keine Fälligkeit" }}</p>
             <p><strong>Status:</strong> <span :class="selectedTask.completed ? $style['completed'] : $style['pending']">{{ selectedTask.completed ? 'Abgeschlossen' : 'Ausstehend' }}</span></p>
 
             <button @click="toggleCompletion" :class="$style['complete-button']">
@@ -68,25 +64,12 @@
 import SidebarComponent from "@/components/sidebar/SidebarComponent.vue";
 import { ref, onMounted, computed } from 'vue';
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import TaskService from "@/service/TaskService"; // Import the service
+import TaskService, {Task} from "@/service/TaskService"; // Import the service
 import CreateTaskDialog from "@/components/task/CreateTaskDialog.vue";
 
-// --- Interface for OpenPlannedTask (matches StationTaskDTO) ---
-interface OpenPlannedTask {
-  id: string;
-  permissionGroup: string | null;
-  endTime: string | null;
-  isTemplate: boolean;
-  scheduledTaskId: string | null;
-  completed: boolean;
-  title?: string; // Add title, description, etc.
-  description?: string;
-  priority?: number;
-}
-
-const tasks = ref<OpenPlannedTask[]>([]); // Use OpenPlannedTask
+const tasks = ref<Task[]>([]); // Use OpenPlannedTask
 const loading = ref(true);
-const selectedTask = ref<OpenPlannedTask | null>(null); // Use OpenPlannedTask
+const selectedTask = ref<Task | null>(null); // Use OpenPlannedTask
 const showCreateTaskDialog = ref(false);
 
 onMounted(async () => {
@@ -117,7 +100,7 @@ const handleTaskCreated = async () => {
     await loadTasks();
 }
 
-const selectTask = (task: OpenPlannedTask) => { // Use OpenPlannedTask
+const selectTask = (task: Task) => {
   selectedTask.value = task;
 };
 
@@ -133,7 +116,7 @@ const toggleCompletion = () => {
 };
 
 // --- Priority Label Logic (Adjust as needed) ---
-const priorityLabel = (task: OpenPlannedTask) => {
+const priorityLabel = (task: Task) => {
   switch (task.priority) {
     case 1: return { text: 'Niedrig', class: 'priority-low' };
     case 2: return { text: 'Normal', class: 'priority-medium' };
@@ -143,7 +126,7 @@ const priorityLabel = (task: OpenPlannedTask) => {
   }
 };
 
-const isOverdue = (task: OpenPlannedTask) => {
+const isOverdue = (task: Task) => {
   if (!task.endTime) {
     return false;
   }
