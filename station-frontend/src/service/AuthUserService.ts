@@ -1,7 +1,7 @@
 import axios from "axios";
 import {ExpireProduct} from "@/service/ExpireProductService";
 
-const API_BASE_URL: string = import.meta.env.AUTH_BASE_URL || "http://localhost:8081/api/v1/auth";
+const API_BASE_URL: string = window.env.AUTH_BASE_URL;
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
