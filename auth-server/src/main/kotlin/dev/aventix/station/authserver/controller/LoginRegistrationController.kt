@@ -29,6 +29,7 @@ class LoginRegistrationController(
     private val userService: UserService,
     private val googleProfileDetailsService: GoogleProfileDetailsService,
     private val applicationConfig: ApplicationConfigProperties,
+    // JWKSource is injected but the endpoint to expose keys is handled by Spring Authorization Server automatically
     private val jwkSource: JWKSource<SecurityContext>,
 ) {
 
@@ -42,8 +43,9 @@ class LoginRegistrationController(
 
         return try {
             ResponseEntity.ok(UserAuthenticateResponse(tokenService.generateToken(authentication)))
-        } catch (error: Error) {
-            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(UserAuthenticateResponse(null, error))
+        } catch (error: Exception) { // Catch broader exception if needed
+            // Log the error appropriately
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(UserAuthenticateResponse(null, Error("Authentication failed"))) // Provide a generic error
         }
     }
 
@@ -52,34 +54,46 @@ class LoginRegistrationController(
                           @RequestParam("scope") scope: String,
                           @RequestParam("authuser") authUser: String,
                           @RequestParam("prompt") prompt: String): Unit {
+        // TODO: Implement Google OAuth2 login flow properly
+        // This typically involves exchanging the code for tokens, fetching user details,
+        // finding or creating a local user, and generating a session/token for your application.
         val accessToken = googleProfileDetailsService.oAuthAccessToken(code)
         val details = googleProfileDetailsService.getUserDetails(accessToken)
 
         if (userService.findByEmail(details.email).isPresent) {
             println("USER EXISTS, CONNECT TO GOOGLE ACCOUNT")
+            // TODO: Link existing account or log the user in
         } else {
             println("USER NOT EXISTS, CREATE NEW ACCOUNT!")
+            // TODO: Create a new user based on Google profile details
         }
+        // TODO: Redirect user or return appropriate response (e.g., JWT token)
     }
 
     @PostMapping("/login/oauth2/callback/github")
     fun oauth2LoginGitHub(@RequestParam oAuthId: String) {
-
+        // TODO: Implement GitHub OAuth2 login flow
     }
 
+    // The public key endpoint is automatically exposed at /oauth2/jwks by Spring Authorization Server
+    // No need for a manual endpoint like the commented out one below.
     /*@GetMapping("/jwt/public-key")
-    fun exposePublicKey(jwkSource: JWKSource<SecurityContext>): ResponseEntity<Map<String, List<JWK>>> {
-        return ResponseEntity.ok(mapOf("keys" to jwkSource(null, null)))
+    fun exposePublicKey(): ResponseEntity<Map<String, Any>> {
+         // This manual implementation is not needed.
+         // Use the JWKSource bean if you need programmatic access to keys.
+         // The endpoint /oauth2/jwks serves the keys automatically.
+         return ResponseEntity.ok(mapOf("keys" to ... )) // Example structure
     }*/
 
     @PostMapping("/register")
     fun register() {
-
+        // TODO: Implement user registration logic
     }
 
-    @PostMapping("/secure")
+    // This endpoint seems unnecessary if security is handled correctly via Spring Security filters
+    /*@PostMapping("/secure")
     fun secure(): String {
         return "very secure"
-    }
+    }*/
 
 }
