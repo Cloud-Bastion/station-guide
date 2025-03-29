@@ -14,6 +14,7 @@ class TaskEntity {
     @Column(nullable = false, unique = false)
     lateinit var title: String
 
+    @Column(columnDefinition = "TEXT") // Explizit TEXT für längere Beschreibungen mit Zeilenumbrüchen
     var description: String? = null
 
     var priority: Int = 0
