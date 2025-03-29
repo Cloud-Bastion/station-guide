@@ -464,6 +464,7 @@ $overdue-color: $priority-high; // Red for overdue
         margin-bottom: 15px;
         line-height: 1.5; // Better readability
         color: $text-color-light; // Slightly lighter description
+        white-space: pre-wrap; // <-- HIER DIE ÄNDERUNG: Whitespace und Zeilenumbrüche beibehalten
       }
 
       p {
