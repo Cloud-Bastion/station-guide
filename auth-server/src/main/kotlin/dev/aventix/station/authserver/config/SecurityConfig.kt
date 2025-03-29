@@ -57,8 +57,6 @@ class SecurityConfig(
             .authorizeHttpRequests { auth ->
                 auth
                     .anyRequest().permitAll()
-                /*.requestMatchers("/api/v1/auth/login").permitAll()
-                .anyRequest().authenticated()*/
             }
             .csrf { csrf -> csrf.disable() }
             .sessionManagement { session ->
