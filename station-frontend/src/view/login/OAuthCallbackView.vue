@@ -33,7 +33,8 @@ onMounted(async () => {
 
   // Retrieve the code verifier stored before redirect
   const codeVerifier = sessionStorage.getItem('pkce_code_verifier');
-  sessionStorage.removeItem('pkce_code_verifier'); // Clean up verifier
+  // --- REMOVED cleanup here, it's done in exchangeCodeForToken ---
+  // sessionStorage.removeItem('pkce_code_verifier'); // Clean up verifier
 
   // Optional: Retrieve and validate state
   // const storedState = sessionStorage.getItem('oauth_state');
@@ -41,38 +42,44 @@ onMounted(async () => {
   // if (!state || state !== storedState) {
   //   error.value = "Ungültiger Statusparameter (CSRF-Schutz).";
   //   loading.value = false;
+  //   // --- ADDED cleanup here on error ---
+  //   sessionStorage.removeItem('pkce_code_verifier');
   //   return;
   // }
 
   if (errorParam) {
     error.value = errorDescription || errorParam || "Unbekannter OAuth-Fehler.";
     loading.value = false;
+    // --- ADDED cleanup here on error ---
+    sessionStorage.removeItem('pkce_code_verifier');
     return;
   }
 
   if (!code) {
     error.value = "Kein Authorisierungscode empfangen.";
     loading.value = false;
+    // --- ADDED cleanup here on error ---
+    sessionStorage.removeItem('pkce_code_verifier');
     return;
   }
 
   if (!codeVerifier) {
     error.value = "Code Verifier nicht gefunden. Login-Vorgang möglicherweise unterbrochen.";
     loading.value = false;
+    // No need to remove verifier here as it wasn't found
     return;
   }
 
   try {
-    // Exchange the code for a token
+    // Exchange the code for a token (this now handles storing tokens and removing verifier)
     const tokenResponse = await AuthUserService.exchangeCodeForToken(code, codeVerifier);
 
     if (tokenResponse.access_token) {
-      // Store the token (e.g., in localStorage)
-      localStorage.setItem('auth_token', tokenResponse.access_token);
-      // Optional: Store refresh token if received and needed
-      if (tokenResponse.refresh_token) {
-        localStorage.setItem('refresh_token', tokenResponse.refresh_token);
-      }
+      // --- REMOVED redundant token storage ---
+      // localStorage.setItem('auth_token', tokenResponse.access_token);
+      // if (tokenResponse.refresh_token) {
+      //   localStorage.setItem('refresh_token', tokenResponse.refresh_token);
+      // }
 
       // Redirect to the intended page or a default dashboard
       // const intendedUrl = sessionStorage.getItem('intended_url') || '/employee/management';
@@ -80,13 +87,16 @@ onMounted(async () => {
       router.push({ name: 'employee-management' }); // Redirect to dashboard
 
     } else {
+      // This case should ideally be handled within exchangeCodeForToken's error handling
       throw new Error("Kein Access Token in der Antwort erhalten.");
     }
 
   } catch (err: any) {
     console.error("Error exchanging code for token:", err);
-    error.value = err.response?.data?.error_description || err.message || "Fehler beim Austausch des Codes gegen ein Token.";
+    // Error message is now derived from the error thrown by exchangeCodeForToken
+    error.value = err.message || "Fehler beim Austausch des Codes gegen ein Token.";
     loading.value = false;
+    // Verifier cleanup is handled within exchangeCodeForToken's catch block
   }
 });
 </script>

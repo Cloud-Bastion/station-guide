@@ -5,8 +5,7 @@ import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
 import LoginView from "@/view/login/LoginView.vue";
 import NotFoundView from "@/view/error/NotFoundView.vue";
 import AuthUserService from '@/service/AuthUserService'; // Import auth service for check
-
-// Removed OidcCallbackView import
+import OAuthCallbackView from '@/view/login/OAuthCallbackView.vue'; // --- IMPORTED Callback View ---
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -24,15 +23,16 @@ const routes: Array<RouteRecordRaw> = [
         path: '/login',
         name: 'login',
         component: LoginView,
-        // Redirect handled by global beforeEach guard
+        meta: { isPublic: true } // Mark login page as public
     },
-    // Removed OIDC callback route
-    // {
-    //     path: '/oidc-callback',
-    //     name: 'oidc-callback',
-    //     component: OidcCallback,
-    //     meta: { isPublic: true }
-    // },
+    // --- ADDED OIDC Callback Route ---
+    {
+        path: '/oidc-callback',
+        name: 'oidc-callback',
+        component: OAuthCallbackView, // Use the imported component
+        meta: { isPublic: true } // This route must be public to receive the callback
+    },
+    // --- END ADDED Route ---
     {
         path: '/employee/management',
         name: 'employee-management',
@@ -64,25 +64,29 @@ const router = createRouter({
     routes
 })
 
-// Global Navigation Guard using ROPC token check
+// Global Navigation Guard
 router.beforeEach((to, from, next) => {
     const isAuthenticated = AuthUserService.isAuthenticated(); // Check if token exists
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-    const isLoginPage = to.name === 'login';
+    const isPublic = to.matched.some(record => record.meta.isPublic); // Check if route is explicitly public
+
+    console.log(`Navigating to: ${to.path}, Requires Auth: ${requiresAuth}, Is Public: ${isPublic}, Is Authenticated: ${isAuthenticated}`);
 
     if (requiresAuth && !isAuthenticated) {
         // If trying to access a protected route without being authenticated,
         // redirect to the login page.
-        console.log(`Redirecting to login. Target: ${to.fullPath}, AuthRequired: ${requiresAuth}, Authenticated: ${isAuthenticated}`);
+        console.log(`Redirecting to login. Target: ${to.fullPath}`);
         next({ name: 'login' });
-    } else if (isLoginPage && isAuthenticated) {
+    } else if (to.name === 'login' && isAuthenticated) {
         // If trying to access the login page while already authenticated,
         // redirect to the default authenticated route (e.g., dashboard).
         console.log(`User already logged in, redirecting from login to dashboard.`);
         next({ name: 'employee-management' }); // Or your default authenticated route
     } else {
-        // Otherwise, allow navigation.
-        console.log(`Proceeding to route: ${to.fullPath}, AuthRequired: ${requiresAuth}, Authenticated: ${isAuthenticated}`);
+        // Allow navigation if:
+        // - Route requires auth and user is authenticated
+        // - Route does not require auth (is public or no meta field)
+        console.log(`Proceeding to route: ${to.fullPath}`);
         next();
     }
 });

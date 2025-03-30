@@ -3,8 +3,10 @@ import { generateRandomString, generateCodeChallenge } from '@/utils/pkce'; // I
 
 // Use the base URL of the auth server
 const AUTH_SERVER_URL: string = window.env.AUTH_BASE_URL || 'http://localhost:8081'; // Fallback added
-const AUTHORIZE_ENDPOINT = `${AUTH_SERVER_URL}/oauth2/authorize`;
-const TOKEN_ENDPOINT = `${AUTH_SERVER_URL}/oauth2/token`;
+// --- CORRECTED ENDPOINTS ---
+const AUTHORIZE_ENDPOINT = `${AUTH_SERVER_URL}/oauth2/authorize`; // Removed /api/v1/auth
+const TOKEN_ENDPOINT = `${AUTH_SERVER_URL}/oauth2/token`;       // Removed /api/v1/auth
+// --- END CORRECTIONS ---
 const CLIENT_ID = 'station-frontend-client'; // Client ID registered in auth server
 const REDIRECT_URI = 'http://localhost:5173/oidc-callback'; // Must match registered redirect URI and callback route path
 const SCOPE = 'openid profile station.read station.write'; // Scopes needed
