@@ -5,7 +5,8 @@ import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
 import LoginView from "@/view/login/LoginView.vue";
 import NotFoundView from "@/view/error/NotFoundView.vue";
 import AuthUserService from '@/service/AuthUserService'; // Import auth service for check
-import OAuthCallbackView from '@/view/login/OAuthCallbackView.vue'; // --- IMPORTED Callback View ---
+// --- REMOVED OIDC Callback View Import ---
+// import OAuthCallbackView from '@/view/login/OAuthCallbackView.vue';
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -25,14 +26,14 @@ const routes: Array<RouteRecordRaw> = [
         component: LoginView,
         meta: { isPublic: true } // Mark login page as public
     },
-    // --- ADDED OIDC Callback Route ---
-    {
-        path: '/oidc-callback',
-        name: 'oidc-callback',
-        component: OAuthCallbackView, // Use the imported component
-        meta: { isPublic: true } // This route must be public to receive the callback
-    },
-    // --- END ADDED Route ---
+    // --- REMOVED OIDC Callback Route ---
+    // {
+    //     path: '/oidc-callback',
+    //     name: 'oidc-callback',
+    //     component: OAuthCallbackView,
+    //     meta: { isPublic: true }
+    // },
+    // --- END REMOVED Route ---
     {
         path: '/employee/management',
         name: 'employee-management',
