@@ -71,12 +71,11 @@ class SecurityConfig(
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http.cors(Customizer.withDefaults()) // Apply CORS globally
             .authorizeHttpRequests { auth ->
-                // Allow access to the token endpoint and potentially other public endpoints
-                // Explicitly permit /oauth2/token, /login (for auth server's own login page if needed),
-                // and any public registration endpoints.
-                auth.requestMatchers("/oauth2/token", "/login", "/api/v1/auth/register").permitAll()
+                // Allow access to the auth server's own login page and public registration endpoints.
+                // Let the authorizationServerSecurityFilterChain handle /oauth2/** endpoint security.
+                auth.requestMatchers("/login", "/api/v1/auth/register").permitAll()
                 // Secure other endpoints by requiring authentication
-                auth.anyRequest().authenticated() // Change back from permitAll()
+                auth.anyRequest().authenticated()
             }
             .csrf { csrf -> csrf.disable() } // Disable CSRF for stateless API
             .sessionManagement { session ->
