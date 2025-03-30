@@ -45,19 +45,15 @@ class SecurityConfig(
         http.getConfigurer(OAuth2AuthorizationServerConfigurer::class.java)
             .oidc(Customizer.withDefaults()) // Enable OpenID Connect 1.0
 
-        // Accept access tokens for User Info and/or Client Registration
-        http.oauth2ResourceServer { resourceServer ->
-            resourceServer.jwt(Customizer.withDefaults())
-        }
+        // REMOVED: Don't configure the auth server itself as a resource server here,
+        // as it might interfere with the /oauth2/token endpoint which doesn't expect a JWT.
+        // http.oauth2ResourceServer { resourceServer ->
+        //     resourceServer.jwt(Customizer.withDefaults())
+        // }
 
         // Redirect to the login page when not authenticated from the authorization endpoint
-        // This might not be needed if you only use ROPC, but keep it if you might add other flows later
-        // http.exceptionHandling { exceptions ->
-        //     exceptions.defaultAuthenticationEntryPointFor(
-        //         LoginUrlAuthenticationEntryPoint("/login"), // Default Spring Security login page
-        //         http.getConfigurer(OAuth2AuthorizationServerConfigurer::class.java).authorizationEndpointMatcher
-        //     )
-        // }
+        // (Keep commented out if only ROPC is used)
+        // http.exceptionHandling { exceptions -> ... }
 
         // Enable CORS for Authorization Server endpoints
         http.cors(Customizer.withDefaults())
@@ -129,6 +125,8 @@ class SecurityConfig(
 
     @Bean
     fun jwtDecoder(jwkSource: JWKSource<SecurityContext>): JwtDecoder {
+        // This decoder is used if the auth server needs to decode tokens (e.g., for /userinfo if it were enabled)
+        // It's also used by the resource server via the jwkSetUri.
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource)
     }
 
@@ -144,6 +142,7 @@ class SecurityConfig(
 
     @Bean
     fun jwtEncoder(jwkSource: JWKSource<SecurityContext>): NimbusJwtEncoder {
+        // Used to encode the tokens issued by the auth server.
         return NimbusJwtEncoder(jwkSource)
     }
 
