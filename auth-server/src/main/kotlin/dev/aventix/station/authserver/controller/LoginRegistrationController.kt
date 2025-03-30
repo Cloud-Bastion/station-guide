@@ -35,6 +35,7 @@ class LoginRegistrationController(
 
     @PostMapping("/login")
     fun login(@RequestBody requestBody: LoginRequest): ResponseEntity<UserAuthenticateResponse> {
+        println("PRE LOGIN")
         val authentication = authenticationManager.authenticate(
             UsernamePasswordAuthenticationToken(
                 requestBody.username, requestBody.password
@@ -45,6 +46,7 @@ class LoginRegistrationController(
             ResponseEntity.ok(UserAuthenticateResponse(tokenService.generateToken(authentication)))
         } catch (error: Exception) { // Catch broader exception if needed
             // Log the error appropriately
+            println("ERROR: ${error.message}")
             ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(UserAuthenticateResponse(null, Error("Authentication failed"))) // Provide a generic error
         }
     }
