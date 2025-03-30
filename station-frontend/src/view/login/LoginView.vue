@@ -1,106 +1,88 @@
 <script setup lang="ts">
-import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import Ref from "@/components/util/Ref";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import AuthUserService from "@/service/AuthUserService";
-// Removed PKCE imports: import { generateRandomString, generateCodeChallenge } from '@/utils/pkce';
-import { ref } from 'vue';
-import { useRouter } from 'vue-router'; // Import useRouter for redirection
+import { ref, onMounted } from 'vue';
+import { User } from 'oidc-client-ts';
+// Removed useRouter as redirection is handled by guards and service now
+// Removed PKCE utils as oidc-client-ts handles it
 
-const email = ref(""); // Use standard ref for v-model
-const password = ref(""); // Use standard ref for v-model
-const loginError = ref<string | null>(null); // For displaying errors
-const isLoading = ref(false); // Loading indicator
-const router = useRouter(); // Get router instance
+const isAuthenticated = ref(false);
+const user = ref<User | null>(null);
+const loginError = ref<string | null>(null); // Can be used for general login initiation errors
 
-// OAuth2 Configuration (Client ID and Scopes are still needed for ROPC)
-const CLIENT_ID = "station-frontend-client"; // Must match RegisteredClient in auth-server
-const SCOPES = "openid profile station.read station.write"; // Requested scopes
-
-const submitLogin = async () => {
-  loginError.value = null; // Clear previous errors
-  isLoading.value = true; // Show loading indicator
-
-  if (!email.value || !password.value) {
-      loginError.value = "Bitte geben Sie E-Mail und Passwort ein.";
-      isLoading.value = false;
-      return;
-  }
-
+// Check authentication status when the component mounts
+const checkAuthStatus = async () => {
   try {
-    // Call the ROPC login function from the service
-    const tokenResponse = await AuthUserService.loginWithPassword(
-        email.value,
-        password.value,
-        CLIENT_ID,
-        SCOPES
-    );
-
-    if (tokenResponse.access_token) {
-      // Store the token
-      localStorage.setItem('auth_token', tokenResponse.access_token);
-      if (tokenResponse.refresh_token) {
-        localStorage.setItem('refresh_token', tokenResponse.refresh_token);
-      }
-
-      // Redirect to the dashboard or intended page
-      router.push({ name: 'employee-management' });
-
-    } else {
-      // Should not happen if service throws error, but as a fallback
-      throw new Error("Kein Access Token erhalten.");
-    }
-
-  } catch (error: any) {
-    console.error("Login failed:", error);
-    // Display specific error from service or a generic one
-    loginError.value = error.message || "Login fehlgeschlagen. Überprüfen Sie Ihre Anmeldedaten.";
-  } finally {
-    isLoading.value = false; // Hide loading indicator
+    const currentUser = await AuthUserService.getUser();
+    isAuthenticated.value = !!currentUser && !currentUser.expired;
+    user.value = currentUser;
+  } catch (error) {
+    console.error("Error checking auth status:", error);
+    isAuthenticated.value = false;
+    user.value = null;
   }
 };
 
-// Keep Google login for now, but ideally it should also go through the auth-server
-const googleLogin = async () => {
-  // This flow bypasses your auth-server. Consider integrating it.
-  const GOOGLE_CLIENT_ID = encodeURIComponent("158421481211-6vp5a7oq3lbd60s16f43r3fs3ic66s7r.apps.googleusercontent.com")
-  // Redirect URI for Google needs to be handled separately or integrated into auth server flow
-  const GOOGLE_REDIRECT_URI = encodeURIComponent("http://localhost:5173/google-callback")
-  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?redirect_uri=${GOOGLE_REDIRECT_URI}&response_type=code&client_id=${GOOGLE_CLIENT_ID}&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+openid&access_type=offline`
+// Function to initiate the OIDC login flow
+const handleLogin = async () => {
+  loginError.value = null; // Reset error
+  try {
+    // Redirects the user to the auth server's login page
+    await AuthUserService.login();
+    // The browser will navigate away, so code here might not execute immediately after.
+  } catch (error) {
+    console.error("Login initiation failed:", error);
+    loginError.value = "Login konnte nicht gestartet werden. Bitte versuchen Sie es erneut.";
+  }
 };
+
+// Function to initiate the OIDC logout flow
+const handleLogout = async () => {
+  try {
+    await AuthUserService.logout();
+    // The browser will navigate away to the auth server and then back to the post_logout_redirect_uri.
+  } catch (error) {
+    console.error("Logout failed:", error);
+    // Handle logout error display if needed
+  }
+};
+
+// --- Potentially keep Google Login if needed, but it bypasses your Auth Server ---
+// const googleLogin = async () => {
+//   // This flow bypasses your auth-server. Consider integrating it via the auth-server itself.
+//   const GOOGLE_CLIENT_ID = encodeURIComponent("YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com") // Replace with actual ID
+//   const GOOGLE_REDIRECT_URI = encodeURIComponent("http://localhost:5173/google-callback") // Needs a handler route
+//   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?redirect_uri=${GOOGLE_REDIRECT_URI}&response_type=code&client_id=${GOOGLE_CLIENT_ID}&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+openid&access_type=offline`
+// };
+// --- End Google Login ---
+
+
+onMounted(() => {
+  checkAuthStatus();
+});
 
 </script>
 
 <template>
   <div :class="$style.parent">
     <div :class="$style['login-container']">
-      <h1 :class="$style['login-header']">Login</h1>
+      <h1 :class="$style['login-header']">Station Portal</h1>
 
-      <form @submit.prevent="submitLogin" :class="$style['login-wrapper']">
+      <div v-if="!isAuthenticated" :class="$style['login-wrapper']">
+        <p :class="$style['login-prompt']">Bitte melden Sie sich an.</p>
 
-        <!-- Email and Password fields are now active -->
-        <div :class="$style['login-input-container']">
-          <label for="email">E-Mail / Personalnummer</label>
-          <input v-model="email" type="text" id="email" placeholder="Ihre E-Mail" :class="$style['input']" required/>
-        </div>
-
-        <div :class="$style['login-input-container']">
-          <label for="password">Passwort</label>
-          <input v-model="password" type="password" id="password" placeholder="••••••••" :class="$style['input']" required/>
-        </div>
-
-        <!-- Display login errors -->
+        <!-- Display general login errors -->
         <div v-if="loginError" :class="$style['error-message']">
           {{ loginError }}
         </div>
 
-        <!-- Removed remember me as session is managed by auth-server/token -->
-
-        <button type="submit" :class="$style['login-submit-button']" :disabled="isLoading">
-          <FontAwesomeIcon v-if="isLoading" icon="spinner" spin :class="$style['loading-spinner']"/>
-          <span v-else>Einloggen</span>
+        <button @click="handleLogin" :class="$style['login-submit-button']">
+          <FontAwesomeIcon icon="sign-in-alt" :class="$style['icon']" />
+          <span>Login</span>
         </button>
-        <a href="#" :class="$style['login-forgot-password']">Passwort vergessen?</a> <!-- Link should point to auth-server's password reset -->
 
+        <!-- Optional: Separator and Third-Party Logins (if keeping Google/Apple) -->
+        <!--
         <div :class="$style['login-sidebar-container']">
           <div :class="$style['login-sidebar-line']"></div>
           <span :class="$style['login-sidebar-text']">Oder</span>
@@ -108,7 +90,6 @@ const googleLogin = async () => {
         </div>
 
         <div :class="$style['login-third-party-container']">
-          <!-- Keep these buttons but they should ideally trigger the auth-server flow too -->
           <button type="button" :class="$style['login-third-party-button']">
             <FontAwesomeIcon :icon="['fab', 'apple']" size="lg" :class="$style['icon']"/>
             <span>Login mit Apple</span>
@@ -118,18 +99,33 @@ const googleLogin = async () => {
             <span>Login mit Google</span>
           </button>
         </div>
-      </form>
+        -->
+      </div>
+
+      <div v-if="isAuthenticated" :class="$style['login-wrapper']">
+         <p :class="$style['welcome-message']">
+           Willkommen, {{ user?.profile?.name || user?.profile?.preferred_username || 'Benutzer' }}!
+         </p>
+         <button @click="handleLogout" :class="[$style['login-submit-button'], $style['logout-button']]">
+           <FontAwesomeIcon icon="sign-out-alt" :class="$style['icon']" />
+           <span>Logout</span>
+         </button>
+      </div>
+
     </div>
   </div>
 </template>
 
 <style lang="scss" module>
+// SCSS Variables and Styles from the original file
 $bg-dark: #121212;
 $bg-medium: #1e1e1e;
 $bg-light: #2a2a2a;
 $text-color: #f1f1f1;
 $accent: #4f0000; // Darker red
 $accent-hover: #3d0000; // Even darker red for hover
+$logout-color: #6c757d; // A greyish color for logout button perhaps
+$logout-hover: #5a6268;
 $border-radius: 10px;
 $transition-speed: 0.3s;
 $input-bg: #333;
@@ -154,6 +150,7 @@ $error-color: #e74c3c; // Error color
   width: 380px; // Slightly wider
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); // Stronger shadow
   animation: fadeIn 0.5s ease-in-out;
+  text-align: center; // Center content like buttons
 }
 
 .login-header {
@@ -167,6 +164,13 @@ $error-color: #e74c3c; // Error color
 .login-wrapper {
   display: flex;
   flex-direction: column;
+  align-items: center; // Center items horizontally
+
+  .login-prompt, .welcome-message {
+      color: $text-color;
+      font-size: 1.1rem;
+      margin-bottom: 25px;
+  }
 
   .error-message {
       color: $error-color;
@@ -177,13 +181,15 @@ $error-color: #e74c3c; // Error color
       margin-bottom: 15px;
       font-size: 0.9rem;
       text-align: center;
+      width: 100%; // Take full width within the wrapper
   }
 
-
+  // --- Styles for optional third-party buttons ---
   .login-third-party-container {
     display: flex;
     justify-content: space-between;
     margin-bottom: 25px; // More space
+    width: 100%; // Take full width
 
     .login-third-party-button {
       display: flex;
@@ -221,6 +227,7 @@ $error-color: #e74c3c; // Error color
     justify-content: center;
     gap: 15px; // More space
     margin: 20px 0 25px;
+    width: 100%;
 
     .login-sidebar-line {
       flex: 1;
@@ -233,11 +240,16 @@ $error-color: #e74c3c; // Error color
       color: #999; // Darker gray
     }
   }
+  // --- End styles for optional third-party buttons ---
 
+
+  // --- Styles for removed elements (kept for reference or potential reuse) ---
+  /*
   .login-input-container {
     display: flex;
     flex-direction: column;
     margin-bottom: 20px; // More space
+    width: 100%; // Take full width
 
     label {
       font-size: 1rem;
@@ -259,7 +271,6 @@ $error-color: #e74c3c; // Error color
         outline: none;
         background-color: #444; // Slightly lighter on focus
       }
-       // Removed disabled style as inputs are active now
     }
   }
 
@@ -269,13 +280,14 @@ $error-color: #e74c3c; // Error color
     gap: 10px;
     margin-bottom: 25px; // More space
     text-align: left;
+    width: 100%;
 
     .checkbox {
       width: 18px;
       height: 18px;
       accent-color: $accent;
       cursor: pointer;
-      border-radius: 6px; /* Added border-radius */
+      border-radius: 6px;
     }
 
     .remember-label {
@@ -284,6 +296,23 @@ $error-color: #e74c3c; // Error color
       user-select: none; // Prevent text selection
     }
   }
+
+  .login-forgot-password {
+    text-align: center;
+    font-size: 1rem; // Slightly larger
+    color: #bbb;
+    margin-top: 15px; // More space
+    cursor: pointer;
+    transition: color $transition-speed ease;
+
+    &:hover {
+      color: $text-color;
+      text-decoration: underline; // Add underline on hover
+    }
+  }
+  */
+  // --- End styles for removed elements ---
+
 
   .login-submit-button {
     padding: 14px; // Larger padding
@@ -296,10 +325,11 @@ $error-color: #e74c3c; // Error color
     cursor: pointer;
     transition: background-color $transition-speed ease, transform $transition-speed ease, opacity $transition-speed ease;
     margin-top: 10px; // Add some margin above the button
-    display: flex; // For spinner alignment
+    display: inline-flex; // Use inline-flex for button sizing
     align-items: center;
     justify-content: center;
-    gap: 8px; // Space between spinner and text
+    gap: 8px; // Space between icon and text
+    min-width: 150px; // Give button a minimum width
 
     &:hover:not(:disabled) {
       background: $accent-hover;
@@ -317,24 +347,22 @@ $error-color: #e74c3c; // Error color
         opacity: 0.7;
     }
 
-    .loading-spinner {
-        // Spinner styles are handled by FontAwesome component props
+    .icon {
+        // Icon styles if needed, FontAwesome handles size etc.
+    }
+
+    // Specific style for logout button
+    &.logout-button {
+        background: $logout-color;
+        &:hover:not(:disabled) {
+            background: $logout-hover;
+        }
+         &:active:not(:disabled) {
+            background: darken($logout-color, 10%);
+        }
     }
   }
 
-  .login-forgot-password {
-    text-align: center;
-    font-size: 1rem; // Slightly larger
-    color: #bbb;
-    margin-top: 15px; // More space
-    cursor: pointer;
-    transition: color $transition-speed ease;
-
-    &:hover {
-      color: $text-color;
-      text-decoration: underline; // Add underline on hover
-    }
-  }
 }
 
 @keyframes fadeIn {
@@ -354,6 +382,8 @@ $error-color: #e74c3c; // Error color
     width: 90%; // Take up more width on smaller screens
     padding: 20px;
   }
+  // Adjust third-party container if used
+  /*
   .login-third-party-container {
     flex-direction: column;
 
@@ -362,5 +392,6 @@ $error-color: #e74c3c; // Error color
       margin-bottom: 10px;
     }
   }
+  */
 }
 </style>
