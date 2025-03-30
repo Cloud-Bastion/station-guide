@@ -72,9 +72,11 @@ class SecurityConfig(
         http.cors(Customizer.withDefaults()) // Apply CORS globally
             .authorizeHttpRequests { auth ->
                 // Allow access to the token endpoint and potentially other public endpoints
-                //auth.requestMatchers("/oauth2/token", "/login", "/api/v1/auth/register").permitAll() // Allow token endpoint
-                // Secure other endpoints if necessary
-                auth.anyRequest().permitAll()
+                // Explicitly permit /oauth2/token, /login (for auth server's own login page if needed),
+                // and any public registration endpoints.
+                auth.requestMatchers("/oauth2/token", "/login", "/api/v1/auth/register").permitAll()
+                // Secure other endpoints by requiring authentication
+                auth.anyRequest().authenticated() // Change back from permitAll()
             }
             .csrf { csrf -> csrf.disable() } // Disable CSRF for stateless API
             .sessionManagement { session ->
