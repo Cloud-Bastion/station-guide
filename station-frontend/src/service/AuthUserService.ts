@@ -1,11 +1,12 @@
 import axios from "axios";
-import { useRouter } from 'vue-router'; // Import if redirection is needed here
+import { generateRandomString, generateCodeChallenge } from '@/utils/pkce'; // Import PKCE utils
 
 // Use the base URL of the auth server
-// Ensure it points to the root of the auth server (e.g., http://localhost:8081)
 const AUTH_SERVER_URL: string = window.env.AUTH_BASE_URL || 'http://localhost:8081'; // Fallback added
+const AUTHORIZE_ENDPOINT = `${AUTH_SERVER_URL}/oauth2/authorize`;
 const TOKEN_ENDPOINT = `${AUTH_SERVER_URL}/oauth2/token`;
 const CLIENT_ID = 'station-frontend-client'; // Client ID registered in auth server
+const REDIRECT_URI = 'http://localhost:5173/oidc-callback'; // Must match registered redirect URI and callback route path
 const SCOPE = 'openid profile station.read station.write'; // Scopes needed
 
 // Define expected token response structure
@@ -26,25 +27,61 @@ interface TokenErrorResponse {
 
 const AUTH_TOKEN_KEY = 'auth_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
+const PKCE_VERIFIER_KEY = 'pkce_code_verifier'; // Key for storing PKCE verifier
 
 export default {
     /**
-     * Logs in a user using the OAuth2 Resource Owner Password Credentials (ROPC) grant.
-     * @param email The user's email (used as username).
-     * @param password The user's password.
+     * Initiates the OAuth2 Authorization Code Flow with PKCE.
+     * Generates PKCE codes, stores the verifier, and redirects the user
+     * to the authorization server's authorization endpoint.
+     */
+    async initiateLogin(): Promise<void> {
+        // 1. Generate Code Verifier and Challenge
+        const codeVerifier = generateRandomString(128); // Generate a secure random string
+        const codeChallenge = await generateCodeChallenge(codeVerifier); // Hash and encode the verifier
+
+        // 2. Store the Code Verifier in sessionStorage (it's needed after redirect)
+        sessionStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
+        console.log("Stored PKCE Code Verifier.");
+
+        // 3. Construct the Authorization URL
+        const params = new URLSearchParams();
+        params.append('response_type', 'code');
+        params.append('client_id', CLIENT_ID);
+        params.append('redirect_uri', REDIRECT_URI);
+        params.append('scope', SCOPE);
+        params.append('code_challenge', codeChallenge);
+        params.append('code_challenge_method', 'S256');
+        // Optional: Add state parameter for CSRF protection
+        // const state = generateRandomString(32);
+        // sessionStorage.setItem('oauth_state', state);
+        // params.append('state', state);
+
+        const authorizationUrl = `${AUTHORIZE_ENDPOINT}?${params.toString()}`;
+        console.log(`Redirecting user to: ${authorizationUrl}`);
+
+        // 4. Redirect the user's browser
+        window.location.href = authorizationUrl;
+    },
+
+    /**
+     * Exchanges the authorization code for an access token using the PKCE flow.
+     * This is called from the OAuth callback component.
+     * @param code The authorization code received from the authorization server.
+     * @param codeVerifier The PKCE code verifier stored before the redirect.
      * @returns A promise that resolves with the token response on success.
      * @throws An error with a user-friendly message on failure.
      */
-    async loginWithPassword(email: string, password: string): Promise<TokenResponse> {
+    async exchangeCodeForToken(code: string, codeVerifier: string): Promise<TokenResponse> {
         const params = new URLSearchParams();
-        params.append('grant_type', 'password'); // Use 'password' grant type for ROPC
-        params.append('username', email);       // Spring Security uses 'username' by default
-        params.append('password', password);
+        params.append('grant_type', 'authorization_code');
+        params.append('code', code);
+        params.append('redirect_uri', REDIRECT_URI); // Must match the URI used in the initial request
         params.append('client_id', CLIENT_ID);
-        params.append('scope', SCOPE);
+        params.append('code_verifier', codeVerifier); // Send the original verifier
 
         try {
-            console.log(`Attempting ROPC login to ${TOKEN_ENDPOINT} for user ${email}`);
+            console.log(`Exchanging authorization code at ${TOKEN_ENDPOINT}`);
             const response = await axios.post<TokenResponse>(TOKEN_ENDPOINT, params, {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
@@ -52,33 +89,43 @@ export default {
                 }
             });
 
-            // Store tokens upon successful login
+            // Store tokens upon successful exchange
             if (response.data.access_token) {
                 localStorage.setItem(AUTH_TOKEN_KEY, response.data.access_token);
                 console.log("Access token stored.");
             }
             if (response.data.refresh_token) {
                 localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
-                 console.log("Refresh token stored.");
+                console.log("Refresh token stored.");
             }
+
+            // Clean up PKCE verifier from session storage
+            sessionStorage.removeItem(PKCE_VERIFIER_KEY);
+            console.log("Removed PKCE Code Verifier.");
 
             return response.data;
 
         } catch (error) {
+             // Clean up PKCE verifier even on error
+            sessionStorage.removeItem(PKCE_VERIFIER_KEY);
+            console.log("Removed PKCE Code Verifier after error.");
+
             if (axios.isAxiosError(error) && error.response) {
                 const errorData = error.response.data as TokenErrorResponse;
-                console.error("OAuth Token Error (Password Grant):", error.response.status, errorData.error, errorData.error_description);
+                console.error("OAuth Token Error (Authorization Code Grant):", error.response.status, errorData.error, errorData.error_description);
                 // Provide a more user-friendly message based on the error
-                if (errorData.error === 'invalid_grant' || error.response.status === 400 || error.response.status === 401) {
-                    throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie E-Mail und Passwort.');
+                if (errorData.error === 'invalid_grant') {
+                    throw new Error('Ungültiger oder abgelaufener Authorisierungscode.');
                 } else if (errorData.error === 'invalid_client') {
                      throw new Error('Client-Konfigurationsfehler.');
+                } else if (errorData.error === 'invalid_request' && errorData.error_description?.includes('PKCE')) {
+                     throw new Error('PKCE Code Verifier Fehler.');
                 } else {
-                    throw new Error(errorData.error_description || errorData.error || 'Login fehlgeschlagen.');
+                    throw new Error(errorData.error_description || errorData.error || 'Tokenaustausch fehlgeschlagen.');
                 }
             } else {
-                console.error("Error during password login:", error);
-                throw new Error('Ein unerwarteter Fehler ist beim Login aufgetreten.');
+                console.error("Error exchanging code for token:", error);
+                throw new Error('Ein unerwarteter Fehler ist beim Tokenaustausch aufgetreten.');
             }
         }
     },
@@ -89,10 +136,11 @@ export default {
     logout() {
         localStorage.removeItem(AUTH_TOKEN_KEY);
         localStorage.removeItem(REFRESH_TOKEN_KEY);
-        console.log("User logged out, tokens removed.");
-        // Optional: Redirect to login page after logout
-        // const router = useRouter(); // Cannot use hooks outside setup, handle redirection in component
-        // router.push({ name: 'login' });
+        // Also clear PKCE verifier in case logout happens mid-flow
+        sessionStorage.removeItem(PKCE_VERIFIER_KEY);
+        console.log("User logged out, tokens and PKCE verifier removed.");
+        // Optional: Redirect to a post-logout page or login page
+        // window.location.href = '/login'; // Or use router.push('/login') in component
     },
 
     /**
@@ -112,52 +160,9 @@ export default {
         return !!localStorage.getItem(AUTH_TOKEN_KEY);
     },
 
-    // --- OIDC Methods Removed ---
-    // async login(): Promise<void> { ... }
-    // async handleCallback(): Promise<User | null> { ... }
-    // async getUser(): Promise<User | null> { ... }
-    // getUserManager(): UserManager { ... }
+    // --- ROPC Method Removed ---
+    // async loginWithPassword(email: string, password: string): Promise<TokenResponse> { ... }
 
     // Optional: Add function for refresh token grant if needed
-    // async refreshToken(): Promise<TokenResponse | null> {
-    //     const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-    //     if (!refreshToken) {
-    //         console.log("No refresh token available.");
-    //         return null;
-    //     }
-
-    //     const params = new URLSearchParams();
-    //     params.append('grant_type', 'refresh_token');
-    //     params.append('refresh_token', refreshToken);
-    //     params.append('client_id', CLIENT_ID);
-
-    //     try {
-    //         console.log(`Attempting token refresh using ${TOKEN_ENDPOINT}`);
-    //         const response = await axios.post<TokenResponse>(TOKEN_ENDPOINT, params, {
-    //             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    //         });
-
-    //         if (response.data.access_token) {
-    //             localStorage.setItem(AUTH_TOKEN_KEY, response.data.access_token);
-    //             console.log("Access token refreshed and stored.");
-    //         }
-    //         // Potentially update refresh token if a new one is issued
-    //         if (response.data.refresh_token) {
-    //             localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
-    //             console.log("Refresh token updated and stored.");
-    //         } else {
-    //             // If no new refresh token, the old one might still be valid or rotation is not used
-    //             console.log("No new refresh token received.");
-    //         }
-    //         return response.data;
-
-    //     } catch (error) {
-    //         console.error("Error refreshing token:", error);
-    //         // If refresh fails (e.g., expired refresh token), log the user out
-    //         this.logout();
-    //         // Optionally redirect to login
-    //         // window.location.href = '/login';
-    //         return null; // Indicate refresh failure
-    //     }
-    // }
+    // async refreshToken(): Promise<TokenResponse | null> { ... } // (Implementation remains the same as before)
 }

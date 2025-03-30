@@ -4,17 +4,8 @@ import AuthUserService from "@/service/AuthUserService";
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router'; // Import useRouter for redirection
 
-// --- OIDC related refs removed ---
-// import { User } from 'oidc-client-ts';
-// const user = ref<User | null>(null);
-
-// --- Refs for ROPC Login ---
-const email = ref('');
-const password = ref('');
-const loginError = ref<string | null>(null);
-const isLoading = ref(false);
+const isLoading = ref(false); // Used for the login button state
 const isAuthenticated = ref(false); // Still useful to control UI elements
-
 const router = useRouter(); // Initialize router
 
 // Check authentication status when the component mounts
@@ -27,22 +18,19 @@ const checkAuthStatus = () => {
   }
 };
 
-// Function to handle ROPC login submission
-const submitLogin = async () => {
-  loginError.value = null; // Reset error
-  isLoading.value = true;
+// Function to handle initiating the Authorization Code login flow
+const handleLogin = async () => {
+  isLoading.value = true; // Show loading state on button
   try {
-    await AuthUserService.loginWithPassword(email.value, password.value);
-    isAuthenticated.value = true; // Update auth state
-    console.log("Login successful, redirecting...");
-    // Redirect to a protected route after successful login
-    router.push({ name: 'employee-management' }); // Or your default authenticated route
-  } catch (error: any) {
-    console.error("Login failed:", error);
-    loginError.value = error.message || "Login fehlgeschlagen. Bitte versuchen Sie es erneut.";
-    isAuthenticated.value = false; // Ensure auth state is false on error
-  } finally {
-    isLoading.value = false;
+    // This function now redirects the browser, so no further action needed here
+    await AuthUserService.initiateLogin();
+    // isLoading will remain true until the browser redirects
+  } catch (error) {
+    console.error("Failed to initiate login redirect:", error);
+    // Handle error (e.g., show a message to the user)
+    // You might want a general error display area
+    alert("Login konnte nicht gestartet werden. Bitte versuchen Sie es erneut.");
+    isLoading.value = false; // Reset loading state on error
   }
 };
 
@@ -50,16 +38,9 @@ const submitLogin = async () => {
 const handleLogout = () => {
   AuthUserService.logout();
   isAuthenticated.value = false; // Update auth state
-  email.value = ''; // Clear fields
-  password.value = '';
-  loginError.value = null;
-  // Redirect to login page after logout
+  // Redirect to login page after logout (or stay on page if preferred)
   router.push({ name: 'login' });
 };
-
-// --- OIDC login/logout handlers removed ---
-// const handleLogin = async () => { ... };
-// const handleOidcLogout = async () => { ... };
 
 onMounted(() => {
   checkAuthStatus();
@@ -72,59 +53,30 @@ onMounted(() => {
     <div :class="$style['login-container']">
       <h1 :class="$style['login-header']">Station Portal</h1>
 
-      <!-- ROPC Login Form -->
-      <form v-if="!isAuthenticated" @submit.prevent="submitLogin" :class="$style['login-wrapper']">
+      <!-- Login Button (Authorization Code Flow) -->
+      <div v-if="!isAuthenticated" :class="$style['login-wrapper']">
         <p :class="$style['login-prompt']">Bitte melden Sie sich an.</p>
 
-        <!-- Email Input -->
-        <div :class="$style['login-input-container']">
-          <label for="email">E-Mail</label>
-          <input
-            type="email"
-            id="email"
-            v-model="email"
-            required
-            :class="$style.input"
-            placeholder="Ihre E-Mail-Adresse"
-            :disabled="isLoading"
-          />
-        </div>
-
-        <!-- Password Input -->
-        <div :class="$style['login-input-container']">
-          <label for="password">Passwort</label>
-          <input
-            type="password"
-            id="password"
-            v-model="password"
-            required
-            :class="$style.input"
-            placeholder="Ihr Passwort"
-            :disabled="isLoading"
-          />
-        </div>
-
-        <!-- Display Login Errors -->
-        <div v-if="loginError" :class="$style['error-message']">
-          {{ loginError }}
-        </div>
-
         <!-- Login Button -->
-        <button type="submit" :class="$style['login-submit-button']" :disabled="isLoading">
+        <button @click="handleLogin" :class="$style['login-submit-button']" :disabled="isLoading">
           <FontAwesomeIcon v-if="!isLoading" icon="sign-in-alt" :class="$style['icon']" />
           <FontAwesomeIcon v-if="isLoading" icon="spinner" spin :class="$style['icon']" />
-          <span>{{ isLoading ? 'Anmelden...' : 'Login' }}</span>
+          <span>{{ isLoading ? 'Weiterleitung...' : 'Login' }}</span>
         </button>
 
-        <!-- Optional: Forgot Password Link -->
-        <!-- <div :class="$style['login-forgot-password']">Passwort vergessen?</div> -->
-
-      </form>
+        <!-- Optional: Add buttons for other providers like Google/GitHub here -->
+        <!--
+        <button @click="handleGoogleLogin" :class="$style['provider-button']">
+          <FontAwesomeIcon :icon="['fab', 'google']" :class="$style['icon']" />
+          <span>Login mit Google</span>
+        </button>
+        -->
+      </div>
 
       <!-- Authenticated State -->
       <div v-if="isAuthenticated" :class="$style['login-wrapper']">
          <p :class="$style['welcome-message']">
-           <!-- Cannot display name easily with ROPC, needs separate API call -->
+           <!-- TODO: Fetch user info if needed via separate API call -->
            Willkommen! Sie sind angemeldet.
          </p>
          <button @click="handleLogout" :class="[$style['login-submit-button'], $style['logout-button']]">
@@ -138,7 +90,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" module>
-// SCSS Variables and Styles (mostly unchanged, added input styles back)
+// SCSS Variables and Styles (mostly unchanged, removed ROPC form styles)
 $bg-dark: #121212;
 $bg-medium: #1e1e1e;
 $bg-light: #2a2a2a;
@@ -186,76 +138,15 @@ $error-color: #e74c3c; // Error color
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 20px; // Add gap between elements
 
   .login-prompt, .welcome-message {
       color: $text-color;
       font-size: 1.1rem;
-      margin-bottom: 25px;
+      margin-bottom: 5px; // Reduced margin as gap is used now
   }
 
-  .error-message {
-      color: $error-color;
-      background-color: rgba($error-color, 0.1);
-      border: 1px solid rgba($error-color, 0.3);
-      padding: 10px;
-      border-radius: $border-radius;
-      margin-bottom: 15px;
-      font-size: 0.9rem;
-      text-align: center;
-      width: 100%;
-  }
-
-  // --- Styles for ROPC form elements ---
-  .login-input-container {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 20px; // More space
-    width: 100%; // Take full width
-
-    label {
-      font-size: 1rem;
-      color: $text-color;
-      margin-bottom: 8px; // More space
-      text-align: left;
-    }
-
-    .input {
-      padding: 14px; // Larger padding
-      border: 1px solid $input-border;
-      border-radius: $border-radius;
-      background-color: $input-bg;
-      color: $text-color;
-      transition: border-color $transition-speed ease, background-color $transition-speed ease;
-
-      &:focus {
-        border-color: $input-focus;
-        outline: none;
-        background-color: #444; // Slightly lighter on focus
-      }
-       &:disabled {
-            background-color: darken($input-bg, 5%);
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-    }
-  }
-
-  .login-forgot-password {
-    text-align: center;
-    font-size: 1rem; // Slightly larger
-    color: #bbb;
-    margin-top: 15px; // More space
-    cursor: pointer;
-    transition: color $transition-speed ease;
-    width: 100%; // Take full width for centering
-
-    &:hover {
-      color: $text-color;
-      text-decoration: underline; // Add underline on hover
-    }
-  }
-  // --- End styles for ROPC form elements ---
-
+  // Removed ROPC form styles (input container, label, input, forgot password)
 
   .login-submit-button {
     padding: 14px;
@@ -267,7 +158,7 @@ $error-color: #e74c3c; // Error color
     font-size: 1.1rem;
     cursor: pointer;
     transition: background-color $transition-speed ease, transform $transition-speed ease, opacity $transition-speed ease;
-    margin-top: 10px;
+    // margin-top: 10px; // Removed margin-top, using gap now
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -305,6 +196,29 @@ $error-color: #e74c3c; // Error color
             background: darken($logout-color, 10%);
         }
     }
+  }
+
+  // Optional styles for provider buttons
+  .provider-button {
+      // Similar styles to login-submit-button but maybe different colors
+      padding: 14px;
+      border: 1px solid $input-border; // Example border
+      border-radius: $border-radius;
+      background: $bg-light; // Different background
+      color: $text-color;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color $transition-speed ease, transform $transition-speed ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+
+      &:hover {
+          background: darken($bg-light, 5%);
+          border-color: $input-focus;
+      }
   }
 
 }
