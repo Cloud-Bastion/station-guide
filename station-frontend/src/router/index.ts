@@ -4,7 +4,9 @@ import TaskManagementView from "@/view/task/TaskManagementView.vue";
 import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
 import LoginView from "@/view/login/LoginView.vue";
 import NotFoundView from "@/view/error/NotFoundView.vue";
-// Removed OAuthCallbackView import
+import AuthUserService from '@/service/AuthUserService'; // Import auth service for check
+
+// Removed OidcCallbackView import
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -15,52 +17,33 @@ const routes: Array<RouteRecordRaw> = [
     {
         path: '/',
         name: 'home',
-        component: LoginView,
-        // Redirect to dashboard if already logged in
-        beforeEnter: (to, from, next) => {
-            if (localStorage.getItem('auth_token')) {
-                next({ name: 'employee-management' }); // Or your default authenticated route
-            } else {
-                next();
-            }
-        }
+        component: LoginView, // Default to login view
+        // Redirect handled by global beforeEach guard
     },
     {
         path: '/login',
         name: 'login',
         component: LoginView,
-         // Redirect to dashboard if already logged in
-        beforeEnter: (to, from, next) => {
-            if (localStorage.getItem('auth_token')) {
-                next({ name: 'employee-management' }); // Or your default authenticated route
-            } else {
-                next();
-            }
-        }
+        // Redirect handled by global beforeEach guard
     },
-    // Removed OAuth callback route
+    // Removed OIDC callback route
     // {
-    //     path: '/oauth/callback',
-    //     name: 'oauth-callback',
-    //     component: OAuthCallbackView,
-    // },
-    // Remove or adapt Google specific callback if not needed anymore
-    // {
-    //     path: '/google-callback',
-    //     name: 'google-callback',
-    //     component: GoogleCallbackView // Replace with OAuthCallbackView or remove
+    //     path: '/oidc-callback',
+    //     name: 'oidc-callback',
+    //     component: OidcCallback,
+    //     meta: { isPublic: true }
     // },
     {
         path: '/employee/management',
         name: 'employee-management',
         component: EmployeeManageView,
         meta: {
-            requiresAuth: true
+            requiresAuth: true // Mark as requiring authentication
         }
     },
     {
         path: '/expire/management',
-        name: 'expire/management',
+        name: 'expire-management', // Consistent naming convention
         component: ProductExpireManageView,
         meta: {
             requiresAuth: true
@@ -81,26 +64,26 @@ const router = createRouter({
     routes
 })
 
+// Global Navigation Guard using ROPC token check
 router.beforeEach((to, from, next) => {
-    const token = localStorage.getItem('auth_token');
+    const isAuthenticated = AuthUserService.isAuthenticated(); // Check if token exists
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+    const isLoginPage = to.name === 'login';
 
-    // Allow access to login page even if requiresAuth is true initially
-    if (to.name === 'login') { // Removed 'oauth-callback'
-        // If trying to access login page while already logged in, redirect to dashboard
-        if (token) {
-             next({ name: 'employee-management' });
-        } else {
-            next();
-        }
-        return;
-    }
-
-    if (requiresAuth && !token) {
-        console.log("Redirecting to login, requiresAuth:", requiresAuth, "token:", token);
-        next({ name: 'login' }); // Redirect to login if auth is required and no token
+    if (requiresAuth && !isAuthenticated) {
+        // If trying to access a protected route without being authenticated,
+        // redirect to the login page.
+        console.log(`Redirecting to login. Target: ${to.fullPath}, AuthRequired: ${requiresAuth}, Authenticated: ${isAuthenticated}`);
+        next({ name: 'login' });
+    } else if (isLoginPage && isAuthenticated) {
+        // If trying to access the login page while already authenticated,
+        // redirect to the default authenticated route (e.g., dashboard).
+        console.log(`User already logged in, redirecting from login to dashboard.`);
+        next({ name: 'employee-management' }); // Or your default authenticated route
     } else {
-        next(); // Proceed as normal
+        // Otherwise, allow navigation.
+        console.log(`Proceeding to route: ${to.fullPath}, AuthRequired: ${requiresAuth}, Authenticated: ${isAuthenticated}`);
+        next();
     }
 });
 

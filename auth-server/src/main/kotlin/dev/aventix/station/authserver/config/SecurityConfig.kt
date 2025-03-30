@@ -45,25 +45,17 @@ class SecurityConfig(
     fun authorizationServerSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http)
         http.getConfigurer(OAuth2AuthorizationServerConfigurer::class.java)
-            .oidc(Customizer.withDefaults()) // Enable OpenID Connect 1.0
+            .oidc(Customizer.withDefaults()) // Enable OpenID Connect 1.0 (still useful for /userinfo etc.)
 
-        // Enable CORS for Authorization Server endpoints
+        // Enable CORS for Authorization Server endpoints (including /oauth2/token)
         http.cors(Customizer.withDefaults())
-            // Configure the authorization endpoint to require login
-            // Redirect unauthenticated users to the login page
+            // Configure the authorization endpoint (/oauth2/authorize) to require login via form
+            // This is relevant for the Authorization Code Flow, not directly for ROPC
             .exceptionHandling { exceptions ->
                 exceptions.authenticationEntryPoint(
                     LoginUrlAuthenticationEntryPoint("/login") // Default Spring login page path
                 )
             }
-            // Optional: Configure User Info endpoint if needed
-            // .oidc(oidc -> oidc.userInfoEndpoint(Customizer.withDefaults()))
-
-        // REMOVED: Don't configure the auth server itself as a resource server here,
-        // as it might interfere with the /oauth2/token endpoint which doesn't expect a JWT.
-        // http.oauth2ResourceServer { resourceServer ->
-        //     resourceServer.jwt(Customizer.withDefaults())
-        // }
 
         return http.build()
     }
@@ -74,18 +66,18 @@ class SecurityConfig(
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http.cors(Customizer.withDefaults()) // Apply CORS globally
             .authorizeHttpRequests { auth ->
-                // Allow access to the login page and error pages
+                // Allow access to the login page and error pages (used by Spring Security form login)
                 auth
                     .requestMatchers("/login", "/error").permitAll()
-                    // Secure all other endpoints handled by this chain
+                    // Secure all other endpoints handled by this chain (e.g., custom API endpoints if any)
                     .anyRequest().authenticated()
             }
-            .csrf { csrf -> csrf.disable() } // Disable CSRF for stateless API (consider enabling for stateful parts like login form if not using separate frontend)
+            .csrf { csrf -> csrf.disable() } // Disable CSRF for stateless API
             .sessionManagement { session ->
-                // Use session IF REQUIRED for the form login page
+                // ROPC is stateless, but form login (if used as fallback or for other flows) might need session.
                  session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
-            // Configure form login for the default Spring Security login page
+            // Configure form login (used if user hits a protected resource without auth, or for /oauth2/authorize)
             .formLogin(Customizer.withDefaults())
 
         return http.build()
@@ -98,51 +90,33 @@ class SecurityConfig(
             .clientId("station-frontend-client")
             // No client secret for public clients (SPA)
             .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
-            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE) // Use Authorization Code Grant
-            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN) // Allow refresh tokens
-            // Define the allowed redirect URI for the frontend app after login
-            .redirectUri("http://localhost:5173/oidc-callback") // OIDC Callback URI (MUST match frontend config)
-            // Define the allowed redirect URI after logout (optional but recommended)
-            .postLogoutRedirectUri("http://localhost:5173/login") // Post Logout URI (MUST match frontend config)
-            .scope(OidcScopes.OPENID) // Standard OIDC scope
-            .scope(OidcScopes.PROFILE) // Scope for user profile information
-            .scope("station.read") // Custom scope
-            .scope("station.write") // Custom scope
-            .clientSettings(
-                ClientSettings.builder()
-                    .requireProofKey(true) // Enable PKCE (Proof Key for Code Exchange) - REQUIRED for public clients using Auth Code flow
-                    .requireAuthorizationConsent(true) // Optional: Set to true to show consent screen, false otherwise
-                    .build()
-            )
-            .build()
-
-        // If ROPC is needed for a *different* client (e.g., testing, mobile app), register it separately.
-        // Example ROPC client (adjust as needed):
-        /*
-        val ropcClient = RegisteredClient.withId(UUID.randomUUID().toString())
-            .clientId("ropc-client")
-            // .clientSecret(passwordEncoder().encode("ropc-secret")) // Use a secret for confidential ROPC clients
-            // .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-            .clientAuthenticationMethod(ClientAuthenticationMethod.NONE) // Or NONE if it's a public ROPC client
-            .authorizationGrantType(AuthorizationGrantType.PASSWORD) // ROPC Grant
-            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+            // --- Allow BOTH Authorization Code (for potential future use) AND Password (ROPC) ---
+            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+            .authorizationGrantType(AuthorizationGrantType.PASSWORD) // <-- ADDED ROPC Grant Type
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN) // Allow refresh tokens for both flows
+            // --- OIDC Settings (kept for flexibility, not strictly needed for ROPC) ---
+            .redirectUri("http://localhost:5173/oidc-callback") // OIDC Callback URI
+            .postLogoutRedirectUri("http://localhost:5173/login") // Post Logout URI
             .scope(OidcScopes.OPENID)
             .scope(OidcScopes.PROFILE)
             .scope("station.read")
             .scope("station.write")
-            .clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
+            .clientSettings(
+                ClientSettings.builder()
+                    .requireProofKey(true) // Required for OIDC Auth Code flow
+                    .requireAuthorizationConsent(false) // Set to false for ROPC (no consent screen) and potentially OIDC if desired
+                    .build()
+            )
             .build()
-        */
 
-        // return InMemoryRegisteredClientRepository(frontendClient, ropcClient) // Include both if needed
-        return InMemoryRegisteredClientRepository(frontendClient) // Only frontend client for now
+        return InMemoryRegisteredClientRepository(frontendClient)
     }
 
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
-    // This AuthenticationManager is used by the form login and potentially ROPC if enabled
+    // This AuthenticationManager is used by the form login AND the ROPC grant type
     fun authenticationManager(userDetailsService: UserDetailsService, passwordEncoder: PasswordEncoder): AuthenticationManager {
         val provider = DaoAuthenticationProvider()
         provider.setUserDetailsService(userDetailsService)
@@ -152,13 +126,11 @@ class SecurityConfig(
 
     @Bean
     fun jwtDecoder(jwkSource: JWKSource<SecurityContext>): JwtDecoder {
-        // Decoder used by resource servers and potentially the auth server itself (e.g., for /userinfo)
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource)
     }
 
     @Bean
     fun jwkSource(): JWKSource<SecurityContext> {
-        // Generates the JWK set used for signing tokens
         val rsaKey = RSAKey.Builder(applicationConfig.rsaPublicKey)
             .privateKey(applicationConfig.rsaPrivateKey)
             .keyID(UUID.randomUUID().toString())
@@ -169,18 +141,14 @@ class SecurityConfig(
 
     @Bean
     fun jwtEncoder(jwkSource: JWKSource<SecurityContext>): NimbusJwtEncoder {
-        // Encoder used to create the JWTs issued by the auth server
         return NimbusJwtEncoder(jwkSource)
     }
 
     @Bean
-    // Provides the authorization server settings, including issuer URL
     fun authorizationServerSettings(): AuthorizationServerSettings {
-        // Configure the issuer URI properly. Replace 'http://localhost:9000' with your actual issuer URI if different.
-        // It should match the 'authority' configured in the frontend oidcConfig.
-        // You can also fetch this from application properties.
+        // Ensure issuer URI matches frontend config if OIDC features (/userinfo) are used
         return AuthorizationServerSettings.builder()
-            .issuer("http://localhost:8081") // Use configured or default issuer
+            .issuer(applicationConfig.issuerUri ?: "http://localhost:8081") // Use configured or default issuer
             .build()
     }
 
@@ -188,26 +156,21 @@ class SecurityConfig(
     @Bean
     fun corsConfigurationSource(): UrlBasedCorsConfigurationSource {
         val configuration = CorsConfiguration().apply {
-            // Allow requests from the frontend development server
-            allowedOrigins = listOf("http://localhost:5173")
+            allowedOrigins = listOf("http://localhost:5173") // Frontend origin
             allowedMethods = listOf(
                 HttpMethod.GET.name(),
-                HttpMethod.POST.name(),
+                HttpMethod.POST.name(), // Needed for /oauth2/token
                 HttpMethod.PUT.name(),
                 HttpMethod.PATCH.name(),
                 HttpMethod.DELETE.name(),
                 HttpMethod.OPTIONS.name()
             )
-            // Allow all standard headers and custom ones like Authorization
-            allowedHeaders = listOf("*")
-            // Allow credentials (cookies, authorization headers) - needed for session cookie with form login
-            allowCredentials = true
-            // How long the results of a preflight request can be cached
+            allowedHeaders = listOf("*") // Allow all headers
+            allowCredentials = true // Important for potential session cookies (form login) and potentially future needs
             maxAge = 3600L
         }
         val source = UrlBasedCorsConfigurationSource()
-        // Apply this CORS configuration to all paths
-        source.registerCorsConfiguration("/**", configuration)
+        source.registerCorsConfiguration("/**", configuration) // Apply CORS to all paths
         return source
     }
 }

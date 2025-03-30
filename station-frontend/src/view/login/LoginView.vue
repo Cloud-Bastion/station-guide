@@ -2,60 +2,64 @@
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import AuthUserService from "@/service/AuthUserService";
 import { ref, onMounted } from 'vue';
-import { User } from 'oidc-client-ts';
-// Removed useRouter as redirection is handled by guards and service now
-// Removed PKCE utils as oidc-client-ts handles it
+import { useRouter } from 'vue-router'; // Import useRouter for redirection
 
-const isAuthenticated = ref(false);
-const user = ref<User | null>(null);
-const loginError = ref<string | null>(null); // Can be used for general login initiation errors
+// --- OIDC related refs removed ---
+// import { User } from 'oidc-client-ts';
+// const user = ref<User | null>(null);
+
+// --- Refs for ROPC Login ---
+const email = ref('');
+const password = ref('');
+const loginError = ref<string | null>(null);
+const isLoading = ref(false);
+const isAuthenticated = ref(false); // Still useful to control UI elements
+
+const router = useRouter(); // Initialize router
 
 // Check authentication status when the component mounts
-const checkAuthStatus = async () => {
-  try {
-    const currentUser = await AuthUserService.getUser();
-    isAuthenticated.value = !!currentUser && !currentUser.expired;
-    user.value = currentUser;
-  } catch (error) {
-    console.error("Error checking auth status:", error);
-    isAuthenticated.value = false;
-    user.value = null;
+const checkAuthStatus = () => {
+  isAuthenticated.value = AuthUserService.isAuthenticated();
+  // If already authenticated, redirect away from login page
+  if (isAuthenticated.value) {
+      console.log("Already authenticated, redirecting to dashboard.");
+      router.push({ name: 'employee-management' }); // Or your default authenticated route
   }
 };
 
-// Function to initiate the OIDC login flow
-const handleLogin = async () => {
+// Function to handle ROPC login submission
+const submitLogin = async () => {
   loginError.value = null; // Reset error
+  isLoading.value = true;
   try {
-    // Redirects the user to the auth server's login page
-    await AuthUserService.login();
-    // The browser will navigate away, so code here might not execute immediately after.
-  } catch (error) {
-    console.error("Login initiation failed:", error);
-    loginError.value = "Login konnte nicht gestartet werden. Bitte versuchen Sie es erneut.";
+    await AuthUserService.loginWithPassword(email.value, password.value);
+    isAuthenticated.value = true; // Update auth state
+    console.log("Login successful, redirecting...");
+    // Redirect to a protected route after successful login
+    router.push({ name: 'employee-management' }); // Or your default authenticated route
+  } catch (error: any) {
+    console.error("Login failed:", error);
+    loginError.value = error.message || "Login fehlgeschlagen. Bitte versuchen Sie es erneut.";
+    isAuthenticated.value = false; // Ensure auth state is false on error
+  } finally {
+    isLoading.value = false;
   }
 };
 
-// Function to initiate the OIDC logout flow
-const handleLogout = async () => {
-  try {
-    await AuthUserService.logout();
-    // The browser will navigate away to the auth server and then back to the post_logout_redirect_uri.
-  } catch (error) {
-    console.error("Logout failed:", error);
-    // Handle logout error display if needed
-  }
+// Function to handle logout
+const handleLogout = () => {
+  AuthUserService.logout();
+  isAuthenticated.value = false; // Update auth state
+  email.value = ''; // Clear fields
+  password.value = '';
+  loginError.value = null;
+  // Redirect to login page after logout
+  router.push({ name: 'login' });
 };
 
-// --- Potentially keep Google Login if needed, but it bypasses your Auth Server ---
-// const googleLogin = async () => {
-//   // This flow bypasses your auth-server. Consider integrating it via the auth-server itself.
-//   const GOOGLE_CLIENT_ID = encodeURIComponent("YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com") // Replace with actual ID
-//   const GOOGLE_REDIRECT_URI = encodeURIComponent("http://localhost:5173/google-callback") // Needs a handler route
-//   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?redirect_uri=${GOOGLE_REDIRECT_URI}&response_type=code&client_id=${GOOGLE_CLIENT_ID}&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+openid&access_type=offline`
-// };
-// --- End Google Login ---
-
+// --- OIDC login/logout handlers removed ---
+// const handleLogin = async () => { ... };
+// const handleOidcLogout = async () => { ... };
 
 onMounted(() => {
   checkAuthStatus();
@@ -68,43 +72,60 @@ onMounted(() => {
     <div :class="$style['login-container']">
       <h1 :class="$style['login-header']">Station Portal</h1>
 
-      <div v-if="!isAuthenticated" :class="$style['login-wrapper']">
+      <!-- ROPC Login Form -->
+      <form v-if="!isAuthenticated" @submit.prevent="submitLogin" :class="$style['login-wrapper']">
         <p :class="$style['login-prompt']">Bitte melden Sie sich an.</p>
 
-        <!-- Display general login errors -->
+        <!-- Email Input -->
+        <div :class="$style['login-input-container']">
+          <label for="email">E-Mail</label>
+          <input
+            type="email"
+            id="email"
+            v-model="email"
+            required
+            :class="$style.input"
+            placeholder="Ihre E-Mail-Adresse"
+            :disabled="isLoading"
+          />
+        </div>
+
+        <!-- Password Input -->
+        <div :class="$style['login-input-container']">
+          <label for="password">Passwort</label>
+          <input
+            type="password"
+            id="password"
+            v-model="password"
+            required
+            :class="$style.input"
+            placeholder="Ihr Passwort"
+            :disabled="isLoading"
+          />
+        </div>
+
+        <!-- Display Login Errors -->
         <div v-if="loginError" :class="$style['error-message']">
           {{ loginError }}
         </div>
 
-        <button @click="handleLogin" :class="$style['login-submit-button']">
-          <FontAwesomeIcon icon="sign-in-alt" :class="$style['icon']" />
-          <span>Login</span>
+        <!-- Login Button -->
+        <button type="submit" :class="$style['login-submit-button']" :disabled="isLoading">
+          <FontAwesomeIcon v-if="!isLoading" icon="sign-in-alt" :class="$style['icon']" />
+          <FontAwesomeIcon v-if="isLoading" icon="spinner" spin :class="$style['icon']" />
+          <span>{{ isLoading ? 'Anmelden...' : 'Login' }}</span>
         </button>
 
-        <!-- Optional: Separator and Third-Party Logins (if keeping Google/Apple) -->
-        <!--
-        <div :class="$style['login-sidebar-container']">
-          <div :class="$style['login-sidebar-line']"></div>
-          <span :class="$style['login-sidebar-text']">Oder</span>
-          <div :class="$style['login-sidebar-line']"></div>
-        </div>
+        <!-- Optional: Forgot Password Link -->
+        <!-- <div :class="$style['login-forgot-password']">Passwort vergessen?</div> -->
 
-        <div :class="$style['login-third-party-container']">
-          <button type="button" :class="$style['login-third-party-button']">
-            <FontAwesomeIcon :icon="['fab', 'apple']" size="lg" :class="$style['icon']"/>
-            <span>Login mit Apple</span>
-          </button>
-          <button type="button" :class="$style['login-third-party-button']" @click="googleLogin()">
-            <FontAwesomeIcon :icon="['fab', 'google']" size="lg" :class="$style['icon']" />
-            <span>Login mit Google</span>
-          </button>
-        </div>
-        -->
-      </div>
+      </form>
 
+      <!-- Authenticated State -->
       <div v-if="isAuthenticated" :class="$style['login-wrapper']">
          <p :class="$style['welcome-message']">
-           Willkommen, {{ user?.profile?.name || user?.profile?.preferred_username || 'Benutzer' }}!
+           <!-- Cannot display name easily with ROPC, needs separate API call -->
+           Willkommen! Sie sind angemeldet.
          </p>
          <button @click="handleLogout" :class="[$style['login-submit-button'], $style['logout-button']]">
            <FontAwesomeIcon icon="sign-out-alt" :class="$style['icon']" />
@@ -117,7 +138,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" module>
-// SCSS Variables and Styles from the original file
+// SCSS Variables and Styles (mostly unchanged, added input styles back)
 $bg-dark: #121212;
 $bg-medium: #1e1e1e;
 $bg-light: #2a2a2a;
@@ -140,31 +161,31 @@ $error-color: #e74c3c; // Error color
   background-color: $bg-dark;
   height: 100vh;
   justify-content: center;
-  font-family: 'Roboto', sans-serif; // More professional font
+  font-family: 'Roboto', sans-serif;
 }
 
 .login-container {
   background: $bg-medium;
   border-radius: $border-radius;
   padding: 40px;
-  width: 380px; // Slightly wider
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); // Stronger shadow
+  width: 380px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   animation: fadeIn 0.5s ease-in-out;
-  text-align: center; // Center content like buttons
+  text-align: center;
 }
 
 .login-header {
-  font-size: 2.5rem; // Larger font size
+  font-size: 2.5rem;
   font-weight: bold;
   color: $text-color;
-  margin-bottom: 30px; // More space
+  margin-bottom: 30px;
   text-align: center;
 }
 
 .login-wrapper {
   display: flex;
   flex-direction: column;
-  align-items: center; // Center items horizontally
+  align-items: center;
 
   .login-prompt, .welcome-message {
       color: $text-color;
@@ -181,70 +202,10 @@ $error-color: #e74c3c; // Error color
       margin-bottom: 15px;
       font-size: 0.9rem;
       text-align: center;
-      width: 100%; // Take full width within the wrapper
+      width: 100%;
   }
 
-  // --- Styles for optional third-party buttons ---
-  .login-third-party-container {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 25px; // More space
-    width: 100%; // Take full width
-
-    .login-third-party-button {
-      display: flex;
-      align-items: center;
-      justify-content: center; // Center the content
-      padding: 12px 20px;
-      background-color: transparent;
-      color: $text-color;
-      border: 1px solid $input-border;
-      border-radius: $border-radius;
-      cursor: pointer;
-      transition: background-color $transition-speed ease, border-color $transition-speed ease, color $transition-speed;
-      width: 48%; // Make buttons take up equal space
-
-      &:hover {
-        background-color: $input-bg;
-        border-color: $accent;
-        color: $accent;
-      }
-
-      .icon {
-        margin-right: 8px; // Space between icon and text
-        color: inherit;
-      }
-
-      span {
-        color: inherit;
-      }
-    }
-  }
-
-  .login-sidebar-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px; // More space
-    margin: 20px 0 25px;
-    width: 100%;
-
-    .login-sidebar-line {
-      flex: 1;
-      height: 1px;
-      background-color: #444;
-    }
-
-    .login-sidebar-text {
-      font-size: 1rem; // Slightly larger
-      color: #999; // Darker gray
-    }
-  }
-  // --- End styles for optional third-party buttons ---
-
-
-  // --- Styles for removed elements (kept for reference or potential reuse) ---
-  /*
+  // --- Styles for ROPC form elements ---
   .login-input-container {
     display: flex;
     flex-direction: column;
@@ -271,29 +232,11 @@ $error-color: #e74c3c; // Error color
         outline: none;
         background-color: #444; // Slightly lighter on focus
       }
-    }
-  }
-
-  .login-remember-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 25px; // More space
-    text-align: left;
-    width: 100%;
-
-    .checkbox {
-      width: 18px;
-      height: 18px;
-      accent-color: $accent;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-
-    .remember-label {
-      font-size: 1rem; // Slightly larger
-      color: $text-color;
-      user-select: none; // Prevent text selection
+       &:disabled {
+            background-color: darken($input-bg, 5%);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
     }
   }
 
@@ -304,32 +247,33 @@ $error-color: #e74c3c; // Error color
     margin-top: 15px; // More space
     cursor: pointer;
     transition: color $transition-speed ease;
+    width: 100%; // Take full width for centering
 
     &:hover {
       color: $text-color;
       text-decoration: underline; // Add underline on hover
     }
   }
-  */
-  // --- End styles for removed elements ---
+  // --- End styles for ROPC form elements ---
 
 
   .login-submit-button {
-    padding: 14px; // Larger padding
+    padding: 14px;
     text-align: center;
     border: none;
     border-radius: $border-radius;
     background: $accent;
     color: $text-color;
-    font-size: 1.1rem; // Larger font size
+    font-size: 1.1rem;
     cursor: pointer;
     transition: background-color $transition-speed ease, transform $transition-speed ease, opacity $transition-speed ease;
-    margin-top: 10px; // Add some margin above the button
-    display: inline-flex; // Use inline-flex for button sizing
+    margin-top: 10px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px; // Space between icon and text
-    min-width: 150px; // Give button a minimum width
+    gap: 8px;
+    min-width: 150px;
+    width: 100%; // Make button full width
 
     &:hover:not(:disabled) {
       background: $accent-hover;
@@ -379,19 +323,8 @@ $error-color: #e74c3c; // Error color
 // Media query for smaller screens
 @media (max-width: 768px) {
   .login-container {
-    width: 90%; // Take up more width on smaller screens
+    width: 90%;
     padding: 20px;
   }
-  // Adjust third-party container if used
-  /*
-  .login-third-party-container {
-    flex-direction: column;
-
-    .login-third-party-button {
-      width: 100%;
-      margin-bottom: 10px;
-    }
-  }
-  */
 }
 </style>
