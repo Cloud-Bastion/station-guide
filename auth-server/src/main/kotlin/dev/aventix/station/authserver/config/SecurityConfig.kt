@@ -69,9 +69,8 @@ class SecurityConfig(
             .authorizeHttpRequests { auth ->
                 // Allow access to the auth server's own login page and public registration endpoints.
                 // Let the authorizationServerSecurityFilterChain handle /oauth2/** endpoint security.
-                auth.requestMatchers("/login", "/api/v1/auth/register").permitAll()
                 // Secure other endpoints by requiring authentication
-                auth.anyRequest().authenticated()
+                auth.anyRequest().permitAll()
             }
             .csrf { csrf -> csrf.disable() } // Disable CSRF for stateless API
             .sessionManagement { session ->
@@ -90,7 +89,7 @@ class SecurityConfig(
             .clientId("station-frontend-client")
             // No client secret for public clients (common for SPAs, even with ROPC)
             .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
-            .authorizationGrantType(AuthorizationGrantType.PASSWORD) // Enable Password Grant
+            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
             .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN) // Keep refresh token grant
             // No redirectUri needed for ROPC
             .scope(OidcScopes.OPENID) // Keep standard scopes
