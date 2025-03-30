@@ -41,8 +41,7 @@ class SecurityConfig(
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http.with(OAuth2AuthorizationServerConfigurer.authorizationServer(), Customizer.withDefaults())
         http.getConfigurer(OAuth2AuthorizationServerConfigurer::class.java).oidc(Customizer.withDefaults())
-        return http
-            .cors {
+        return http.cors {
                 it.configurationSource(UrlBasedCorsConfigurationSource().apply {
                     registerCorsConfiguration("/**", CorsConfiguration().applyPermitDefaultValues().apply {
                         addAllowedMethod(HttpMethod.OPTIONS)
@@ -50,36 +49,27 @@ class SecurityConfig(
                         addAllowedMethod(HttpMethod.PATCH)
                         addAllowedMethod(HttpMethod.DELETE)
                         addAllowedMethod(HttpMethod.GET)
-                        addAllowedOrigin("http://localhost:5173")
+                        addAllowedHeader("*")
+                        addAllowedOriginPattern("*")
                     })
                 })
-            }
-            .authorizeHttpRequests { auth ->
-                auth
-                    .anyRequest().permitAll()
-            }
-            .csrf { csrf -> csrf.disable() }
-            .sessionManagement { session ->
-                session
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            }
-            .build()
+            }.authorizeHttpRequests { auth ->
+                auth.anyRequest().permitAll()
+            }.csrf { csrf -> csrf.disable() }.sessionManagement { session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            }.build()
     }
 
     @Bean
     fun registeredClientRepository(): RegisteredClientRepository {
-        val oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
-            .clientId("client-id")
+        val oidcClient = RegisteredClient.withId(UUID.randomUUID().toString()).clientId("client-id")
             .clientSecret("{noop}client-secret")
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
             .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
             .redirectUri("http://127.0.0.1:8080/login/oauth2/code/oidc-client")
-            .postLogoutRedirectUri("http://127.0.0.1:8080/")
-            .scope(OidcScopes.OPENID)
-            .scope(OidcScopes.PROFILE)
-            .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-            .build()
+            .postLogoutRedirectUri("http://127.0.0.1:8080/").scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE)
+            .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build()).build()
 
         return InMemoryRegisteredClientRepository(oidcClient)
     }

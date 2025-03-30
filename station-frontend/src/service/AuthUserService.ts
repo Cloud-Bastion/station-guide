@@ -17,7 +17,7 @@ interface UserAuthentication {
 
 export default {
     async getUserAuth(username: string, password: string): Promise<UserAuthentication> {
-        const response = await apiClient.post<UserAuthentication>("login", {
+        const response = await apiClient.post("/login", {
             username: username,
             password: password,
         });
@@ -25,7 +25,7 @@ export default {
     },
 
     async getGoogleAuth(username: string, password: string): Promise<UserAuthentication> {
-        const response = await apiClient.post<UserAuthentication>("login", {
+        const response = await apiClient.post<UserAuthentication>("/login", {
             username: username,
             password: password,
         });
