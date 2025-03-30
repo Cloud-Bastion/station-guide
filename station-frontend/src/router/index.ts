@@ -4,6 +4,7 @@ import TaskManagementView from "@/view/task/TaskManagementView.vue";
 import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
 import LoginView from "@/view/login/LoginView.vue";
 import NotFoundView from "@/view/error/NotFoundView.vue";
+import OAuthCallbackView from "@/view/login/OAuthCallbackView.vue"; // Import the new callback view
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -14,13 +15,40 @@ const routes: Array<RouteRecordRaw> = [
     {
         path: '/',
         name: 'home',
-        component: LoginView
+        component: LoginView,
+        // Redirect to dashboard if already logged in
+        beforeEnter: (to, from, next) => {
+            if (localStorage.getItem('auth_token')) {
+                next({ name: 'employee-management' }); // Or your default authenticated route
+            } else {
+                next();
+            }
+        }
     },
     {
         path: '/login',
         name: 'login',
-        component: LoginView
+        component: LoginView,
+         // Redirect to dashboard if already logged in
+        beforeEnter: (to, from, next) => {
+            if (localStorage.getItem('auth_token')) {
+                next({ name: 'employee-management' }); // Or your default authenticated route
+            } else {
+                next();
+            }
+        }
     },
+    {
+        path: '/oauth/callback', // New OAuth2 callback route
+        name: 'oauth-callback',
+        component: OAuthCallbackView,
+    },
+    // Remove or adapt Google specific callback if not needed anymore
+    // {
+    //     path: '/google-callback',
+    //     name: 'google-callback',
+    //     component: GoogleCallbackView // Replace with OAuthCallbackView or remove
+    // },
     {
         path: '/employee/management',
         name: 'employee-management',
@@ -48,19 +76,25 @@ const routes: Array<RouteRecordRaw> = [
 ]
 
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHistory(), // Use createWebHistory for cleaner URLs
     routes
 })
 
 router.beforeEach((to, from, next) => {
     const token = localStorage.getItem('auth_token');
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-    const isAuthenticated = !!token;
 
-    if (requiresAuth && !isAuthenticated) {
-        next('/login');
-    } else {
+    // Allow access to login and callback pages even if requiresAuth is true initially
+    if (to.name === 'login' || to.name === 'oauth-callback') {
         next();
+        return;
+    }
+
+    if (requiresAuth && !token) {
+        console.log("Redirecting to login, requiresAuth:", requiresAuth, "token:", token);
+        next({ name: 'login' }); // Redirect to login if auth is required and no token
+    } else {
+        next(); // Proceed as normal
     }
 });
 

@@ -2,19 +2,55 @@
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import Ref from "@/components/util/Ref";
 import AuthUserService from "@/service/AuthUserService";
+import { generateRandomString, generateCodeChallenge } from '@/utils/pkce'; // Import PKCE helpers
+import { ref } from 'vue'; // Import ref for potential error messages
 
-const email: Ref<string> = new Ref("");
-const password: Ref<string> = new Ref("");
+const email: Ref<string> = new Ref(""); // Keep if needed for UI hints, but not sent directly
+const password: Ref<string> = new Ref(""); // Keep if needed for UI hints, but not sent directly
+const loginError = ref<string | null>(null); // For displaying errors
+
+// OAuth2 Configuration (should match auth-server and callback route)
+const AUTH_SERVER_URL = window.env.AUTH_BASE_URL.replace('/api/v1/auth/', ''); // Get base URL like http://localhost:8081
+const CLIENT_ID = "station-frontend-client"; // Must match RegisteredClient in auth-server
+const REDIRECT_URI = "http://localhost:5173/oauth/callback"; // Must match RegisteredClient and router
+const SCOPES = "openid profile station.read station.write"; // Requested scopes
 
 const submitLogin = async () => {
-  const authentication = await AuthUserService.getUserAuth(email.value, password.value);
-  localStorage.setItem("auth_token", authentication.token)
+  loginError.value = null; // Clear previous errors
+  try {
+    // 1. Generate Code Verifier and Challenge for PKCE
+    const codeVerifier = generateRandomString(128); // Generate a secure random string
+    sessionStorage.setItem('pkce_code_verifier', codeVerifier); // Store verifier for callback
+    const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+    // 2. Construct Authorization URL
+    const authUrl = new URL(`${AUTH_SERVER_URL}/oauth2/authorize`);
+    authUrl.searchParams.append('response_type', 'code');
+    authUrl.searchParams.append('client_id', CLIENT_ID);
+    authUrl.searchParams.append('redirect_uri', REDIRECT_URI);
+    authUrl.searchParams.append('scope', SCOPES);
+    authUrl.searchParams.append('code_challenge', codeChallenge);
+    authUrl.searchParams.append('code_challenge_method', 'S256');
+    // Optional: Add state parameter for CSRF protection
+    // const state = generateRandomString(32);
+    // sessionStorage.setItem('oauth_state', state);
+    // authUrl.searchParams.append('state', state);
+
+    // 3. Redirect user to Auth Server
+    window.location.href = authUrl.toString();
+
+  } catch (error) {
+    console.error("Error initiating login:", error);
+    loginError.value = "Fehler beim Starten des Login-Vorgangs.";
+  }
 };
 
+// Keep Google login for now, but ideally it should also go through the auth-server
 const googleLogin = async () => {
-  const CLIENT_ID = encodeURIComponent("158421481211-6vp5a7oq3lbd60s16f43r3fs3ic66s7r.apps.googleusercontent.com")
-  const REDIRECT_URI = encodeURIComponent("http://localhost:5173/google-callback")
-  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?redirect_uri=${REDIRECT_URI}&response_type=code&client_id=${CLIENT_ID}&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+openid&access_type=offline`
+  // This flow bypasses your auth-server. Consider integrating it.
+  const GOOGLE_CLIENT_ID = encodeURIComponent("158421481211-6vp5a7oq3lbd60s16f43r3fs3ic66s7r.apps.googleusercontent.com")
+  const GOOGLE_REDIRECT_URI = encodeURIComponent("http://localhost:5173/google-callback") // Needs a separate handler or integrate into main callback
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?redirect_uri=${GOOGLE_REDIRECT_URI}&response_type=code&client_id=${GOOGLE_CLIENT_ID}&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+openid&access_type=offline`
 };
 
 </script>
@@ -26,23 +62,33 @@ const googleLogin = async () => {
 
       <div :class="$style['login-wrapper']">
 
+        <!-- Optional: Keep email/password fields if you want the auth-server login page to prefill them,
+             but the actual submission now happens via OAuth redirect -->
         <div :class="$style['login-input-container']">
-          <label for="email">E-Mail / Personalnummer</label>
-          <input v-model="email.value" type="text" placeholder="Gib deine E-Mail ein" :class="$style['input']" />
+          <label for="email">E-Mail / Personalnummer (Optional)</label>
+          <input v-model="email.value" type="text" placeholder="Wird auf der Login-Seite benötigt" :class="$style['input']" disabled/>
         </div>
 
         <div :class="$style['login-input-container']">
-          <label for="password">Passwort</label>
-          <input v-model="password.value" type="password" placeholder="••••••••" :class="$style['input']" />
+          <label for="password">Passwort (Optional)</label>
+          <input v-model="password.value" type="password" placeholder="••••••••" :class="$style['input']" disabled/>
         </div>
 
+        <!-- Display login errors -->
+        <div v-if="loginError" :class="$style['error-message']">
+          {{ loginError }}
+        </div>
+
+        <!-- Removed remember me as session is managed by auth-server/token -->
+        <!--
         <div :class="$style['login-remember-container']">
           <input type="checkbox" id="remember-me" :class="$style['checkbox']"/>
           <label for="remember-me" :class="$style['remember-label']">Angemeldet bleiben</label>
         </div>
+        -->
 
-        <button :class="$style['login-submit-button']" @click="submitLogin()">Einloggen</button>
-        <a href="#" :class="$style['login-forgot-password']">Passwort vergessen?</a>
+        <button :class="$style['login-submit-button']" @click="submitLogin()">Einloggen via Auth Server</button>
+        <a href="#" :class="$style['login-forgot-password']">Passwort vergessen?</a> <!-- Link should point to auth-server's password reset -->
 
         <div :class="$style['login-sidebar-container']">
           <div :class="$style['login-sidebar-line']"></div>
@@ -51,6 +97,7 @@ const googleLogin = async () => {
         </div>
 
         <div :class="$style['login-third-party-container']">
+          <!-- Keep these buttons but they should ideally trigger the auth-server flow too -->
           <button :class="$style['login-third-party-button']">
             <FontAwesomeIcon :icon="['fab', 'apple']" size="lg" :class="$style['icon']"/>
             <span>Login mit Apple</span>
@@ -77,6 +124,7 @@ $transition-speed: 0.3s;
 $input-bg: #333;
 $input-border: #555;
 $input-focus: #3d0000; // Darker red focus
+$error-color: #e74c3c; // Error color
 
 .parent {
   display: flex;
@@ -108,6 +156,18 @@ $input-focus: #3d0000; // Darker red focus
 .login-wrapper {
   display: flex;
   flex-direction: column;
+
+  .error-message {
+      color: $error-color;
+      background-color: rgba($error-color, 0.1);
+      border: 1px solid rgba($error-color, 0.3);
+      padding: 10px;
+      border-radius: $border-radius;
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+      text-align: center;
+  }
+
 
   .login-third-party-container {
     display: flex;
@@ -188,6 +248,11 @@ $input-focus: #3d0000; // Darker red focus
         outline: none;
         background-color: #444; // Slightly lighter on focus
       }
+       &:disabled { // Style disabled inputs
+            background-color: darken($input-bg, 5%);
+            cursor: not-allowed;
+            opacity: 0.6;
+       }
     }
   }
 
@@ -223,6 +288,7 @@ $input-focus: #3d0000; // Darker red focus
     font-size: 1.1rem; // Larger font size
     cursor: pointer;
     transition: background-color $transition-speed ease, transform $transition-speed ease;
+    margin-top: 10px; // Add some margin above the button
 
     &:hover {
       background: $accent-hover;
