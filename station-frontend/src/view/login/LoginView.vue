@@ -2,46 +2,60 @@
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import Ref from "@/components/util/Ref";
 import AuthUserService from "@/service/AuthUserService";
-import { generateRandomString, generateCodeChallenge } from '@/utils/pkce'; // Import PKCE helpers
-import { ref } from 'vue'; // Import ref for potential error messages
+// Removed PKCE imports: import { generateRandomString, generateCodeChallenge } from '@/utils/pkce';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router'; // Import useRouter for redirection
 
-const email: Ref<string> = new Ref(""); // Keep if needed for UI hints, but not sent directly
-const password: Ref<string> = new Ref(""); // Keep if needed for UI hints, but not sent directly
+const email = ref(""); // Use standard ref for v-model
+const password = ref(""); // Use standard ref for v-model
 const loginError = ref<string | null>(null); // For displaying errors
+const isLoading = ref(false); // Loading indicator
+const router = useRouter(); // Get router instance
 
-// OAuth2 Configuration (should match auth-server and callback route)
-const AUTH_SERVER_URL = window.env.AUTH_BASE_URL.replace('/api/v1/auth/', ''); // Get base URL like http://localhost:8081
+// OAuth2 Configuration (Client ID and Scopes are still needed for ROPC)
 const CLIENT_ID = "station-frontend-client"; // Must match RegisteredClient in auth-server
-const REDIRECT_URI = "http://localhost:5173/oauth/callback"; // Must match RegisteredClient and router
 const SCOPES = "openid profile station.read station.write"; // Requested scopes
 
 const submitLogin = async () => {
   loginError.value = null; // Clear previous errors
+  isLoading.value = true; // Show loading indicator
+
+  if (!email.value || !password.value) {
+      loginError.value = "Bitte geben Sie E-Mail und Passwort ein.";
+      isLoading.value = false;
+      return;
+  }
+
   try {
-    // 1. Generate Code Verifier and Challenge for PKCE
-    const codeVerifier = generateRandomString(128); // Generate a secure random string
-    sessionStorage.setItem('pkce_code_verifier', codeVerifier); // Store verifier for callback
-    const codeChallenge = await generateCodeChallenge(codeVerifier);
+    // Call the ROPC login function from the service
+    const tokenResponse = await AuthUserService.loginWithPassword(
+        email.value,
+        password.value,
+        CLIENT_ID,
+        SCOPES
+    );
 
-    // 2. Construct Authorization URL
-    const authUrl = new URL(`${AUTH_SERVER_URL}/oauth2/authorize`);
-    authUrl.searchParams.append('response_type', 'code');
-    authUrl.searchParams.append('client_id', CLIENT_ID);
-    authUrl.searchParams.append('redirect_uri', REDIRECT_URI);
-    authUrl.searchParams.append('scope', SCOPES);
-    authUrl.searchParams.append('code_challenge', codeChallenge);
-    authUrl.searchParams.append('code_challenge_method', 'S256');
-    // Optional: Add state parameter for CSRF protection
-    // const state = generateRandomString(32);
-    // sessionStorage.setItem('oauth_state', state);
-    // authUrl.searchParams.append('state', state);
+    if (tokenResponse.access_token) {
+      // Store the token
+      localStorage.setItem('auth_token', tokenResponse.access_token);
+      if (tokenResponse.refresh_token) {
+        localStorage.setItem('refresh_token', tokenResponse.refresh_token);
+      }
 
-    // 3. Redirect user to Auth Server
-    window.location.href = authUrl.toString();
+      // Redirect to the dashboard or intended page
+      router.push({ name: 'employee-management' });
 
-  } catch (error) {
-    console.error("Error initiating login:", error);
-    loginError.value = "Fehler beim Starten des Login-Vorgangs.";
+    } else {
+      // Should not happen if service throws error, but as a fallback
+      throw new Error("Kein Access Token erhalten.");
+    }
+
+  } catch (error: any) {
+    console.error("Login failed:", error);
+    // Display specific error from service or a generic one
+    loginError.value = error.message || "Login fehlgeschlagen. Überprüfen Sie Ihre Anmeldedaten.";
+  } finally {
+    isLoading.value = false; // Hide loading indicator
   }
 };
 
@@ -49,7 +63,8 @@ const submitLogin = async () => {
 const googleLogin = async () => {
   // This flow bypasses your auth-server. Consider integrating it.
   const GOOGLE_CLIENT_ID = encodeURIComponent("158421481211-6vp5a7oq3lbd60s16f43r3fs3ic66s7r.apps.googleusercontent.com")
-  const GOOGLE_REDIRECT_URI = encodeURIComponent("http://localhost:5173/google-callback") // Needs a separate handler or integrate into main callback
+  // Redirect URI for Google needs to be handled separately or integrated into auth server flow
+  const GOOGLE_REDIRECT_URI = encodeURIComponent("http://localhost:5173/google-callback")
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?redirect_uri=${GOOGLE_REDIRECT_URI}&response_type=code&client_id=${GOOGLE_CLIENT_ID}&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+openid&access_type=offline`
 };
 
@@ -60,18 +75,17 @@ const googleLogin = async () => {
     <div :class="$style['login-container']">
       <h1 :class="$style['login-header']">Login</h1>
 
-      <div :class="$style['login-wrapper']">
+      <form @submit.prevent="submitLogin" :class="$style['login-wrapper']">
 
-        <!-- Optional: Keep email/password fields if you want the auth-server login page to prefill them,
-             but the actual submission now happens via OAuth redirect -->
+        <!-- Email and Password fields are now active -->
         <div :class="$style['login-input-container']">
-          <label for="email">E-Mail / Personalnummer (Optional)</label>
-          <input v-model="email.value" type="text" placeholder="Wird auf der Login-Seite benötigt" :class="$style['input']" disabled/>
+          <label for="email">E-Mail / Personalnummer</label>
+          <input v-model="email" type="text" id="email" placeholder="Ihre E-Mail" :class="$style['input']" required/>
         </div>
 
         <div :class="$style['login-input-container']">
-          <label for="password">Passwort (Optional)</label>
-          <input v-model="password.value" type="password" placeholder="••••••••" :class="$style['input']" disabled/>
+          <label for="password">Passwort</label>
+          <input v-model="password" type="password" id="password" placeholder="••••••••" :class="$style['input']" required/>
         </div>
 
         <!-- Display login errors -->
@@ -80,14 +94,11 @@ const googleLogin = async () => {
         </div>
 
         <!-- Removed remember me as session is managed by auth-server/token -->
-        <!--
-        <div :class="$style['login-remember-container']">
-          <input type="checkbox" id="remember-me" :class="$style['checkbox']"/>
-          <label for="remember-me" :class="$style['remember-label']">Angemeldet bleiben</label>
-        </div>
-        -->
 
-        <button :class="$style['login-submit-button']" @click="submitLogin()">Einloggen via Auth Server</button>
+        <button type="submit" :class="$style['login-submit-button']" :disabled="isLoading">
+          <FontAwesomeIcon v-if="isLoading" icon="spinner" spin :class="$style['loading-spinner']"/>
+          <span v-else>Einloggen</span>
+        </button>
         <a href="#" :class="$style['login-forgot-password']">Passwort vergessen?</a> <!-- Link should point to auth-server's password reset -->
 
         <div :class="$style['login-sidebar-container']">
@@ -98,16 +109,16 @@ const googleLogin = async () => {
 
         <div :class="$style['login-third-party-container']">
           <!-- Keep these buttons but they should ideally trigger the auth-server flow too -->
-          <button :class="$style['login-third-party-button']">
+          <button type="button" :class="$style['login-third-party-button']">
             <FontAwesomeIcon :icon="['fab', 'apple']" size="lg" :class="$style['icon']"/>
             <span>Login mit Apple</span>
           </button>
-          <button :class="$style['login-third-party-button']" @click="googleLogin()">
+          <button type="button" :class="$style['login-third-party-button']" @click="googleLogin()">
             <FontAwesomeIcon :icon="['fab', 'google']" size="lg" :class="$style['icon']" />
             <span>Login mit Google</span>
           </button>
         </div>
-      </div>
+      </form>
     </div>
   </div>
 </template>
@@ -248,11 +259,7 @@ $error-color: #e74c3c; // Error color
         outline: none;
         background-color: #444; // Slightly lighter on focus
       }
-       &:disabled { // Style disabled inputs
-            background-color: darken($input-bg, 5%);
-            cursor: not-allowed;
-            opacity: 0.6;
-       }
+       // Removed disabled style as inputs are active now
     }
   }
 
@@ -287,17 +294,31 @@ $error-color: #e74c3c; // Error color
     color: $text-color;
     font-size: 1.1rem; // Larger font size
     cursor: pointer;
-    transition: background-color $transition-speed ease, transform $transition-speed ease;
+    transition: background-color $transition-speed ease, transform $transition-speed ease, opacity $transition-speed ease;
     margin-top: 10px; // Add some margin above the button
+    display: flex; // For spinner alignment
+    align-items: center;
+    justify-content: center;
+    gap: 8px; // Space between spinner and text
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: $accent-hover;
       transform: translateY(-2px);
     }
 
-    &:active {
+    &:active:not(:disabled) {
       background: darken($accent, 10%);
       transform: translateY(0);
+    }
+
+    &:disabled {
+        background-color: darken($accent, 15%);
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    .loading-spinner {
+        // Spinner styles are handled by FontAwesome component props
     }
   }
 

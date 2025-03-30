@@ -1,10 +1,10 @@
-import {createRouter, createWebHashHistory, createWebHistory, RouteRecordRaw} from 'vue-router'
+import {createRouter, createWebHistory, RouteRecordRaw} from 'vue-router'
 import EmployeeManageView from "@/view/employee/EmployeeManageView.vue";
 import TaskManagementView from "@/view/task/TaskManagementView.vue";
 import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
 import LoginView from "@/view/login/LoginView.vue";
 import NotFoundView from "@/view/error/NotFoundView.vue";
-import OAuthCallbackView from "@/view/login/OAuthCallbackView.vue"; // Import the new callback view
+// Removed OAuthCallbackView import
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -38,11 +38,12 @@ const routes: Array<RouteRecordRaw> = [
             }
         }
     },
-    {
-        path: '/oauth/callback', // New OAuth2 callback route
-        name: 'oauth-callback',
-        component: OAuthCallbackView,
-    },
+    // Removed OAuth callback route
+    // {
+    //     path: '/oauth/callback',
+    //     name: 'oauth-callback',
+    //     component: OAuthCallbackView,
+    // },
     // Remove or adapt Google specific callback if not needed anymore
     // {
     //     path: '/google-callback',
@@ -84,9 +85,14 @@ router.beforeEach((to, from, next) => {
     const token = localStorage.getItem('auth_token');
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 
-    // Allow access to login and callback pages even if requiresAuth is true initially
-    if (to.name === 'login' || to.name === 'oauth-callback') {
-        next();
+    // Allow access to login page even if requiresAuth is true initially
+    if (to.name === 'login') { // Removed 'oauth-callback'
+        // If trying to access login page while already logged in, redirect to dashboard
+        if (token) {
+             next({ name: 'employee-management' });
+        } else {
+            next();
+        }
         return;
     }
 

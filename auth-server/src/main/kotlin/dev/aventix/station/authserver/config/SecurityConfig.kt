@@ -2,6 +2,7 @@ package dev.aventix.station.authserver.config
 
 import com.nimbusds.jose.jwk.JWKSelector
 import com.nimbusds.jose.jwk.JWKSet
+import com.nimbusds.jose.jwk.RSAKey // Import RSAKey
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
 import org.springframework.context.annotation.Bean
@@ -21,8 +22,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 import org.springframework.security.oauth2.core.oidc.OidcScopes
 import org.springframework.security.oauth2.jwt.JwtDecoder
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder // Correct import for NimbusJwtEncoder
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
@@ -30,7 +30,6 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import java.util.*
@@ -52,9 +51,10 @@ class SecurityConfig(
         }
 
         // Redirect to the login page when not authenticated from the authorization endpoint
+        // This might not be needed if you only use ROPC, but keep it if you might add other flows later
         // http.exceptionHandling { exceptions ->
         //     exceptions.defaultAuthenticationEntryPointFor(
-        //         LoginUrlAuthenticationEntryPoint("/login"), // Adjust if your login page URL is different
+        //         LoginUrlAuthenticationEntryPoint("/login"), // Default Spring Security login page
         //         http.getConfigurer(OAuth2AuthorizationServerConfigurer::class.java).authorizationEndpointMatcher
         //     )
         // }
@@ -71,17 +71,17 @@ class SecurityConfig(
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http.cors(Customizer.withDefaults()) // Apply CORS globally
             .authorizeHttpRequests { auth ->
-                // Allow access to the custom login endpoint and OAuth2 endpoints
-                auth.requestMatchers("/api/v1/auth/login", "/oauth2/**", "/login").permitAll()
-                // Secure other endpoints if necessary, or permit all for now
-                auth.anyRequest().authenticated() // Or permitAll() depending on needs
+                // Allow access to the token endpoint and potentially other public endpoints
+                auth.requestMatchers("/oauth2/token", "/login", "/api/v1/auth/register").permitAll() // Allow token endpoint
+                // Secure other endpoints if necessary
+                auth.anyRequest().authenticated()
             }
             .csrf { csrf -> csrf.disable() } // Disable CSRF for stateless API
             .sessionManagement { session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
-            // Configure form login if the default Spring Security login page is used
-            .formLogin(Customizer.withDefaults()) // Use default login page for auth server
+            // Configure form login for the default Spring Security login page (used by Auth Server itself if needed)
+            .formLogin(Customizer.withDefaults())
 
         return http.build()
     }
@@ -91,62 +91,51 @@ class SecurityConfig(
     fun registeredClientRepository(): RegisteredClientRepository {
         val frontendClient = RegisteredClient.withId(UUID.randomUUID().toString())
             .clientId("station-frontend-client")
-            // No client secret for public clients using PKCE
+            // No client secret for public clients (common for SPAs, even with ROPC)
             .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
-            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN) // Optional: Add refresh token grant
-            .redirectUri("http://localhost:5173/oauth/callback") // Frontend callback URL
-            // .postLogoutRedirectUri("http://localhost:5173/") // Optional: Where to redirect after logout
-            .scope(OidcScopes.OPENID)
+            .authorizationGrantType(AuthorizationGrantType.PASSWORD) // Enable Password Grant
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN) // Keep refresh token grant
+            // No redirectUri needed for ROPC
+            .scope(OidcScopes.OPENID) // Keep standard scopes
             .scope(OidcScopes.PROFILE)
-            .scope("station.read") // Example custom scope
-            .scope("station.write") // Example custom scope
+            .scope("station.read") // Keep custom scopes
+            .scope("station.write")
             .clientSettings(
                 ClientSettings.builder()
-                    .requireProofKey(true) // Enable PKCE
-                    .requireAuthorizationConsent(false) // Set to true to show consent screen
+                    .requireProofKey(false) // Disable PKCE for ROPC
+                    .requireAuthorizationConsent(false) // No consent screen for ROPC
                     .build()
             )
             .build()
 
-        // Keep other clients if needed, e.g., for backend services
-        // val oidcClient = RegisteredClient.withId(UUID.randomUUID().toString()).clientId("client-id")
-        //     .clientSecret("{noop}client-secret") // Use passwordEncoder for secrets
-        //     .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-        //     .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-        //     .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-        //     .redirectUri("http://127.0.0.1:8080/login/oauth2/code/oidc-client") // Example backend callback
-        //     .postLogoutRedirectUri("http://127.0.0.1:8080/")
-        //     .scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE)
-        //     .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-        //     .build()
+        // Remove or comment out other clients if not needed
+        // val oidcClient = ...
 
-        return InMemoryRegisteredClientRepository(frontendClient /*, oidcClient */)
+        return InMemoryRegisteredClientRepository(frontendClient)
     }
 
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
+    // This AuthenticationManager is crucial for the Password Grant
     fun authenticationManager(userDetailsService: UserDetailsService, passwordEncoder: PasswordEncoder): AuthenticationManager {
         val provider = DaoAuthenticationProvider()
         provider.setUserDetailsService(userDetailsService)
-        provider.setPasswordEncoder(passwordEncoder) // Set the password encoder
+        provider.setPasswordEncoder(passwordEncoder)
         return ProviderManager(provider)
     }
 
     @Bean
     fun jwtDecoder(jwkSource: JWKSource<SecurityContext>): JwtDecoder {
-        // Use the JWKSource bean provided by Spring Authorization Server
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource)
     }
 
     @Bean
     fun jwkSource(): JWKSource<SecurityContext> {
-        // Use the keys defined in application properties
         val rsaKey = RSAKey.Builder(applicationConfig.rsaPublicKey)
             .privateKey(applicationConfig.rsaPrivateKey)
-            .keyID(UUID.randomUUID().toString()) // Generate a key ID
+            .keyID(UUID.randomUUID().toString())
             .build()
         val jwkSet = JWKSet(rsaKey)
         return JWKSource { jwkSelector: JWKSelector, _: SecurityContext? -> jwkSelector.select(jwkSet) }
@@ -154,17 +143,13 @@ class SecurityConfig(
 
     @Bean
     fun jwtEncoder(jwkSource: JWKSource<SecurityContext>): NimbusJwtEncoder {
-        // Use the same JWKSource for encoding
         return NimbusJwtEncoder(jwkSource)
     }
 
-    // Define CORS configuration globally
     @Bean
     fun corsConfigurationSource(): UrlBasedCorsConfigurationSource {
         val configuration = CorsConfiguration().apply {
-            // Allow the frontend origin
-            allowedOrigins = listOf("http://localhost:5173")
-            // Allow common methods and OAuth2 methods
+            allowedOrigins = listOf("http://localhost:5173") // Allow frontend origin
             allowedMethods = listOf(
                 HttpMethod.GET.name(),
                 HttpMethod.POST.name(),
@@ -173,16 +158,12 @@ class SecurityConfig(
                 HttpMethod.DELETE.name(),
                 HttpMethod.OPTIONS.name()
             )
-            // Allow all headers, including Authorization
-            allowedHeaders = listOf("*")
-            // Allow credentials (cookies, authorization headers)
-            allowCredentials = true
-            // Max age for preflight requests
+            allowedHeaders = listOf("*") // Allow all headers, including Authorization and Content-Type
+            allowCredentials = true // Important for sending credentials if needed (though not typical for public ROPC)
             maxAge = 3600L
         }
         val source = UrlBasedCorsConfigurationSource()
-        // Apply CORS configuration to all paths
-        source.registerCorsConfiguration("/**", configuration)
+        source.registerCorsConfiguration("/**", configuration) // Apply CORS to all paths
         return source
     }
 }

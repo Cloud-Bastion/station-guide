@@ -3,8 +3,7 @@ import axios from "axios";
 // Use the base URL of the auth server, not the specific API path
 const AUTH_SERVER_URL: string = window.env.AUTH_BASE_URL.replace('/api/v1/auth/', '');
 const TOKEN_ENDPOINT = `${AUTH_SERVER_URL}/oauth2/token`;
-const CLIENT_ID = "station-frontend-client"; // Must match RegisteredClient in auth-server
-const REDIRECT_URI = "http://localhost:5173/oauth/callback"; // Must match RegisteredClient and router
+// CLIENT_ID and REDIRECT_URI are defined within the functions now or passed as arguments
 
 // Define expected token response structure
 interface TokenResponse {
@@ -27,49 +26,57 @@ export default {
      * @deprecated Use OAuth2 flow instead.
      */
     /*
-    async getUserAuth(username: string, password: string): Promise<UserAuthentication> {
-        // This uses the direct password login, which we are replacing with OAuth2
-        const response = await axios.post(`${window.env.AUTH_BASE_URL}/login`, {
-            username: username,
-            password: password,
-        });
-        // Assuming the old endpoint returned { token: string } or { error: string }
-        // Adjust based on actual old response structure if needed for reference
-        return response.data;
-    },
+    async getUserAuth(username: string, password: string): Promise<UserAuthentication> { ... }
     */
 
     /**
-     * Exchanges an authorization code for an access token using the Authorization Code Grant with PKCE.
-     * @param code The authorization code received from the authorization server.
-     * @param codeVerifier The PKCE code verifier corresponding to the code challenge sent earlier.
+     * @deprecated Replaced by ROPC flow in loginWithPassword.
+     */
+    /*
+    async exchangeCodeForToken(code: string, codeVerifier: string): Promise<TokenResponse> { ... }
+    */
+
+    /**
+     * Logs in a user using the OAuth2 Resource Owner Password Credentials (ROPC) grant.
+     * @param username The user's username (email).
+     * @param password The user's password.
+     * @param clientId The OAuth2 client ID.
+     * @param scope The requested scopes.
      * @returns A promise that resolves with the token response.
      */
-    async exchangeCodeForToken(code: string, codeVerifier: string): Promise<TokenResponse> {
+    async loginWithPassword(username: string, password: string, clientId: string, scope: string): Promise<TokenResponse> {
         const params = new URLSearchParams();
-        params.append('grant_type', 'authorization_code');
-        params.append('code', code);
-        params.append('redirect_uri', REDIRECT_URI);
-        params.append('client_id', CLIENT_ID);
-        params.append('code_verifier', codeVerifier);
+        params.append('grant_type', 'password');
+        params.append('username', username);
+        params.append('password', password);
+        params.append('client_id', clientId);
+        params.append('scope', scope);
 
         try {
             const response = await axios.post<TokenResponse>(TOKEN_ENDPOINT, params, {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
+                    // No 'Authorization' header needed here for public clients (ClientAuthenticationMethod.NONE)
+                    // If using client_secret_basic, it would be:
+                    // 'Authorization': 'Basic ' + btoa(clientId + ':' + clientSecret)
                 }
             });
             return response.data;
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
-                // Log or handle the specific OAuth2 error from the server
                 const errorData = error.response.data as TokenErrorResponse;
-                console.error("OAuth Token Error:", errorData.error, errorData.error_description);
-                throw new Error(errorData.error_description || errorData.error || 'Failed to exchange code for token');
+                console.error("OAuth Token Error (Password Grant):", errorData.error, errorData.error_description);
+                // Provide a more user-friendly message based on the error
+                if (errorData.error === 'invalid_grant') {
+                    throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie E-Mail und Passwort.');
+                } else if (errorData.error === 'invalid_client') {
+                     throw new Error('Client-Konfigurationsfehler.');
+                } else {
+                    throw new Error(errorData.error_description || errorData.error || 'Login fehlgeschlagen.');
+                }
             } else {
-                // Handle other network or unexpected errors
-                console.error("Error exchanging code for token:", error);
-                throw new Error('An unexpected error occurred during token exchange.');
+                console.error("Error during password login:", error);
+                throw new Error('Ein unerwarteter Fehler ist beim Login aufgetreten.');
             }
         }
     },
@@ -77,19 +84,20 @@ export default {
     // Optional: Add function for refresh token grant if needed
     // async refreshToken(refreshToken: string): Promise<TokenResponse> { ... }
 
-    // Optional: Add function for logout (might involve redirecting to auth-server logout endpoint)
-    // async logout() { ... }
+    // Optional: Add function for logout (might involve redirecting to auth-server logout endpoint or just clearing local tokens)
+    logout() {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
+        // Optionally redirect to login page or auth server logout endpoint
+        // window.location.href = '/login';
+        // Or: window.location.href = `${AUTH_SERVER_URL}/logout?id_token_hint=...&post_logout_redirect_uri=...`;
+        console.log("User logged out locally.");
+    }
 
     /**
      * @deprecated Google login should ideally go through the main auth-server flow.
      */
     /*
-    async getGoogleAuth(username: string, password: string): Promise<UserAuthentication> {
-        const response = await apiClient.post<UserAuthentication>("/login", {
-            username: username,
-            password: password,
-        });
-        return response.data;
-    },
+    async getGoogleAuth(username: string, password: string): Promise<UserAuthentication> { ... }
     */
 }
