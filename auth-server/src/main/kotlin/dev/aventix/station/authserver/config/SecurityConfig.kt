@@ -180,7 +180,7 @@ class SecurityConfig(
         // It should match the 'authority' configured in the frontend oidcConfig.
         // You can also fetch this from application properties.
         return AuthorizationServerSettings.builder()
-            .issuer(applicationConfig.issuerUri ?: "http://localhost:9000") // Use configured or default issuer
+            .issuer("http://localhost:8081") // Use configured or default issuer
             .build()
     }
 

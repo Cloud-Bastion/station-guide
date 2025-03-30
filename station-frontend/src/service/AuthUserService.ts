@@ -46,7 +46,7 @@ export default {
      */
     async loginWithPassword(username: string, password: string, clientId: string, scope: string): Promise<TokenResponse> {
         const params = new URLSearchParams();
-        params.append('grant_type', 'password');
+        params.append('grant_type', 'challenge_code');
         params.append('username', username);
         params.append('password', password);
         params.append('client_id', clientId);
