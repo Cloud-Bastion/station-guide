@@ -5,6 +5,7 @@ import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey // Import RSAKey
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
+import org.apache.catalina.webresources.TomcatURLStreamHandlerFactory.disable
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -43,18 +44,17 @@ class SecurityConfig(
     @Bean
     @Order(1) // Authorization server filter chain needs higher precedence
     fun authorizationServerSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
-        OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http)
-        http.getConfigurer(OAuth2AuthorizationServerConfigurer::class.java)
-            .oidc(Customizer.withDefaults()) // Enable OpenID Connect 1.0 (still useful for /userinfo etc.)
+        http.securityMatcher("/oauth2/**", "/api/v1/auth/**") // ✅ Apply filter chain ONLY to OAuth2 endpoints
+        http.formLogin { disable() }
+        http.httpBasic { disable() }
 
-        // Enable CORS for Authorization Server endpoints (including /oauth2/token)
+        http.with(OAuth2AuthorizationServerConfigurer.authorizationServer(), Customizer.withDefaults())
+            .getConfigurer(OAuth2AuthorizationServerConfigurer::class.java)
+            .oidc(Customizer.withDefaults()) // Enable OpenID Connect if needed
+
         http.cors(Customizer.withDefaults())
-            // Configure the authorization endpoint (/oauth2/authorize) to require login via form
-            // This is relevant for the Authorization Code Flow, not directly for ROPC
             .exceptionHandling { exceptions ->
-                exceptions.authenticationEntryPoint(
-                    LoginUrlAuthenticationEntryPoint("/login") // Default Spring login page path
-                )
+                exceptions.authenticationEntryPoint(LoginUrlAuthenticationEntryPoint("/login"))
             }
 
         return http.build()
@@ -68,7 +68,7 @@ class SecurityConfig(
             .authorizeHttpRequests { auth ->
                 // Allow access to the login page and error pages (used by Spring Security form login)
                 auth
-                    .requestMatchers("/login", "/error").permitAll()
+                    .requestMatchers("/api/v1/auth/**", "/error").permitAll()
                     // Secure all other endpoints handled by this chain (e.g., custom API endpoints if any)
                     .anyRequest().authenticated()
             }
@@ -77,8 +77,11 @@ class SecurityConfig(
                 // ROPC is stateless, but form login (if used as fallback or for other flows) might need session.
                  session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
+
+            // NO DISABLE FORM LOGIN!!
+            // We can then send a request to /login endpoint with username/pwd set as header
             // Configure form login (used if user hits a protected resource without auth, or for /oauth2/authorize)
-            .formLogin(Customizer.withDefaults())
+            // .formLogin(Customizer.withDefaults())
 
         return http.build()
     }
@@ -86,25 +89,18 @@ class SecurityConfig(
 
     @Bean
     fun registeredClientRepository(): RegisteredClientRepository {
-        val frontendClient = RegisteredClient.withId(UUID.randomUUID().toString())
+        val frontendClient = RegisteredClient.withId(UUID.nameUUIDFromBytes(("station-frontend-client").toByteArray()).toString())
             .clientId("station-frontend-client")
             // No client secret for public clients (SPA)
             .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
             // --- Allow BOTH Authorization Code (for potential future use) AND Password (ROPC) ---
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-            .authorizationGrantType(AuthorizationGrantType.PASSWORD) // <-- ADDED ROPC Grant Type
-            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN) // Allow refresh tokens for both flows
-            // --- OIDC Settings (kept for flexibility, not strictly needed for ROPC) ---
             .redirectUri("http://localhost:5173/oidc-callback") // OIDC Callback URI
             .postLogoutRedirectUri("http://localhost:5173/login") // Post Logout URI
             .scope(OidcScopes.OPENID)
-            .scope(OidcScopes.PROFILE)
-            .scope("station.read")
-            .scope("station.write")
             .clientSettings(
                 ClientSettings.builder()
-                    .requireProofKey(true) // Required for OIDC Auth Code flow
-                    .requireAuthorizationConsent(false) // Set to false for ROPC (no consent screen) and potentially OIDC if desired
+                    .requireProofKey(true)
                     .build()
             )
             .build()
@@ -148,7 +144,7 @@ class SecurityConfig(
     fun authorizationServerSettings(): AuthorizationServerSettings {
         // Ensure issuer URI matches frontend config if OIDC features (/userinfo) are used
         return AuthorizationServerSettings.builder()
-            .issuer(applicationConfig.issuerUri ?: "http://localhost:8081") // Use configured or default issuer
+            .issuer("http://localhost:8081") // Use configured or default issuer
             .build()
     }
 

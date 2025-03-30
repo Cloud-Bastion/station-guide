@@ -9,9 +9,16 @@ import dev.aventix.station.authserver.user.authority.UserAuthorityRepository
 import dev.aventix.station.authserver.user.spring.StationUserDetails
 import jakarta.annotation.PostConstruct
 import jakarta.persistence.EntityNotFoundException
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -23,7 +30,9 @@ class UserService(
     private val authorityRepository: UserAuthorityRepository,
     private val passwordEncoder: PasswordEncoder,
     private val appProperties: ApplicationConfigProperties, // Keep for potential future use, but not for prefixing here
-): UserDetailsService {
+) : UserDetailsService {
+    private val securityContextRepository = HttpSessionSecurityContextRepository()
+    private val securityHolderStrategy = SecurityContextHolder.getContextHolderStrategy()
 
     @PostConstruct
     @Transactional // Add transactional annotation for PostConstruct data initialization
@@ -34,10 +43,7 @@ class UserService(
             try {
                 createUser(
                     UserCreateRequest(
-                        "test@gmail.com",
-                        "Raphael",
-                        "Eiden",
-                        "password", // Raw password
+                        "test@gmail.com", "Raphael", "Eiden", "password", // Raw password
                         emptySet()
                     )
                 )
@@ -124,6 +130,20 @@ class UserService(
         println("User found: ${user.email}, Password Hash from DB: ${user.password}")
         val dto = user.toDto()
         return StationUserDetails(dto)
+    }
+
+
+    fun authenticateUser(
+        username: String,
+        password: String,
+        authentication: Authentication,
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ) {
+        request.getSession(true)
+        val context = securityHolderStrategy.createEmptyContext()
+        context.authentication = authentication
+        securityContextRepository.saveContext(context, request, response)
     }
 
 }

@@ -31,6 +31,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-authorization-server")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    //implementation("com.vladmihalcea:hibernate-types-60:2.21.1")
+    // https://mvnrepository.com/artifact/io.hypersistence/hypersistence-utils-hibernate-63
+    implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.8")
     runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     implementation("org.springframework.boot:spring-boot-testcontainers")

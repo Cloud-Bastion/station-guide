@@ -1,7 +1,9 @@
 package dev.aventix.station.authserver.user
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import dev.aventix.station.authserver.provider.AuthProvider
 import dev.aventix.station.authserver.user.authority.UserAuthority
+import dev.aventix.station.authserver.user.session.Session
 import jakarta.persistence.*
 import java.util.UUID
 
@@ -10,9 +12,9 @@ import java.util.UUID
 class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(nullable = false, unique = true)
-    lateinit var id: UUID
+    // @GeneratedValue(strategy = GenerationType.AUTO)
+    //@Column(nullable = false, unique = true)
+    var id: UUID = UUID.randomUUID()
 
     @Column(unique = true, nullable = false)
     var badgeNumber: Long = 0
@@ -35,6 +37,10 @@ class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     lateinit var authProvider: AuthProvider
+
+    /*@JsonIgnore
+    @OneToMany(mappedBy = "account", cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
+    var sessions: MutableList<Session> = mutableListOf()*/
 
     @Column(nullable = true)
     var oAuthId: String? = null
