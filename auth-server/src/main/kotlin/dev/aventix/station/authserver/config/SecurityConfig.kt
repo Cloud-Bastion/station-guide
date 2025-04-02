@@ -1,10 +1,7 @@
 package dev.aventix.station.authserver.config
 
-import com.nimbusds.jose.jwk.JWKSelector
-import com.nimbusds.jose.jwk.JWKSet
-import com.nimbusds.jose.jwk.RSAKey // Import RSAKey
-import com.nimbusds.jose.jwk.source.JWKSource
-import com.nimbusds.jose.proc.SecurityContext
+import dev.aventix.station.authserver.authenticate.TokenService
+import dev.aventix.station.authserver.user.UserService
 import org.apache.catalina.webresources.TomcatURLStreamHandlerFactory.disable
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -17,22 +14,19 @@ import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.userdetails.UserDetailsService
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 import org.springframework.security.oauth2.core.oidc.OidcScopes
-import org.springframework.security.oauth2.jwt.JwtDecoder
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder // Correct import for NimbusJwtEncoder
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings // Import AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint // Import for login redirect
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import java.util.*
@@ -40,17 +34,22 @@ import java.util.*
 @Configuration
 class SecurityConfig(
     private val applicationConfig: ApplicationConfigProperties,
+    private val userService: UserService,
+    private val tokenService: TokenService,
 ) {
     @Bean
-    @Order(1) // Authorization server filter chain needs higher precedence
+    @Order(2) // Authorization server filter chain needs higher precedence
     fun authorizationServerSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
-        http.securityMatcher("/oauth2/**", "/api/v1/auth/**") // ✅ Apply filter chain ONLY to OAuth2 endpoints
-        http.formLogin { disable() }
-        http.httpBasic { disable() }
 
         http.with(OAuth2AuthorizationServerConfigurer.authorizationServer(), Customizer.withDefaults())
-            .getConfigurer(OAuth2AuthorizationServerConfigurer::class.java)
-            .oidc(Customizer.withDefaults()) // Enable OpenID Connect if needed
+        http.getConfigurer(OAuth2AuthorizationServerConfigurer::class.java).oidc(Customizer.withDefaults()) // Enable OpenID Connect if needed
+
+        http.oauth2Login {  }
+        http.formLogin { disable() }
+        http.httpBasic { disable() }
+        http.authorizeHttpRequests { auth ->
+            auth.anyRequest().permitAll()
+        }
 
         http.cors(Customizer.withDefaults())
             .exceptionHandling { exceptions ->
@@ -62,13 +61,15 @@ class SecurityConfig(
 
 
     @Bean
-    @Order(2) // Default security filter chain
-    fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
+    @Order(1) // Default security filter chain
+    fun apiSecurityChain(http: HttpSecurity): SecurityFilterChain {
+        http.securityMatcher("/api/v1/**")
+
         http.cors(Customizer.withDefaults()) // Apply CORS globally
             .authorizeHttpRequests { auth ->
                 // Allow access to the login page and error pages (used by Spring Security form login)
                 auth
-                    .requestMatchers("/api/v1/auth/**", "/error").permitAll()
+                    .requestMatchers("/api/v1/auth/login").permitAll()
                     // Secure all other endpoints handled by this chain (e.g., custom API endpoints if any)
                     .anyRequest().authenticated()
             }
@@ -77,6 +78,7 @@ class SecurityConfig(
                 // ROPC is stateless, but form login (if used as fallback or for other flows) might need session.
                  session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
+            .addFilterBefore(JwtAuthenticationFilter(tokenService, userService), UsernamePasswordAuthenticationFilter::class.java)
 
             // NO DISABLE FORM LOGIN!!
             // We can then send a request to /login endpoint with username/pwd set as header
@@ -108,8 +110,7 @@ class SecurityConfig(
         return InMemoryRegisteredClientRepository(frontendClient)
     }
 
-    @Bean
-    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+
 
     @Bean
     // This AuthenticationManager is used by the form login AND the ROPC grant type
@@ -118,26 +119,6 @@ class SecurityConfig(
         provider.setUserDetailsService(userDetailsService)
         provider.setPasswordEncoder(passwordEncoder)
         return ProviderManager(provider)
-    }
-
-    @Bean
-    fun jwtDecoder(jwkSource: JWKSource<SecurityContext>): JwtDecoder {
-        return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource)
-    }
-
-    @Bean
-    fun jwkSource(): JWKSource<SecurityContext> {
-        val rsaKey = RSAKey.Builder(applicationConfig.rsaPublicKey)
-            .privateKey(applicationConfig.rsaPrivateKey)
-            .keyID(UUID.randomUUID().toString())
-            .build()
-        val jwkSet = JWKSet(rsaKey)
-        return JWKSource { jwkSelector: JWKSelector, _: SecurityContext? -> jwkSelector.select(jwkSet) }
-    }
-
-    @Bean
-    fun jwtEncoder(jwkSource: JWKSource<SecurityContext>): NimbusJwtEncoder {
-        return NimbusJwtEncoder(jwkSource)
     }
 
     @Bean

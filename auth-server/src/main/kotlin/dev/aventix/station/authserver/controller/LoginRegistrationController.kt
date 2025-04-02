@@ -1,6 +1,7 @@
 package dev.aventix.station.authserver.controller
 
 import dev.aventix.station.authserver.authenticate.LoginRequest
+import dev.aventix.station.authserver.authenticate.TokenService
 import dev.aventix.station.authserver.config.ApplicationConfigProperties
 import dev.aventix.station.authserver.provider.google.GoogleProfileDetailsService
 import dev.aventix.station.authserver.user.UserAuthenticateResponse
@@ -38,11 +39,13 @@ class LoginRegistrationController(
     private val userService: UserService,
     private val googleProfileDetailsService: GoogleProfileDetailsService,
     private val applicationConfig: ApplicationConfigProperties,
-    private val authenticationManager: AuthenticationManager
+    private val authenticationManager: AuthenticationManager,
+    private val tokenService: TokenService,
     // JWKSource removed as it's not directly used here; /oauth2/jwks endpoint handles it.
 ) {
     // Removed the custom @PostMapping("/login") endpoint.
     // Frontend should use POST /oauth2/token with grant_type=password.
+    private val logger: Logger = LoggerFactory.getLogger(UserService::class.java)
 
     @PostMapping("/login")
     fun login(
@@ -53,7 +56,7 @@ class LoginRegistrationController(
         try {
             val authentication = authenticationManager.authenticate(UsernamePasswordAuthenticationToken(requestBody.username, requestBody.password))
             userService.authenticateUser(requestBody.username, requestBody.password, authentication, request, response)
-            return ResponseEntity.ok().build()
+            return ResponseEntity.ok().body(UserAuthenticateResponse(tokenService.generateToken(authentication)))
         } catch (disabledError: DisabledException) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         } catch (lockedError: LockedException) {
