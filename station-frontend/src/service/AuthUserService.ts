@@ -31,7 +31,37 @@ const REFRESH_TOKEN_KEY = 'refresh_token';
 // PKCE_VERIFIER_KEY is no longer needed
 // const PKCE_VERIFIER_KEY = 'pkce_code_verifier';
 
+async function generatePKCE() {
+    const code_verifier = generateRandomString(64);
+    const code_challenge = await sha256(code_verifier);
+
+    localStorage.setItem("pkce_code_verifier", code_verifier); // Store it for later use
+
+    return code_challenge;
+}
+
+function generateRandomString(length: number) {
+    const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+    let result = "";
+    for (let i = 0; i < length; i++) {
+        result += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return result;
+}
+
+async function sha256(plain: string) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(plain);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    return btoa(String.fromCharCode(...new Uint8Array(hashBuffer)))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); // Base64URL encode
+}
+
 export default {
+
+    async loginWithUsernamePassword(username: string, password: string) {
+          
+    },
 
     /**
      * Logs the user in using the Resource Owner Password Credentials (ROPC) flow.

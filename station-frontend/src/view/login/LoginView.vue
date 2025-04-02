@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import AuthUserService from "@/service/AuthUserService";
+import OAuthUserService, {useUserSession} from "@/service/OAuthUserService";
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router'; // Import useRouter for redirection
+import {useRoute, useRouter} from 'vue-router'; // Import useRouter for redirection
 
-const isLoading = ref(false);
+// const isLoading = ref(false);
 const isAuthenticated = ref(false);
 const router = useRouter();
 
@@ -12,6 +13,13 @@ const router = useRouter();
 const username = ref(''); // Use 'username' as it maps to the ROPC parameter
 const password = ref('');
 const loginError = ref<string | null>(null); // To display login errors
+
+const isLoading = ref(false)
+// const router = useRouter()
+const route = useRoute()
+const userSession = useUserSession
+
+const redirect = route.query.redirect as string
 
 // Check authentication status when the component mounts
 const checkAuthStatus = () => {
@@ -23,20 +31,51 @@ const checkAuthStatus = () => {
 };
 
 // --- Updated handleLogin for ROPC ---
+// const handleLogin = async () => {
+//   isLoading.value = true;
+//   loginError.value = null; // Clear previous errors
+//   try {
+//     await AuthUserService.loginWithPassword(username.value, password.value);
+//     isAuthenticated.value = true; // Update state
+//     // Redirect to dashboard on successful login
+//     router.push({ name: 'employee-management' });
+//   } catch (error: any) {
+//     console.error("Login failed:", error);
+//     loginError.value = error.message || "Login fehlgeschlagen. Bitte versuchen Sie es erneut.";
+//   } finally {
+//     isLoading.value = false;
+//   }
+// };
 const handleLogin = async () => {
-  isLoading.value = true;
-  loginError.value = null; // Clear previous errors
-  try {
-    await AuthUserService.loginWithPassword(username.value, password.value);
-    isAuthenticated.value = true; // Update state
-    // Redirect to dashboard on successful login
-    router.push({ name: 'employee-management' });
-  } catch (error: any) {
-    console.error("Login failed:", error);
-    loginError.value = error.message || "Login fehlgeschlagen. Bitte versuchen Sie es erneut.";
-  } finally {
-    isLoading.value = false;
-  }
+  // isLoading.value = true;
+  // loginError.value = null; // Clear previous errors
+  // try {
+  //   await OAuthUserService.loginWithUsernamePassword(username.value, password.value);
+  //   // isAuthenticated.value = true; // Update state
+  //   // Redirect to dashboard on successful login
+  //   // router.push({ name: 'employee-management' });
+  //
+  // } catch (error: any) {
+  //   console.error("Login failed:", error);
+  //   loginError.value = error.message || "Login fehlgeschlagen. Bitte versuchen Sie es erneut.";
+  // } finally {
+  //   isLoading.value = false;
+  // }
+  userSession.value
+      .logInEmailPw(username.value, password.value)
+      .then(() => {
+        console.log("Authenticated. Verifying...")
+        userSession.value.verify().then(() => {
+          console.log("redirecting after login")
+          router.push({
+            name: 'employee-management',
+          })
+        })
+      })
+      .catch((err) => {
+        console.log(err)
+        // notif.error(err.response.data.message)
+      })
 };
 
 // Function to handle logout

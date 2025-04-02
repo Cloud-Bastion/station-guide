@@ -44,4 +44,12 @@ station:
 
 server:
   port: 8081
-debug: true
+#trace: true
+
+logging:
+  level:
+    org:
+      springframework:
+        security: TRACE
+    dev:
+      aventix: TRACE

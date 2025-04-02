@@ -2,6 +2,7 @@ package dev.aventix.station.authserver.config
 
 import dev.aventix.station.authserver.authenticate.TokenService
 import dev.aventix.station.authserver.user.UserService
+import dev.aventix.station.authserver.user.spring.StationAuthentication
 import org.apache.catalina.webresources.TomcatURLStreamHandlerFactory.disable
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -24,6 +25,8 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings // Import AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint // Import for login redirect
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
@@ -40,7 +43,6 @@ class SecurityConfig(
     @Bean
     @Order(2) // Authorization server filter chain needs higher precedence
     fun authorizationServerSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
-
         http.with(OAuth2AuthorizationServerConfigurer.authorizationServer(), Customizer.withDefaults())
         http.getConfigurer(OAuth2AuthorizationServerConfigurer::class.java).oidc(Customizer.withDefaults()) // Enable OpenID Connect if needed
 
@@ -49,6 +51,18 @@ class SecurityConfig(
         http.httpBasic { disable() }
         http.authorizeHttpRequests { auth ->
             auth.anyRequest().permitAll()
+        }
+        http.headers {
+            it.frameOptions { frameOptions ->
+                frameOptions.sameOrigin()
+            }.contentSecurityPolicy { csp ->
+                csp.policyDirectives("frame-ancestors 'self' http://localhost:5173/;")
+            }
+        }
+        http.oidcLogout {
+            it.backChannel {
+
+            }
         }
 
         http.cors(Customizer.withDefaults())
@@ -64,6 +78,14 @@ class SecurityConfig(
     @Order(1) // Default security filter chain
     fun apiSecurityChain(http: HttpSecurity): SecurityFilterChain {
         http.securityMatcher("/api/v1/**")
+
+        http.headers {
+            it.frameOptions { frameOptions ->
+                frameOptions.sameOrigin()
+            }.contentSecurityPolicy { csp ->
+                csp.policyDirectives("frame-ancestors 'self' http://localhost:5173/;")
+            }
+        }
 
         http.cors(Customizer.withDefaults()) // Apply CORS globally
             .authorizeHttpRequests { auth ->
@@ -88,16 +110,24 @@ class SecurityConfig(
         return http.build()
     }
 
+    @Bean
+    fun configureOpenIdToken() = OAuth2TokenCustomizer<JwtEncodingContext> {
+        val account = it.getPrincipal<StationAuthentication>().account
+        it.claims.subject(account.id.toString())
+        it.claims.claim("email", account.email)
+        it.claims.claim("role", "role_user")
+    }
 
     @Bean
     fun registeredClientRepository(): RegisteredClientRepository {
-        val frontendClient = RegisteredClient.withId(UUID.nameUUIDFromBytes(("station-frontend-client").toByteArray()).toString())
-            .clientId("station-frontend-client")
+        val frontendClient = RegisteredClient.withId(UUID.nameUUIDFromBytes(("station-frontend").toByteArray()).toString())
+            .clientId("station-frontend")
             // No client secret for public clients (SPA)
             .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
             // --- Allow BOTH Authorization Code (for potential future use) AND Password (ROPC) ---
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-            .redirectUri("http://localhost:5173/oidc-callback") // OIDC Callback URI
+            //.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+            .redirectUri("http://localhost:5173/silent-renew") // OIDC Callback URI
             .postLogoutRedirectUri("http://localhost:5173/login") // Post Logout URI
             .scope(OidcScopes.OPENID)
             .clientSettings(
@@ -128,7 +158,6 @@ class SecurityConfig(
             .issuer("http://localhost:8081") // Use configured or default issuer
             .build()
     }
-
 
     @Bean
     fun corsConfigurationSource(): UrlBasedCorsConfigurationSource {

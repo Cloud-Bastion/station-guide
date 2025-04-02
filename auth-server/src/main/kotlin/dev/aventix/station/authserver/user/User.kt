@@ -38,9 +38,9 @@ class User {
     @Column(nullable = false)
     lateinit var authProvider: AuthProvider
 
-    /*@JsonIgnore
+    @JsonIgnore
     @OneToMany(mappedBy = "account", cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
-    var sessions: MutableList<Session> = mutableListOf()*/
+    var sessions: MutableList<Session> = mutableListOf()
 
     @Column(nullable = true)
     var oAuthId: String? = null
@@ -54,7 +54,8 @@ class User {
             password,
             authorities.map { authority -> authority.toDto() }.toSet(),
             authProvider,
-            oAuthId
+            oAuthId,
+            sessions
         )
 
 }

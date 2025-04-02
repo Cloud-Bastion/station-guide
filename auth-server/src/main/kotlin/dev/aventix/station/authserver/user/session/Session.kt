@@ -33,6 +33,6 @@ class Session {
     lateinit var tokens: List<SessionToken>
 
     @ManyToOne
-    @JoinColumn
+    @JoinColumn(nullable = false)
     lateinit var account: User
 }

@@ -5,7 +5,7 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 
-class StationAuthentication(private val account: User) : Authentication {
+class StationAuthentication(val account: User) : Authentication {
     override fun getName(): String = account.email
 
     override fun getAuthorities() = emptyList<GrantedAuthority>()

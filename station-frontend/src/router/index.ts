@@ -4,7 +4,11 @@ import TaskManagementView from "@/view/task/TaskManagementView.vue";
 import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
 import LoginView from "@/view/login/LoginView.vue";
 import NotFoundView from "@/view/error/NotFoundView.vue";
-import AuthUserService from '@/service/AuthUserService'; // Import auth service for check
+import LocalOAuthCallbackView from "@/view/login/LocalOAuthCallbackView.vue";
+import SilentRenew from "@/view/login/SilentRenew.vue";
+import OAuthUserService, {useUserSession} from "@/service/OAuthUserService";
+import LogoutView from "@/view/login/LogoutView.vue";
+import SilentLogout from "@/view/login/SilentLogout.vue"; // Import auth service for check
 // --- REMOVED OIDC Callback View Import ---
 // import OAuthCallbackView from '@/view/login/OAuthCallbackView.vue';
 
@@ -15,16 +19,12 @@ const routes: Array<RouteRecordRaw> = [
         component: NotFoundView
     },
     {
-        path: '/',
-        name: 'home',
-        component: LoginView, // Default to login view
-        // Redirect handled by global beforeEach guard
-    },
-    {
         path: '/login',
         name: 'login',
         component: LoginView,
-        meta: { isPublic: true } // Mark login page as public
+        meta: {
+            requiresAuth: false
+        }
     },
     // --- REMOVED OIDC Callback Route ---
     // {
@@ -57,7 +57,23 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
             requiresAuth: true
         }
-    }
+    },
+    {
+        path: '/logout',
+        name: 'logout',
+        component: LogoutView,
+        meta: {
+            requiresAuth: true
+        }
+    },
+    {
+        path: '/silent-renew',
+        name: 'silent-renew',
+        component: SilentRenew,
+        meta: {
+            requiresAuth: false
+        }
+    },
 ]
 
 const router = createRouter({
@@ -67,29 +83,32 @@ const router = createRouter({
 
 // Global Navigation Guard
 router.beforeEach((to, from, next) => {
-    const isAuthenticated = AuthUserService.isAuthenticated(); // Check if token exists
+    const userManager = useUserSession.value
+
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-    const isPublic = to.matched.some(record => record.meta.isPublic); // Check if route is explicitly public
 
-    console.log(`Navigating to: ${to.path}, Requires Auth: ${requiresAuth}, Is Public: ${isPublic}, Is Authenticated: ${isAuthenticated}`);
+    if (requiresAuth) {
+        userManager.verify().then(() => {
+            const isAuthenticated = userManager.isLoggedIn.value
+            console.log(isAuthenticated)
 
-    if (requiresAuth && !isAuthenticated) {
-        // If trying to access a protected route without being authenticated,
-        // redirect to the login page.
-        console.log(`Redirecting to login. Target: ${to.fullPath}`);
-        next({ name: 'login' });
-    } else if (to.name === 'login' && isAuthenticated) {
-        // If trying to access the login page while already authenticated,
-        // redirect to the default authenticated route (e.g., dashboard).
-        console.log(`User already logged in, redirecting from login to dashboard.`);
-        next({ name: 'employee-management' }); // Or your default authenticated route
+            console.log(`Navigating to: ${to.path}, Requires Auth: ${requiresAuth}, Is Authenticated: ${isAuthenticated}`);
+
+            if (!isAuthenticated) {
+                // If trying to access a protected route without being authenticated,
+                // redirect to the login page.
+                console.log(`Redirecting to login. Target: ${to.fullPath}`);
+                next({ name: 'login' });
+            } else {
+                next()
+            }
+
+        })
     } else {
-        // Allow navigation if:
-        // - Route requires auth and user is authenticated
-        // - Route does not require auth (is public or no meta field)
-        console.log(`Proceeding to route: ${to.fullPath}`);
-        next();
+        next()
     }
+
+
 });
 
 export default router

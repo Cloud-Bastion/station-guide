@@ -18,9 +18,11 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module
+import org.springframework.stereotype.Service
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
+@Service
 class OAuth2AuthorizationService(
     private val accountRepository: UserRepository,
     private val sessionRepository: SessionRepository,

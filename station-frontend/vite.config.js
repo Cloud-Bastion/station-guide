@@ -9,6 +9,14 @@ export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
+    // {
+    //   configureServer(server) {
+    //     server.middlewares.use((_req, res, next) => {
+    //       res.setHeader("X-Frame-Options", "ALLOW-FROM *");
+    //       next();
+    //     });
+    //   }
+    // }
   ],
   resolve: {
     alias: {

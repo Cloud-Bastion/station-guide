@@ -66,6 +66,11 @@ class LoginRegistrationController(
         }
     }
 
+    @GetMapping("/logout")
+    fun validateToken() {
+
+    }
+
     @GetMapping("/login/oauth2/callback/google")
     fun oauth2LoginGoogle(
         @RequestParam("code") code: String,
