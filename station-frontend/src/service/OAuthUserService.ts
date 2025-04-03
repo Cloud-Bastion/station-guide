@@ -14,14 +14,8 @@ interface LoginResponse {
 }
 
 export const useUserSession = computed(() => {
-    // token will be synced with local storage
-    // @see https://vueuse.org/core/usestorage/
-
     const user = ref<User | undefined>()
     const loading = ref(true)
-    const toSingup = ref(false)
-    const otpTokenBuffer = ref<string>('')
-    const userEmailBuffer = ref<string>('')
     const router = useRouter()
 
     const isLoggedIn = computed(() => {
@@ -42,16 +36,10 @@ export const useUserSession = computed(() => {
         prompt: "",
         iframeScriptOrigin: location.protocol + "//" + location.host,
         iframeNotifyParentOrigin: location.protocol + "//" + location.host,
-        // metadataSeed: {
-        //     frontchannel_logout_session_supported: true,
-        //     frontchannel_logout_supported: true,
-        //     // backchannel_logout_session_supported: true,
-        //     // backchannel_logout_supported: true
-        // }
     })
 
-    async function verify() {
-        console.log("verify")
+    async function verify(isLogout: boolean) {
+        if (isLogout) return user.value
         return await userManager
             .getUser().then(async u => {
                 if (u !== null && !u.expired) {
@@ -60,9 +48,10 @@ export const useUserSession = computed(() => {
                     return user.value
                 } else {
                     await userManager.signinSilent()
-                        .then(async () => {
+                        .then(async (singedUser) => {
                             console.log('signinSilent worked')
-                            user.value = await userManager.getUser()
+                            if (singedUser === null) user.value = undefined
+                            else user.value = singedUser
                             return user.value
                         }).catch(async (error) => {
                             console.log('signinSilent didnt work')
@@ -70,7 +59,7 @@ export const useUserSession = computed(() => {
                             user.value = undefined
                             await userManager.removeUser()
                             if (router.currentRoute.value.name !== "login") {
-                                await router.push({ name: "login" })
+                                await router.push({name: "login"})
                             }
                             throw error
                         })
@@ -85,13 +74,31 @@ export const useUserSession = computed(() => {
         loading.value = newLoading
     }
 
-    async function logoutUser(silent: boolean = true) {
-        if(silent) {
-            await userManager.signoutSilent()
+    async function logoutUser(silent: boolean = false) {
+        if (silent) {
+            await userManager.signoutCallback()
         } else {
-            await userManager.signoutRedirect()
+            console.log("logging out..")
+            await userManager.signoutSilent().then(async () => {
+                console.log("signout silent with callback")
+                await userManager.signoutCallback()
+            }).then(async () => {
+                console.log("remove user")
+                await userManager.removeUser()
+            }).then(async () => {
+                console.log("revoke tokens")
+                await userManager.revokeTokens(); // Call the token revocation endpoint (when settings are set).
+            }).then(async () => {
+                console.log("clear stale state")
+                await userManager.clearStaleState();
+            }).then(() => {
+                console.log("set user to undefined")
+                user.value = undefined
+            }).then(() => {
+                console.log("redirect to login")
+                router.push('/login');
+            });
         }
-        user.value = undefined
     }
 
     async function logInEmailPw(emailInput: string, passwordInput: string) {
