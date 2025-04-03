@@ -25,7 +25,7 @@ const routes: Array<RouteRecordRaw> = [
     {
         path: '',
         redirect: {
-            name: 'login'
+            name: 'tasks'
         }
     },
     {

@@ -15,7 +15,15 @@ export interface ScheduledTask {
 }
 
 export interface Task {
-    // TaskDTO already has: id, title, description, priority, permissionGroup, createdBy, startTime, endTime, completed, isTemplate
+    id: string;
+    title: string;
+    description: string;
+    priority: string;
+    permissionGroup: string;
+    createdBy: string;
+    startTime: string;
+    endTime: string;
+    completed: boolean;
 }
 
 export default {

@@ -28,8 +28,8 @@
               </div>
             </div>
             <div :class="$style['task-middle']">
-                <div :class="$style['task-created-by']" v-if="task.createdBy">Erstellt von: {{ task.createdBy }}</div>
-                <div :class="$style['task-permission-group']" v-if="task.permissionGroup">Gruppe: {{ task.permissionGroup }}</div>
+              <div :class="$style['task-created-by']" v-if="task.createdBy">Erstellt von: {{ task.createdBy }}</div>
+              <div :class="$style['task-permission-group']" v-if="task.permissionGroup">Gruppe: {{ task.permissionGroup }}</div>
             </div>
             <div :class="$style['task-right']">
               <div :class="$style['task-time-info']">
@@ -114,8 +114,8 @@ const closeCreateTaskDialog = () => {
 };
 
 const handleTaskCreated = async () => {
-    closeCreateTaskDialog();
-    await loadTasks(); // Reload tasks after creation
+  closeCreateTaskDialog();
+  await loadTasks(); // Reload tasks after creation
 }
 
 const selectTask = (task: Task) => {
@@ -163,7 +163,7 @@ const formatDateTime = (dateTimeString: string | null | undefined): string => {
     const date = new Date(dateTimeString);
     // Check if date is valid
     if (isNaN(date.getTime())) {
-        return "Ungültiges Datum";
+      return "Ungültiges Datum";
     }
     return date.toLocaleString('de-DE', {
       day: '2-digit',
@@ -319,22 +319,22 @@ $overdue-color: $priority-high; // Red for overdue
       }
 
       .task-middle {
-          display: flex;
-          flex-direction: column; // Stack createdBy and permissionGroup
-          align-items: flex-start; // Align text to the start
-          gap: 2px; // Small gap between lines
-          margin: 0 15px; // Add horizontal margin
-          flex-grow: 1; // Allow middle section to grow
-          min-width: 100px; // Ensure some minimum width
-          overflow: hidden; // Hide overflow
+        display: flex;
+        flex-direction: column; // Stack createdBy and permissionGroup
+        align-items: flex-start; // Align text to the start
+        gap: 2px; // Small gap between lines
+        margin: 0 15px; // Add horizontal margin
+        flex-grow: 1; // Allow middle section to grow
+        min-width: 100px; // Ensure some minimum width
+        overflow: hidden; // Hide overflow
 
-          .task-created-by, .task-permission-group {
-              font-size: 0.8rem;
-              color: $text-color-light;
-              white-space: nowrap; // Prevent wrapping
-              overflow: hidden; // Hide overflow
-              text-overflow: ellipsis; // Add ellipsis if text is too long
-          }
+        .task-created-by, .task-permission-group {
+          font-size: 0.8rem;
+          color: $text-color-light;
+          white-space: nowrap; // Prevent wrapping
+          overflow: hidden; // Hide overflow
+          text-overflow: ellipsis; // Add ellipsis if text is too long
+        }
       }
 
 
@@ -345,20 +345,20 @@ $overdue-color: $priority-high; // Red for overdue
         flex-shrink: 0; // Prevent shrinking
 
         .task-time-info {
-            display: flex;
-            flex-direction: column; // Stack start and due date
-            align-items: flex-end; // Align dates to the right
-            gap: 2px; // Small gap between dates
+          display: flex;
+          flex-direction: column; // Stack start and due date
+          align-items: flex-end; // Align dates to the right
+          gap: 2px; // Small gap between dates
 
-            .task-start-time, .task-due-date {
-              color: $text-color-light;
-              font-size: 0.8rem; // Smaller font for dates
-              white-space: nowrap; // Prevent wrapping
-            }
-            .task-due-date[style*="color: red"] { // More specific selector for overdue
-                color: $overdue-color !important; // Ensure overdue color overrides
-                font-weight: 600;
-            }
+          .task-start-time, .task-due-date {
+            color: $text-color-light;
+            font-size: 0.8rem; // Smaller font for dates
+            white-space: nowrap; // Prevent wrapping
+          }
+          .task-due-date[style*="color: red"] { // More specific selector for overdue
+            color: $overdue-color !important; // Ensure overdue color overrides
+            font-weight: 600;
+          }
         }
       }
     }
@@ -369,7 +369,7 @@ $overdue-color: $priority-high; // Red for overdue
         color: $text-color-light; // Dim completed task title
       }
       &:hover {
-         background-color: darken($bg-light, 7%);
+        background-color: darken($bg-light, 7%);
       }
     }
 
@@ -471,17 +471,17 @@ $overdue-color: $priority-high; // Red for overdue
         margin-bottom: 12px; // Consistent spacing
         font-size: 0.95rem;
         strong {
-            color: $text-color;
-            margin-right: 5px;
+          color: $text-color;
+          margin-right: 5px;
         }
         color: $text-color-light; // Lighter text for details
       }
 
       .modal-divider {
-          border: none;
-          height: 1px;
-          background-color: $bg-light;
-          margin: 15px 0;
+        border: none;
+        height: 1px;
+        background-color: $bg-light;
+        margin: 15px 0;
       }
 
       .completed{ color: $completed-color; font-weight: bold; }
@@ -508,10 +508,10 @@ $overdue-color: $priority-high; // Red for overdue
       }
       // Placeholder styles for files/subtasks if added later
       .file-list, .subtask-list {
-          margin-top: 15px;
-          padding-top: 15px;
-          border-top: 1px solid $bg-light;
-          // Add specific styles here
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid $bg-light;
+        // Add specific styles here
       }
     }
   }
@@ -519,42 +519,42 @@ $overdue-color: $priority-high; // Red for overdue
 
 // --- Media Query for smaller screens ---
 @media (max-width: 768px) {
-    .task-management-container {
-        margin: 15px;
-        padding: 15px;
-        .header-container {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-            .title { font-size: 1.5rem; }
-            .add-task-button { align-self: flex-end; }
-        }
-        .task-list .task-item {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-            padding: 10px 12px;
-            .task-left { gap: 8px; }
-            .task-middle { margin: 5px 0; } // Adjust margin for column layout
-            .task-right {
-                width: 100%; // Take full width
-                .task-time-info {
-                    width: 100%;
-                    flex-direction: row; // Side-by-side dates on small screens
-                    justify-content: space-between; // Space them out
-                    align-items: center;
-                }
-            }
-        }
+  .task-management-container {
+    margin: 15px;
+    padding: 15px;
+    .header-container {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      .title { font-size: 1.5rem; }
+      .add-task-button { align-self: flex-end; }
     }
-    .task-details-modal .modal-content {
-        max-width: 95%;
-        padding: 20px;
-        .modal-header {
-            h2 { font-size: 1.4rem; }
-            .modal-priority-label { font-size: 0.8rem; padding: 3px 8px; }
+    .task-list .task-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 12px;
+      .task-left { gap: 8px; }
+      .task-middle { margin: 5px 0; } // Adjust margin for column layout
+      .task-right {
+        width: 100%; // Take full width
+        .task-time-info {
+          width: 100%;
+          flex-direction: row; // Side-by-side dates on small screens
+          justify-content: space-between; // Space them out
+          align-items: center;
         }
+      }
     }
+  }
+  .task-details-modal .modal-content {
+    max-width: 95%;
+    padding: 20px;
+    .modal-header {
+      h2 { font-size: 1.4rem; }
+      .modal-priority-label { font-size: 0.8rem; padding: 3px 8px; }
+    }
+  }
 }
 
 </style>

@@ -9,8 +9,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          # Point to the standard JWK Set endpoint provided by Spring Authorization Server
-          jwk-set-uri: http://localhost:8081/oauth2/jwks
+          issuer-uri: http://localhost:8081
   application:
     name: Station-Guide
 server:

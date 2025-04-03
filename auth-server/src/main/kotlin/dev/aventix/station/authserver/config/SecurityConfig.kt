@@ -44,9 +44,10 @@ class SecurityConfig(
     @Order(2) // Authorization server filter chain needs higher precedence
     fun authorizationServerSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http.with(OAuth2AuthorizationServerConfigurer.authorizationServer(), Customizer.withDefaults())
-        http.getConfigurer(OAuth2AuthorizationServerConfigurer::class.java).oidc(Customizer.withDefaults()) // Enable OpenID Connect if needed
+        http.getConfigurer(OAuth2AuthorizationServerConfigurer::class.java)
+            .oidc(Customizer.withDefaults()) // Enable OpenID Connect if needed
 
-        http.oauth2Login {  }
+        http.oauth2Login { }
         http.formLogin { disable() }
         http.httpBasic { disable() }
         http.authorizeHttpRequests { auth ->
@@ -57,11 +58,6 @@ class SecurityConfig(
                 frameOptions.sameOrigin()
             }.contentSecurityPolicy { csp ->
                 csp.policyDirectives("frame-ancestors 'self' http://localhost:5173/;")
-            }
-        }
-        http.oidcLogout {
-            it.backChannel {
-
             }
         }
 
@@ -89,23 +85,14 @@ class SecurityConfig(
 
         http.cors(Customizer.withDefaults()) // Apply CORS globally
             .authorizeHttpRequests { auth ->
-                // Allow access to the login page and error pages (used by Spring Security form login)
                 auth
                     .requestMatchers("/api/v1/auth/login").permitAll()
-                    // Secure all other endpoints handled by this chain (e.g., custom API endpoints if any)
                     .anyRequest().authenticated()
             }
             .csrf { csrf -> csrf.disable() } // Disable CSRF for stateless API
             .sessionManagement { session ->
-                // ROPC is stateless, but form login (if used as fallback or for other flows) might need session.
-                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
-            //.addFilterBefore(JwtAuthenticationFilter(tokenService, userService), UsernamePasswordAuthenticationFilter::class.java)
-
-            // NO DISABLE FORM LOGIN!!
-            // We can then send a request to /login endpoint with username/pwd set as header
-            // Configure form login (used if user hits a protected resource without auth, or for /oauth2/authorize)
-            // .formLogin(Customizer.withDefaults())
 
         return http.build()
     }
@@ -120,32 +107,35 @@ class SecurityConfig(
 
     @Bean
     fun registeredClientRepository(): RegisteredClientRepository {
-        val frontendClient = RegisteredClient.withId(UUID.nameUUIDFromBytes(("station-frontend").toByteArray()).toString())
-            .clientId("station-frontend")
-            // No client secret for public clients (SPA)
-            .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
-            // --- Allow BOTH Authorization Code (for potential future use) AND Password (ROPC) ---
-            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-            //.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-            .redirectUri("http://localhost:5173/silent-renew") // OIDC Callback URI
-            .postLogoutRedirectUri("http://localhost:5173/login") // Post Logout URI
-            .postLogoutRedirectUri("http://localhost:5173/logout") // Post Logout URI
-            .scope("openid")
-            .clientSettings(
-                ClientSettings.builder()
-                    .requireProofKey(true)
-                    .build()
-            )
-            .build()
+        val frontendClient =
+            RegisteredClient.withId(UUID.nameUUIDFromBytes(("station-frontend").toByteArray()).toString())
+                .clientId("station-frontend")
+                // No client secret for public clients (SPA)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+                // --- Allow BOTH Authorization Code (for potential future use) AND Password (ROPC) ---
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                //.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .redirectUri("http://localhost:5173/silent-renew") // OIDC Callback URI
+                .postLogoutRedirectUri("http://localhost:5173/login") // Post Logout URI
+                .postLogoutRedirectUri("http://localhost:5173/logout") // Post Logout URI
+                .scope("openid")
+                .clientSettings(
+                    ClientSettings.builder()
+                        .requireProofKey(true)
+                        .build()
+                )
+                .build()
 
         return InMemoryRegisteredClientRepository(frontendClient)
     }
 
 
-
     @Bean
     // This AuthenticationManager is used by the form login AND the ROPC grant type
-    fun authenticationManager(userDetailsService: UserDetailsService, passwordEncoder: PasswordEncoder): AuthenticationManager {
+    fun authenticationManager(
+        userDetailsService: UserDetailsService,
+        passwordEncoder: PasswordEncoder,
+    ): AuthenticationManager {
         val provider = DaoAuthenticationProvider()
         provider.setUserDetailsService(userDetailsService)
         provider.setPasswordEncoder(passwordEncoder)

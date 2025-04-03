@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import AuthUserService from "@/service/AuthUserService";
 import OAuthUserService, {useUserSession} from "@/service/OAuthUserService";
-import { ref, onMounted } from 'vue';
+import {ref, onMounted} from 'vue';
 import {useRoute, useRouter} from 'vue-router'; // Import useRouter for redirection
 
 // const isLoading = ref(false);
@@ -25,42 +25,10 @@ const redirect = route.query.redirect as string
 const checkAuthStatus = () => {
   isAuthenticated.value = AuthUserService.isAuthenticated();
   if (isAuthenticated.value) {
-      console.log("Already authenticated, redirecting to dashboard.");
-      router.push({ name: 'employee-management' });
+    router.push({name: 'tasks'});
   }
 };
-
-// --- Updated handleLogin for ROPC ---
-// const handleLogin = async () => {
-//   isLoading.value = true;
-//   loginError.value = null; // Clear previous errors
-//   try {
-//     await AuthUserService.loginWithPassword(username.value, password.value);
-//     isAuthenticated.value = true; // Update state
-//     // Redirect to dashboard on successful login
-//     router.push({ name: 'employee-management' });
-//   } catch (error: any) {
-//     console.error("Login failed:", error);
-//     loginError.value = error.message || "Login fehlgeschlagen. Bitte versuchen Sie es erneut.";
-//   } finally {
-//     isLoading.value = false;
-//   }
-// };
 const handleLogin = async () => {
-  // isLoading.value = true;
-  // loginError.value = null; // Clear previous errors
-  // try {
-  //   await OAuthUserService.loginWithUsernamePassword(username.value, password.value);
-  //   // isAuthenticated.value = true; // Update state
-  //   // Redirect to dashboard on successful login
-  //   // router.push({ name: 'employee-management' });
-  //
-  // } catch (error: any) {
-  //   console.error("Login failed:", error);
-  //   loginError.value = error.message || "Login fehlgeschlagen. Bitte versuchen Sie es erneut.";
-  // } finally {
-  //   isLoading.value = false;
-  // }
   userSession.value
       .logInEmailPw(username.value, password.value)
       .then(() => {
@@ -68,7 +36,7 @@ const handleLogin = async () => {
         userSession.value.verify().then(() => {
           console.log("redirecting after login")
           router.push({
-            name: 'employee-management',
+            name: 'tasks',
           })
         })
       })
@@ -128,7 +96,6 @@ onMounted(() => {
               :class="$style['input-field']"
               placeholder="Ihr Passwort"
               required
-              @keyup.enter="handleLogin"
           />
           <!-- Optional: Forgot Password Link -->
           <!-- <a href="#" :class="$style['forgot-password']">Passwort vergessen?</a> -->
@@ -141,31 +108,20 @@ onMounted(() => {
 
         <!-- Login Button -->
         <button @click="handleLogin" :class="$style['login-submit-button']" :disabled="isLoading">
-          <FontAwesomeIcon v-if="!isLoading" icon="sign-in-alt" :class="$style['icon']" />
-          <FontAwesomeIcon v-if="isLoading" icon="spinner" spin :class="$style['icon']" />
+          <FontAwesomeIcon v-if="!isLoading" icon="sign-in-alt" :class="$style['icon']"/>
+          <FontAwesomeIcon v-if="isLoading" icon="spinner" spin :class="$style['icon']"/>
           <span>{{ isLoading ? 'Anmelden...' : 'Login' }}</span>
         </button>
 
-        <!-- Optional: Add buttons for other providers like Google/GitHub here -->
-        <!--
-        <button @click="handleGoogleLogin" :class="$style['provider-button']">
-          <FontAwesomeIcon :icon="['fab', 'google']" :class="$style['icon']" />
+        <button :class="$style['provider-button']">
+          <FontAwesomeIcon :icon="['fab', 'google']" :class="$style['icon']"/>
           <span>Login mit Google</span>
         </button>
-        -->
+        <button :class="$style['provider-button']">
+          <FontAwesomeIcon :icon="['fab', 'apple']" :class="$style['icon']"/>
+          <span>Login mit Apple</span>
+        </button>
       </div>
-
-      <!-- Authenticated State -->
-      <div v-if="isAuthenticated" :class="$style['login-wrapper']">
-         <p :class="$style['welcome-message']">
-           Willkommen! Sie sind angemeldet.
-         </p>
-         <button @click="handleLogout" :class="[$style['login-submit-button'], $style['logout-button']]">
-           <FontAwesomeIcon icon="sign-out-alt" :class="$style['icon']" />
-           <span>Logout</span>
-         </button>
-      </div>
-
     </div>
   </div>
 </template>
@@ -223,9 +179,9 @@ $error-color: #e74c3c; // Error color
   gap: 20px; // Add gap between elements
 
   .login-prompt, .welcome-message {
-      color: $text-color;
-      font-size: 1.1rem;
-      margin-bottom: 5px;
+    color: $text-color;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
   }
 
   // --- Styles for ROPC form ---
@@ -256,9 +212,10 @@ $error-color: #e74c3c; // Error color
         outline: none;
         box-shadow: 0 0 0 2px rgba($input-focus, 0.3);
       }
+
       // Style placeholder text
       &::placeholder {
-          color: #888;
+        color: #888;
       }
     }
 
@@ -269,6 +226,7 @@ $error-color: #e74c3c; // Error color
       font-size: 0.8rem;
       color: $text-color-light;
       text-decoration: none;
+
       &:hover {
         text-decoration: underline;
         color: $text-color;
@@ -277,13 +235,14 @@ $error-color: #e74c3c; // Error color
   }
 
   .error-message {
-      color: $error-color;
-      font-size: 0.9rem;
-      margin-top: -10px; // Reduce gap before error
-      margin-bottom: 5px; // Add gap after error
-      width: 100%;
-      text-align: center;
+    color: $error-color;
+    font-size: 0.9rem;
+    margin-top: -10px; // Reduce gap before error
+    margin-bottom: 5px; // Add gap after error
+    width: 100%;
+    text-align: center;
   }
+
   // --- End ROPC form styles ---
 
   .login-submit-button {
@@ -314,49 +273,51 @@ $error-color: #e74c3c; // Error color
     }
 
     &:disabled {
-        background-color: darken($accent, 15%);
-        cursor: not-allowed;
-        opacity: 0.7;
+      background-color: darken($accent, 15%);
+      cursor: not-allowed;
+      opacity: 0.7;
     }
 
     .icon {
-        // Icon styles if needed, FontAwesome handles size etc.
+      // Icon styles if needed, FontAwesome handles size etc.
     }
 
     // Specific style for logout button
     &.logout-button {
-        background: $logout-color;
-        &:hover:not(:disabled) {
-            background: $logout-hover;
-        }
-         &:active:not(:disabled) {
-            background: darken($logout-color, 10%);
-        }
+      background: $logout-color;
+
+      &:hover:not(:disabled) {
+        background: $logout-hover;
+      }
+
+      &:active:not(:disabled) {
+        background: darken($logout-color, 10%);
+      }
     }
   }
 
   // Optional styles for provider buttons
+
   .provider-button {
-      padding: 14px;
-      border: 1px solid $input-border;
-      border-radius: $border-radius;
-      background: $bg-light;
-      color: $text-color;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background-color $transition-speed ease, transform $transition-speed ease;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
+    padding: 14px;
+    border: 1px solid $input-border;
+    border-radius: $border-radius;
+    background: $bg-light;
+    color: $text-color;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color $transition-speed ease, transform $transition-speed ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
 
-      &:hover {
-          background: darken($bg-light, 5%);
-          border-color: $input-focus;
-      }
+    &:hover {
+      background: darken($bg-light, 5%);
+      border-color: $input-focus;
+    }
   }
-
 }
 
 @keyframes fadeIn {

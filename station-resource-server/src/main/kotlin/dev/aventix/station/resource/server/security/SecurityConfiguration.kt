@@ -15,13 +15,8 @@ class SecurityConfiguration {
     @Throws(Exception::class)
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http.authorizeHttpRequests { auth ->
-            // Require authentication for all API endpoints under /api/v1/
-            auth.requestMatchers("/api/v1/**").authenticated()
-            // Allow all other requests (e.g., actuator, swagger-ui if added later)
-            // Consider securing these endpoints as needed in the future.
             auth.anyRequest().permitAll()
         }.oauth2ResourceServer { resourceServer ->
-            // Configure JWT validation using the jwk-set-uri from application.yml
             resourceServer.jwt(Customizer.withDefaults())
         }.cors {
             it.configurationSource(UrlBasedCorsConfigurationSource().apply {
@@ -33,9 +28,7 @@ class SecurityConfiguration {
                     addAllowedMethod(HttpMethod.GET) // Added GET for completeness
                     addAllowedOrigin("https://dashboard.cakmak-station.de")
                     addAllowedOrigin("http://localhost:5173")
-                    // Allow credentials (cookies, authorization headers) if needed
-                    // allowCredentials = true
-                    // Allow specific headers if needed
+                    //allowCredentials = true
                     // addAllowedHeader("*") // Example: Allow all headers
                 })
             })
