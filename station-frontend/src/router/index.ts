@@ -4,13 +4,9 @@ import TaskManagementView from "@/view/task/TaskManagementView.vue";
 import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
 import LoginView from "@/view/login/LoginView.vue";
 import NotFoundView from "@/view/error/NotFoundView.vue";
-import LocalOAuthCallbackView from "@/view/login/LocalOAuthCallbackView.vue";
 import SilentRenew from "@/view/login/SilentRenew.vue";
 import OAuthUserService, {useUserSession} from "@/service/OAuthUserService";
 import LogoutView from "@/view/login/LogoutView.vue";
-import SilentLogout from "@/view/login/SilentLogout.vue"; // Import auth service for check
-// --- REMOVED OIDC Callback View Import ---
-// import OAuthCallbackView from '@/view/login/OAuthCallbackView.vue';
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -26,14 +22,12 @@ const routes: Array<RouteRecordRaw> = [
             requiresAuth: false
         }
     },
-    // --- REMOVED OIDC Callback Route ---
-    // {
-    //     path: '/oidc-callback',
-    //     name: 'oidc-callback',
-    //     component: OAuthCallbackView,
-    //     meta: { isPublic: true }
-    // },
-    // --- END REMOVED Route ---
+    {
+        path: '',
+        redirect: {
+            name: 'login'
+        }
+    },
     {
         path: '/employee/management',
         name: 'employee-management',
@@ -80,11 +74,9 @@ const router = createRouter({
     history: createWebHistory(), // Use createWebHistory for cleaner URLs
     routes
 })
-
 // Global Navigation Guard
 router.beforeEach((to, from, next) => {
     const userManager = useUserSession.value
-
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 
     if (requiresAuth) {
@@ -95,10 +87,8 @@ router.beforeEach((to, from, next) => {
             console.log(`Navigating to: ${to.path}, Requires Auth: ${requiresAuth}, Is Authenticated: ${isAuthenticated}`);
 
             if (!isAuthenticated) {
-                // If trying to access a protected route without being authenticated,
-                // redirect to the login page.
                 console.log(`Redirecting to login. Target: ${to.fullPath}`);
-                next({ name: 'login' });
+                next({name: 'login'});
             } else {
                 next()
             }

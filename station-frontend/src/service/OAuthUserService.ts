@@ -24,22 +24,25 @@ export const useUserSession = computed(() => {
 
     const userManager = new UserManager({
         userStore: new WebStorageStateStore({store: window.localStorage}),
+
         authority: OAUTH_BASE_URL,
         client_id: "station-frontend",
         redirect_uri: location.protocol + "//" + location.host,
         post_logout_redirect_uri: location.protocol + "//" + location.host + "/login",
-        automaticSilentRenew: true,
+        automaticSilentRenew: false,
         includeIdTokenInSilentSignout: true,
         silent_redirect_uri: location.protocol + "//" + location.host + "/silent-renew",
         response_type: "code",
         scope: "openid",
-        prompt: "",
+        prompt: "none",
+        extraQueryParams: {
+            prompt: "none",
+        },
         iframeScriptOrigin: location.protocol + "//" + location.host,
         iframeNotifyParentOrigin: location.protocol + "//" + location.host,
     })
 
-    async function verify(isLogout: boolean) {
-        if (isLogout) return user.value
+    async function verify() {
         return await userManager
             .getUser().then(async u => {
                 if (u !== null && !u.expired) {
@@ -74,9 +77,9 @@ export const useUserSession = computed(() => {
         loading.value = newLoading
     }
 
-    async function logoutUser(silent: boolean = false) {
+    async function logoutUser(silent: boolean = true) {
         if (silent) {
-            await userManager.signoutCallback()
+            await userManager.signoutRedirect()
         } else {
             console.log("logging out..")
             await userManager.signoutSilent().then(async () => {

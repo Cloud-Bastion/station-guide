@@ -6,7 +6,6 @@
   const router = useRouter()
 
   onMounted(async () => {
-    console.log("user logout ", useUserSession.value)
     useUserSession.value.logoutUser().then(() => {
       console.log("logout successful")
       // router.push({name: "login"})

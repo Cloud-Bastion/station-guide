@@ -98,9 +98,9 @@ class SecurityConfig(
             .csrf { csrf -> csrf.disable() } // Disable CSRF for stateless API
             .sessionManagement { session ->
                 // ROPC is stateless, but form login (if used as fallback or for other flows) might need session.
-                 session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
-            .addFilterBefore(JwtAuthenticationFilter(tokenService, userService), UsernamePasswordAuthenticationFilter::class.java)
+            //.addFilterBefore(JwtAuthenticationFilter(tokenService, userService), UsernamePasswordAuthenticationFilter::class.java)
 
             // NO DISABLE FORM LOGIN!!
             // We can then send a request to /login endpoint with username/pwd set as header
@@ -129,7 +129,8 @@ class SecurityConfig(
             //.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
             .redirectUri("http://localhost:5173/silent-renew") // OIDC Callback URI
             .postLogoutRedirectUri("http://localhost:5173/login") // Post Logout URI
-            .scope(OidcScopes.OPENID)
+            .postLogoutRedirectUri("http://localhost:5173/logout") // Post Logout URI
+            .scope("openid")
             .clientSettings(
                 ClientSettings.builder()
                     .requireProofKey(true)

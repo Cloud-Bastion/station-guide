@@ -6,7 +6,9 @@
   let { userManager } = useUserSession.value
   onMounted(async () => {
     console.log("signinSilentCallback")
-    await userManager.signinSilentCallback()
+    await userManager.signinSilentCallback().then(() => {
+      console.log("Success silent login")
+    })
 
   })
 </script>

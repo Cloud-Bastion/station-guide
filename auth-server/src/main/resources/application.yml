@@ -44,6 +44,10 @@ station:
 
 server:
   port: 8081
+  servlet:
+    session:
+      cookie:
+        same-site: none
 #trace: true
 
 logging:

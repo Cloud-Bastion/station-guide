@@ -56,6 +56,11 @@ onMounted(() => {
       <img src="/logo.png" alt="circle k logo" :class="$style['logo']">
 
       <div :class="$style['workprogramms-container']">
+        <router-link to="/logout"
+                     :class="[$style['workprogramms-entity'], props.site === 'product-expire-management' ? $style['workprogramms-entity-active'] : '']">
+          <FontAwesomeIcon :icon="['far', 'fa-right-from-bracket']" size="lg" :class="$style['icon']"/>
+          <span>AUSLOGGEN</span>
+        </router-link>
         <router-link to="/employee/management"
                      :class="[$style['workprogramms-entity'], props.site === 'employee-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'id-badge']" size="lg" :class="$style['icon']"/>
