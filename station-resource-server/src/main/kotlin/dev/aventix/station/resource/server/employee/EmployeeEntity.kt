@@ -1,6 +1,8 @@
 package dev.aventix.station.resource.server.employee
 
 import dev.aventix.station.resource.server.employee.address.EmployeeAddressEntity
+import dev.aventix.station.resource.server.schedule.report.MonthlyReport
+import dev.aventix.station.resource.server.schedule.stamp.StampEntry
 import jakarta.persistence.*
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -46,6 +48,16 @@ class EmployeeEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by_id", nullable = true)
     var createdBy: EmployeeEntity? = null
+
+    @OneToMany(fetch = FetchType.LAZY)
+    var timestamps: MutableList<StampEntry> = mutableListOf()
+
+    @OneToMany(fetch = FetchType.LAZY)
+    var createdTimestamps: MutableList<StampEntry> = mutableListOf()
+
+    @OneToMany(fetch = FetchType.LAZY)
+    var monthlyReports: MutableList<MonthlyReport> = mutableListOf()
+
 
     fun toDTO(): EmployeeDTO {
         return EmployeeDTO(

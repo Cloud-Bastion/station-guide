@@ -1,6 +1,6 @@
 package dev.aventix.station.resource.server.schedule
 
-enum class ScheduleEntryType {
+enum class PlannedScheduleEntryType {
 
     SHIFT,
     PAID_EXEMPTION,

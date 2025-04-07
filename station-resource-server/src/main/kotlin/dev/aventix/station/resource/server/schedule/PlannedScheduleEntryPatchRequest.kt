@@ -3,10 +3,10 @@ package dev.aventix.station.resource.server.schedule
 import java.time.Instant
 import java.util.*
 
-data class ScheduleEntryPatchRequest(
+data class PlannedScheduleEntryPatchRequest(
     val id: UUID,
-    val planType: ScheduleEntryPlanType,
-    val entryType: ScheduleEntryType,
+    val entryType: PlannedScheduleEntryType,
     val startDate: Instant,
     val endDate: Instant,
+    val breakMinutes: Int,
 )

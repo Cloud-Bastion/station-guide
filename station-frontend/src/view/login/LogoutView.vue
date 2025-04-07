@@ -12,7 +12,6 @@
     }).catch(() => {
       console.log("logout didnt work")
     })
-
   })
 </script>
 

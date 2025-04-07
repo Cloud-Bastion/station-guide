@@ -4,11 +4,11 @@ import dev.aventix.station.resource.server.employee.EmployeeDTO
 import java.time.Instant
 import java.util.UUID
 
-data class ScheduleEntryDto(
+data class PlannedScheduleEntryDto(
     val id: UUID,
     val assignee: EmployeeDTO,
-    val planType: ScheduleEntryPlanType,
-    val entryType: ScheduleEntryType,
-    val startDate: Instant,
-    val endDate: Instant,
+    val entryType: PlannedScheduleEntryType,
+    val startTime: Instant,
+    val endTime: Instant,
+    val breakMinutes: Int,
 )
