@@ -17,7 +17,7 @@ fun OAuth2Authorization.Token<*>.toSessionToken() = let {
     }.also { it.readFromOAuth2Token(token) }
 }
 
-fun findGrantType(value: String) = when (value) {
+fun findGrantType(value: String): AuthorizationGrantType = when (value) {
     AuthorizationGrantType.AUTHORIZATION_CODE.value -> AuthorizationGrantType.AUTHORIZATION_CODE
     else -> throw IllegalArgumentException("Unknown grant type: $value")
 }

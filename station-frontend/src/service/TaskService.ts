@@ -3,7 +3,7 @@ import settings from "./settings/Settings";
 const API_URL = "/v1/tasks"; // Base URL for tasks
 
 export interface ScheduledTask {
-    id: string;
+    id: string | undefined;
     template: Task;
     frequency: string;
     daysOfWeek: Array<number>;
@@ -11,19 +11,20 @@ export interface ScheduledTask {
     startTime: string;
     endTime: string;
     endTimeDaysAdd: number;
-    lastCreatedTask: string;
+    lastCreatedTask: string | undefined;
 }
 
 export interface Task {
-    id: string;
+    id: string | undefined;
     title: string;
     description: string;
-    priority: string;
+    priority: number;
     permissionGroup: string;
-    createdBy: string;
+    createdBy: string | undefined;
     startTime: string;
     endTime: string;
     completed: boolean;
+    isTemplate: boolean;
 }
 
 export default {

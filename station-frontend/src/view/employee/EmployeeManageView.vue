@@ -4,7 +4,7 @@ import Ref from "@/components/util/Ref";
 import EmployeeAdminView from "@/view/employee/EmployeeAdminView.vue";
 import EmployeeSchedulerView from "@/view/employee/EmployeeSchedulerView.vue";
 import {ref, computed, onMounted} from 'vue';
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {useUserSession} from "@/service/OAuthUserService";
 
 let currentSiteMode: Ref<string> = new Ref("schedule"); //schedule_admin, vacation, vacation_admin, illness, illness_admin, employee_admin
@@ -13,12 +13,29 @@ const settingsMenuOpen = ref(false);
 const addEmployeeDialogOpen = ref(false); // Placeholder for add employee dialog
 const selectedSetting = ref('employees'); // Add selected setting
 
-// Placeholder data - replace with actual API calls
+interface EmployeeAddress {
+  zipcode: number;
+  city: string;
+  street: string;
+  streetNumber: string;
+  apartment: string;
+}
+
 interface Employee {
-  id: number;
+  id: string;
+  badgeNumber: number;
   name: string;
+  firstname: string;
+  lastname: string;
   email: string;
-  // Add other employee properties as needed
+  address: EmployeeAddress;
+  birthdate: string;
+  taxId: number;
+  socialSecurityId: string;
+  minijob: boolean;
+  hourlyWage: number;
+  createdAt: string;
+  createdBy: string;
 }
 
 const employees = ref<Employee[]>([]);
@@ -32,17 +49,27 @@ const filteredEmployees = computed(() => {
 
 // Placeholder for fetching employees - replace with actual API call
 onMounted(async () => {
-  // Fetch employees from backend and populate 'employees' ref
-  // Example:
-  // employees.value = await EmployeeService.getAllEmployees();
-  // displayedEmployees.value = employees.value;
-
-  // Placeholder data for demonstration
-    employees.value = [
-        { id: 1, name: 'Max Mustermann', email: 'max.mustermann@example.com' },
-        { id: 2, name: 'Erika Mustermann', email: 'erika.mustermann@example.com' },
-    ];
-    displayedEmployees.value = employees.value;
+  employees.value = [
+    {
+      id: "566a27c1-ce36-44a6-89fa-aee2809703d3",
+      badgeNumber: 131530,
+      firstname: 'Jan',
+      lastname: "Hechter",
+      email: "jan.hechter@gmail.com",
+      minijob: true,
+      hourlyWage: 0.0
+    },
+    {
+      id: "a266a563-cf1f-4e60-a449-0466ded2a575",
+      badgeNumber: 24471,
+      firstname: "Sarah",
+      lastname: "Weidel",
+      email: "weidel@cakmak-tankstelle.de",
+      minijob: false,
+      hourlyWage: 37.5
+    },
+  ];
+  displayedEmployees.value = employees.value;
 });
 
 function changeSiteMode(mode: string) {
@@ -51,11 +78,11 @@ function changeSiteMode(mode: string) {
 }
 
 function clearEmployeeSearch() {
-    //Implement
+  //Implement
 }
 
 function updateEmployee(employee: Employee) {
-    //Implement
+  //Implement
 }
 
 const userManager = useUserSession.value
@@ -64,7 +91,7 @@ const userManager = useUserSession.value
 <template>
   <div :class="$style['top-level-container']">
     <SidebarComponent site="employee-management"/>
-<!--    <h1>{{userManager.user.value.profile}}</h1>-->
+    <!--    <h1>{{userManager.user.value.profile}}</h1>-->
     <div :class="$style['main-content']">
       <div :class="$style['submenu-container']">
         <button
@@ -100,8 +127,8 @@ const userManager = useUserSession.value
             </div>
 
             <button :class="$style['settings-button']" @click="settingsMenuOpen = !settingsMenuOpen">
-              <FontAwesomeIcon icon="fa-gear"/>
-              <span>Einstellungen</span>
+              <FontAwesomeIcon icon="plus"/>
+              <span>Mitarbeiter anlegen</span>
             </button>
           </div>
 
@@ -112,11 +139,15 @@ const userManager = useUserSession.value
                     v-for="employee in displayedEmployees"
                     :key="employee.id"
                 >
-                  <td :class="$style['employee-id']">#{{ employee.id }}</td>
-                  <td :class="$style['employee-name']">{{ employee.name }}</td>
+                  <td :class="$style['employee-id']">#{{ employee.badgeNumber }}</td>
+                  <td :class="$style['employee-name']">{{ employee.firstname }} {{ employee.lastname }}</td>
                   <td :class="$style['employee-email']">{{ employee.email }}</td>
+                  <td :class="$style['employee-wage']">{{
+                      employee.minijob ? "Minijob" : employee.hourlyWage + " Std / Woche"
+                    }}
+                  </td>
                   <td>
-                    <FontAwesomeIcon :icon="['fas', 'info-circle']" :class="$style['employee-info-icon']"/>
+                    <FontAwesomeIcon icon="fa-gear" :class="$style['employee-info-icon']"/>
                   </td>
                 </tr>
               </transition-group>
@@ -178,7 +209,8 @@ const userManager = useUserSession.value
                                  :class="$style['editable-input']"/>
                         </td>
                         <td>
-                          <input type="text" v-model="employee.email" @change="updateEmployee(employee)" :class="$style['editable-input']" />
+                          <input type="text" v-model="employee.email" @change="updateEmployee(employee)"
+                                 :class="$style['editable-input']"/>
                         </td>
                       </tr>
                     </transition-group>
@@ -221,7 +253,7 @@ $border-design: 0.1vh solid #555;
 }
 
 .main-content {
-    // Removed flex-grow: 1
+  // Removed flex-grow: 1
   display: flex;
   flex-direction: column;
 }
@@ -346,44 +378,144 @@ $border-design: 0.1vh solid #555;
         .employee-name {
           flex-grow: 1;
         }
-        .employee-info-icon{
+
+        .employee-info-icon {
           color: $accent;
         }
       }
     }
   }
 
-    .settings-menu {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: $bg-medium;
-      border-radius: $border-radius;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-      padding: 20px;
-      width: 400px; /* Increased width */
-      z-index: 1000; /* Ensure it's above other content */
+  .settings-menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: $bg-medium;
+    border-radius: $border-radius;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    width: 400px; /* Increased width */
+    z-index: 1000; /* Ensure it's above other content */
 
-      .settings-menu-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
+    .settings-menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
 
-        h2 {
+      h2 {
+        color: $text-color;
+        font-size: 1.5rem;
+        margin: 0;
+      }
+
+      .close-button {
+        background: none;
+        border: none;
+        color: #aaa;
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: color $transition-speed ease;
+
+        &:hover {
           color: $text-color;
-          font-size: 1.5rem;
-          margin: 0;
+        }
+      }
+    }
+
+    .settings-menu-tabs {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 10px;
+
+      .tab-button {
+        padding: 8px 12px;
+        background: none;
+        border: none;
+        color: $text-color;
+        cursor: pointer;
+        transition: background-color $transition-speed ease, color $transition-speed ease;
+        border-radius: $border-radius;
+
+        &:hover {
+          background-color: $bg-light;
+        }
+      }
+
+      .active-tab {
+        background-color: $accent;
+        color: white;
+
+        &:hover {
+          background-color: $accent-hover;
+        }
+      }
+    }
+
+    .settings-menu-content {
+      color: $text-color;
+
+      .add-employee-button {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        background-color: $accent;
+        color: $text-color;
+        border: none;
+        border-radius: $border-radius;
+        cursor: pointer;
+        transition: background-color $transition-speed ease;
+        margin-bottom: 10px;
+
+        &:hover {
+          background-color: $accent-hover;
         }
 
-        .close-button {
+        .add-employee-icon {
+          margin-right: 8px;
+        }
+      }
+
+      .search-bar-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        position: relative;
+
+        .search-icon {
+          color: #777;
+          position: absolute;
+          left: 10px;
+          z-index: 1;
+        }
+
+        .search-input {
+          padding: 10px;
+          padding-left: 35px;
+          border: 1px solid $input-border;
+          border-radius: $border-radius;
+          background-color: $input-bg;
+          color: $text-color;
+          transition: border-color $transition-speed ease;
+          flex-grow: 1;
+
+          &:focus {
+            border-color: $input-focus;
+            outline: none;
+          }
+        }
+
+        .clear-search-button {
+          position: absolute;
+          right: 10px;
           background: none;
           border: none;
           color: #aaa;
           cursor: pointer;
-          font-size: 1.2rem;
           transition: color $transition-speed ease;
+          padding: 0;
+          z-index: 1;
 
           &:hover {
             color: $text-color;
@@ -391,137 +523,38 @@ $border-design: 0.1vh solid #555;
         }
       }
 
-      .settings-menu-tabs {
-        display: flex;
-        justify-content: space-around;
-        margin-bottom: 10px;
+      .employees-table {
+        width: 100%;
+        border-collapse: collapse;
 
-        .tab-button {
+        th, td {
           padding: 8px 12px;
-          background: none;
-          border: none;
+          border-bottom: 1px solid $input-border;
+          text-align: left;
+        }
+
+        th {
+          background-color: $bg-light;
           color: $text-color;
-          cursor: pointer;
-          transition: background-color $transition-speed ease, color $transition-speed ease;
+        }
+
+        .editable-input, .editable-select {
+          padding: 6px;
+          border: 1px solid $input-border;
           border-radius: $border-radius;
-
-          &:hover {
-            background-color: $bg-light;
-          }
-        }
-
-        .active-tab {
-          background-color: $accent;
-          color: white;
-
-          &:hover {
-            background-color: $accent-hover;
-          }
-        }
-      }
-
-      .settings-menu-content {
-        color: $text-color;
-
-        .add-employee-button {
-          display: flex;
-          align-items: center;
-          padding: 10px 15px;
-          background-color: $accent;
+          background-color: $input-bg;
           color: $text-color;
-          border: none;
-          border-radius: $border-radius;
-          cursor: pointer;
-          transition: background-color $transition-speed ease;
-          margin-bottom: 10px;
+          transition: border-color $transition-speed ease;
+          width: 90%;
 
-          &:hover {
-            background-color: $accent-hover;
-          }
-
-          .add-employee-icon {
-            margin-right: 8px;
-          }
-        }
-
-        .search-bar-container {
-          display: flex;
-          align-items: center;
-          margin-bottom: 15px;
-          position: relative;
-
-          .search-icon {
-            color: #777;
-            position: absolute;
-            left: 10px;
-            z-index: 1;
-          }
-
-          .search-input {
-            padding: 10px;
-            padding-left: 35px;
-            border: 1px solid $input-border;
-            border-radius: $border-radius;
-            background-color: $input-bg;
-            color: $text-color;
-            transition: border-color $transition-speed ease;
-            flex-grow: 1;
-
-            &:focus {
-              border-color: $input-focus;
-              outline: none;
-            }
-          }
-
-          .clear-search-button{
-            position: absolute;
-            right: 10px;
-            background: none;
-            border: none;
-            color: #aaa;
-            cursor: pointer;
-            transition: color $transition-speed ease;
-            padding: 0;
-            z-index: 1;
-
-            &:hover {
-              color: $text-color;
-            }
-          }
-        }
-
-        .employees-table {
-          width: 100%;
-          border-collapse: collapse;
-
-          th, td {
-            padding: 8px 12px;
-            border-bottom: 1px solid $input-border;
-            text-align: left;
-          }
-
-          th {
-            background-color: $bg-light;
-            color: $text-color;
-          }
-
-          .editable-input, .editable-select {
-            padding: 6px;
-            border: 1px solid $input-border;
-            border-radius: $border-radius;
-            background-color: $input-bg;
-            color: $text-color;
-            transition: border-color $transition-speed ease;
-            width: 90%;
-
-            &:focus {
-              border-color: $input-focus;
-              outline: none;
-            }
+          &:focus {
+            border-color: $input-focus;
+            outline: none;
           }
         }
       }
     }
+  }
 }
 
 // --- Animations ---
@@ -537,8 +570,7 @@ $border-design: 0.1vh solid #555;
 }
 
 .employee-list-enter-active,
-.employee-list-leave-active
-{
+.employee-list-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
@@ -548,7 +580,7 @@ $border-design: 0.1vh solid #555;
   transform: translateY(20px);
 }
 
-.employee-list-move{
+.employee-list-move {
   transition: transform 0.3s ease;
 }
 
@@ -563,7 +595,7 @@ $border-design: 0.1vh solid #555;
       margin: 0 2px;
     }
   }
-  .content-wrapper{
+  .content-wrapper {
     padding: 10px;
   }
 }

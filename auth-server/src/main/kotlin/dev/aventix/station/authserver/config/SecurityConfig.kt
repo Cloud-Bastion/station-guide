@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 import org.springframework.security.oauth2.core.oidc.OidcScopes
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
@@ -59,6 +60,13 @@ class SecurityConfig(
             }.contentSecurityPolicy { csp ->
                 csp.policyDirectives("frame-ancestors 'self' http://localhost:5173/;")
             }
+        }
+        http.logout {
+            it.logoutUrl("/logout")
+            .logoutSuccessUrl("http://localhost:5173")
+            .invalidateHttpSession(true)  // Destroys session
+            .clearAuthentication(true)    // Clears authentication
+            .deleteCookies("JSESSIONID")  // Deletes cookies
         }
 
         http.cors(Customizer.withDefaults())
@@ -103,6 +111,14 @@ class SecurityConfig(
         it.claims.subject(account.id.toString())
         it.claims.claim("email", account.email)
         it.claims.claim("role", "role_user")
+        val authorization = it.get<OAuth2Authorization>(OAuth2Authorization::class.java.name)
+        if (authorization != null) {
+            // Using the authorization ID as the SID is a common approach
+            it.claims.claim("sid", authorization.id)
+        } else {
+            // Fallback or generate if no authorization context (shouldn't happen for ID token)
+            it.claims.claim("sid", UUID.randomUUID().toString())
+        }
     }
 
     @Bean

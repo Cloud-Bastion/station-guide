@@ -141,7 +141,7 @@
 <script setup lang="ts">
 import {ref, defineEmits, reactive} from 'vue';
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import TaskService, { TaskCreateRequest, ScheduledTaskCreateRequest } from "@/service/TaskService";
+import TaskService, {ScheduledTask, Task} from "@/service/TaskService";
 
 const emit = defineEmits(['close', 'task-created']);
 
@@ -165,7 +165,7 @@ const newTask = reactive({
   daysOfMonth: [] as number[],
   scheduleStartTime: '', // For time input "HH:mm"
   scheduleEndTime: '',   // For time input "HH:mm"
-  endTimeDaysAdd: null as number | null,
+  endTimeDaysAdd: 0,
 });
 
 // Options for days checkboxes
@@ -181,8 +181,8 @@ const close = () => {
 };
 
 // Format time string to "HH:mm:ss" or return null
-const formatTime = (timeString: string | null | undefined): string | null => {
-    if (!timeString) return null;
+const formatTime = (timeString: string | undefined): string => {
+    if (!timeString) return "";
     // Basic check, assumes "HH:mm" input from <input type="time">
     if (/^\d{2}:\d{2}$/.test(timeString)) {
         return `${timeString}:00`;
@@ -192,26 +192,20 @@ const formatTime = (timeString: string | null | undefined): string | null => {
         return timeString;
     }
     console.warn("Invalid time format provided:", timeString);
-    return null; // Or throw error, depending on desired strictness
+    return ""; // Or throw error, depending on desired strictness
 }
 
 // Format datetime-local string to ISO string or return null
-const formatDateTime = (dateTimeLocalString: string | null | undefined): string | null => {
-    if (!dateTimeLocalString) return null;
+const formatDateTime = (dateTimeLocalString: string | undefined): string => {
+    if (!dateTimeLocalString) return "";
     try {
         // Ensure the browser-provided string is correctly interpreted as local time before converting to ISO
         const date = new Date(dateTimeLocalString);
         if (isNaN(date.getTime())) throw new Error("Invalid date");
-        // Adjust for timezone offset to get correct ISO string representing the *local* time chosen
-        // This is often tricky. A library like date-fns or moment might be better.
-        // Simple approach (might be off depending on DST):
-        // const timezoneOffset = date.getTimezoneOffset() * 60000; //offset in milliseconds
-        // const adjustedDate = new Date(date.getTime() - timezoneOffset);
-        // return adjustedDate.toISOString().slice(0, -1); // Remove the 'Z'
         return date.toISOString(); // Standard ISO string (UTC) - Backend needs to handle this correctly
     } catch (e) {
         console.error("Invalid date/time format:", dateTimeLocalString, e);
-        return null;
+        return "";
     }
 }
 
@@ -232,34 +226,45 @@ const submitTask = async () => {
   try {
     if (taskType.value === 'single') {
       // --- Create Single Task ---
-      const taskData: TaskCreateRequest = {
+      const taskData: Task = {
         title: newTask.title,
-        description: newTask.description || null,
+        description: newTask.description,
         priority: newTask.priority,
-        permissionGroup: newTask.permissionGroup || null,
+        permissionGroup: newTask.permissionGroup,
         startTime: formatDateTime(newTask.startTime),
         endTime: formatDateTime(newTask.endTime),
+        id: undefined,
+        createdBy: undefined,
+        completed: false,
+        isTemplate: false
         // createdBy will likely be set by the backend
       };
       await TaskService.createTask(taskData);
 
     } else {
       // --- Create Recurring Task ---
-      const scheduledTaskData: ScheduledTaskCreateRequest = {
+      const scheduledTaskData: ScheduledTask = {
+        id: undefined,
         template: {
+          id: undefined,
           title: newTask.title,
-          description: newTask.description || null,
+          description: newTask.description,
           priority: newTask.priority,
-          permissionGroup: newTask.permissionGroup || null,
-          // createdBy will likely be set by the backend
+          permissionGroup: newTask.permissionGroup,
+          createdBy: undefined,
+          startTime: newTask.startTime,
+          endTime: newTask.endTime,
+          completed: false,
+          isTemplate: true
         },
         frequency: newTask.frequency, // Already uppercase from select value
         // Send days only if relevant for the frequency
-        daysOfWeek: newTask.frequency === 'WEEKLY' && newTask.daysOfWeek.length > 0 ? newTask.daysOfWeek.sort((a, b) => a - b) : null,
-        daysOfMonth: newTask.frequency === 'MONTHLY' && newTask.daysOfMonth.length > 0 ? newTask.daysOfMonth.sort((a, b) => a - b) : null,
+        daysOfWeek: newTask.frequency === 'WEEKLY' && newTask.daysOfWeek.length > 0 ? newTask.daysOfWeek.sort((a, b) => a - b) : [],
+        daysOfMonth: newTask.frequency === 'MONTHLY' && newTask.daysOfMonth.length > 0 ? newTask.daysOfMonth.sort((a, b) => a - b) : [],
         startTime: formatTime(newTask.scheduleStartTime), // Format to HH:mm:ss
         endTime: formatTime(newTask.scheduleEndTime),     // Format to HH:mm:ss
         endTimeDaysAdd: newTask.endTimeDaysAdd,
+        lastCreatedTask: undefined
       };
       await TaskService.createScheduledTask(scheduledTaskData);
     }

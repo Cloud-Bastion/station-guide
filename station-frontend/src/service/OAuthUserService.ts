@@ -30,7 +30,7 @@ export const useUserSession = computed(() => {
         redirect_uri: location.protocol + "//" + location.host,
         post_logout_redirect_uri: location.protocol + "//" + location.host + "/login",
         automaticSilentRenew: false,
-        includeIdTokenInSilentSignout: true,
+        //includeIdTokenInSilentSignout: true,
         silent_redirect_uri: location.protocol + "//" + location.host + "/silent-renew",
         response_type: "code",
         scope: "openid",

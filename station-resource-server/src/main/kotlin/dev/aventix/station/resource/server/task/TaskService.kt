@@ -17,18 +17,6 @@ class TaskService(
     private val scheduledTaskRepository: ScheduledTaskRepository,
     private val taskRepository: TaskRepository,
 ) {
-    @PostConstruct
-    fun init() {
-        for (i in 1..60) {
-            this.taskRepository.saveAndFlush(TaskEntity().apply {
-                this.title = "TEST-TITLE"
-                this.description = "Test"
-                this.completed = false
-                this.priority = 2
-            })
-        }
-    }
-
     fun getAllOpenTasks(): MutableList<TaskDTO> {
         return this.taskRepository.findAllByIsTemplateAndCompleted(isTemplate = false, completed = false)
             .map(TaskEntity::toDTO).toCollection(mutableListOf())

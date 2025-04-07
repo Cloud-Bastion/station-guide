@@ -80,7 +80,8 @@ router.beforeEach((to, from, next) => {
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 
     if (requiresAuth) {
-        userManager.verify().then(() => {
+        next()
+        /*userManager.verify().then(() => {
             const isAuthenticated = userManager.isLoggedIn.value
             console.log(isAuthenticated)
 
@@ -93,7 +94,7 @@ router.beforeEach((to, from, next) => {
                 next()
             }
 
-        })
+        })*/
     } else {
         next()
     }
