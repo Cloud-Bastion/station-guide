@@ -23,4 +23,8 @@ data class StampEntryDto(
             }
         }
     }
+
+    override fun toString(): String {
+        return "StampEntryDto(id=$id, assigneeId=$assigneeId, timestamp=$timestamp, eventType=$eventType)"
+    }
 }

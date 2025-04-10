@@ -1,10 +1,12 @@
 package dev.aventix.station.resource.server.schedule.stamp
 
+import dev.aventix.station.resource.server.employee.EmployeeEntity
 import dev.aventix.station.resource.server.employee.EmployeeService
 import jakarta.annotation.PostConstruct
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import java.time.Duration
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -70,6 +72,10 @@ class StampEntryService(
         println("worked minuted: " + (workingTime.toMinutes() - 60*workingTime.toHours()))
     }
 
+    fun getStampsInRange(startIncluding: LocalDate, endIncluding: LocalDate, employee: EmployeeEntity): List<StampEntryDto> {
+        return stampRepository.findAllInRange(startIncluding, endIncluding, employee).map { it.toDto() }
+    }
+
     fun calculateWorkTime(stamps: List<StampEntryDto>): Duration {
         var workingTime: Duration = Duration.ZERO
         var previousStart: StampEntryDto? = null
@@ -97,14 +103,14 @@ class StampEntryService(
     }
 
     fun create(createRequest: StampEntryCreateRequest): StampEntryDto {
+        val employee = employeeService.findById(createRequest.assigneeId).orElseThrow {
+            EntityNotFoundException("Cannot assign stamp to non-existing employee ${createRequest.assigneeId}")
+        }
         val entity = StampEntry().apply {
-            this.assignee = employeeService.findById(createRequest.assigneeId).orElseThrow {
-                EntityNotFoundException("Cannot assign stamp to non-existing employee ${createRequest.assigneeId}")
-            }
+            this.assignee = employee
             this.eventType = createRequest.eventType
             this.timestamp = createRequest.timestamp.toOffsetDateTime()
         }
-
         stampRepository.saveAndFlush(entity)
         return entity.toDto()
     }

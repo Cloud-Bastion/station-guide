@@ -35,7 +35,6 @@ class ScheduleEntryService(
             null,
             LocalDateTime.now()
         ))
-
     }
 
     // 11 h break between 6-hour shifts

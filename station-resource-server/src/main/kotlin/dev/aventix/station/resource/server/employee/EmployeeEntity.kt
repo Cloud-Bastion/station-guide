@@ -8,6 +8,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
 
+
+//TODO: Add active/inactive field
+
 @Entity
 @Table(name = "station_employee")
 class EmployeeEntity {
@@ -57,7 +60,6 @@ class EmployeeEntity {
 
     @OneToMany(fetch = FetchType.LAZY)
     var monthlyReports: MutableList<MonthlyReport> = mutableListOf()
-
 
     fun toDTO(): EmployeeDTO {
         return EmployeeDTO(

@@ -15,7 +15,7 @@ class StampEntry {
     @Column(nullable = false, unique = true)
     lateinit var id: UUID
 
-    @ManyToOne(cascade = [(CascadeType.ALL)], fetch = FetchType.EAGER)
+    @ManyToOne(cascade = [(CascadeType.MERGE)], fetch = FetchType.EAGER)
     @JoinColumn(name = "employee_id")
     lateinit var assignee: EmployeeEntity
 
@@ -32,7 +32,7 @@ class StampEntry {
 
     var edited: Boolean = false
 
-    @ManyToOne(cascade = [(CascadeType.ALL)], fetch = FetchType.EAGER)
+    @ManyToOne(cascade = [(CascadeType.MERGE)], fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by_id")
     var createdBy: EmployeeEntity? = null
 

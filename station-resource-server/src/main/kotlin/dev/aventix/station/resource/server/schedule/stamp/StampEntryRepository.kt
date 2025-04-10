@@ -2,8 +2,12 @@ package dev.aventix.station.resource.server.schedule.stamp
 
 import dev.aventix.station.resource.server.employee.EmployeeEntity
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.time.Instant
+import java.time.LocalDate
+import java.time.OffsetDateTime
 import java.util.UUID
 
 @Repository
@@ -71,6 +75,26 @@ interface StampEntryRepository: JpaRepository<StampEntry, UUID> {
 
      */
 
-    fun findByTimestampAndAssignee(timestamp: Instant, assignee: EmployeeEntity): List<StampEntry>
+    /*
+
+    @Query(
+        """
+        SELECT product FROM StationExpireProductEntity product
+        LEFT JOIN StationExpireProductCategoryEntity category ON product.category.id = category.id
+        WHERE product.expireDate <= CURRENT_DATE + (COALESCE(product.reduceProductTime, category.reduceProductTime, 0)) day
+        OR product.expireDate IS NULL
+        ORDER BY category.name ASC, product.name ASC
+    """
+    )
+     */
+
+    @Query("""
+        SELECT stamp FROM StampEntry stamp WHERE stamp.timestamp >= :startDate AND stamp.timestamp <= :endDate AND stamp.assignee = :employee
+    """)
+    fun findAllInRange(@Param("startDate") start: LocalDate,
+                       @Param("endDate") end: LocalDate,
+                       @Param("employee") employee: EmployeeEntity): List<StampEntry>
+
+    fun findByTimestampAndAssignee(timestamp: OffsetDateTime, assignee: EmployeeEntity): List<StampEntry>
 
 }
