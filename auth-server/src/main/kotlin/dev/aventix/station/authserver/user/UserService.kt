@@ -1,7 +1,6 @@
 package dev.aventix.station.authserver.user
 
 import dev.aventix.station.authserver.config.ApplicationConfigProperties
-import dev.aventix.station.authserver.provider.AuthProvider
 import dev.aventix.station.authserver.user.authority.UserAuthority
 import dev.aventix.station.authserver.user.authority.UserAuthorityCreateRequest
 import dev.aventix.station.authserver.user.authority.UserAuthorityDto
@@ -93,7 +92,6 @@ class UserService(
             this.lastName = request.lastName
             // Correct way: Let the encoder handle the prefixing if needed (BCrypt does)
             this.password = passwordEncoder.encode(request.password)
-            this.authProvider = AuthProvider.LOCAL
             this.authorities = request.initialAuthorities.mapNotNull { authorityId ->
                 // Use findByIdOrNull for safer handling if an authority ID is invalid
                 authorityRepository.findById(authorityId).orElse(null)

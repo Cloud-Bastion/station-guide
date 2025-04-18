@@ -1,160 +1,169 @@
-import axios from "axios";
-// PKCE utils are no longer needed for ROPC flow
-// import { generateRandomString, generateCodeChallenge } from '@/utils/pkce';
+import { UserManager, WebStorageStateStore, Log } from 'oidc-client-ts';
+import { useAuthStore } from '@/storage/AuthUserStore';
+import Settings from "@/service/settings/Settings"; // We'll create/update this Pinia store
 
-// Use the base URL of the auth server
-const AUTH_SERVER_URL: string = window.env.AUTH_BASE_URL || 'http://localhost:8081'; // Fallback added
-// Only TOKEN_ENDPOINT is needed for ROPC
-const TOKEN_ENDPOINT = `${AUTH_SERVER_URL}/oauth2/token`;
-const CLIENT_ID = 'station-frontend-client'; // Client ID registered in auth server
-// REDIRECT_URI and SCOPE might still be useful if refresh token grant needs scope, but not strictly for password grant itself.
-const SCOPE = 'openid profile station.read station.write'; // Scopes requested
+// Optional: Configure logging level
+// Log.setLevel(Log.DEBUG);
+// Log.setLogger(console);
 
-// Define expected token response structure
-interface TokenResponse {
-    access_token: string;
-    refresh_token?: string; // Optional
-    token_type: string;
-    expires_in: number;
-    scope: string;
-    id_token?: string; // If openid scope is used
-}
+const userManagerSettings = {
+    authority: Settings.AUTH_SERVER_URL,
+    client_id: Settings.AUTH_CLIENT_ID,
+    redirect_uri: Settings.AUTH_REDIRECT_URI,
+    silent_redirect_uri: Settings.AUTH_SILENT_REDIRECT_URI,
+    post_logout_redirect_uri: Settings.AUTH_POST_LOGOUT_REDIRECT_URI,
 
-// Define structure for potential error response from token endpoint
-interface TokenErrorResponse {
-    error: string;
-    error_description?: string;
-}
+    response_type: 'code', // Use Authorization Code flow (PKCE is automatic)
+    scope: Settings.AUTH_SCOPES, // Ensure 'openid' is present
 
-const AUTH_TOKEN_KEY = 'auth_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
-// PKCE_VERIFIER_KEY is no longer needed
-// const PKCE_VERIFIER_KEY = 'pkce_code_verifier';
+    // --- Silent Renew ---
+    automaticSilentRenew: true, // Enable silent renewal
+    // checkSessionIntervalInSeconds: 10, // How often to check session status (optional)
+    // silentRequestTimeoutInSeconds: 10, // Timeout for silent renew iframe (optional)
 
-async function generatePKCE() {
-    const code_verifier = generateRandomString(64);
-    const code_challenge = await sha256(code_verifier);
+    // --- Storage ---
+    // Defaults to sessionStorage, use localStorage to persist across tabs/windows
+    userStore: new WebStorageStateStore({ store: window.localStorage }),
 
-    localStorage.setItem("pkce_code_verifier", code_verifier); // Store it for later use
+    // --- Optional Settings ---
+    loadUserInfo: true, // Fetch user info from userinfo endpoint after login/refresh
+    monitorSession: true, // Recommended: Enable monitoring session status via check session iframe
+    filterProtocolClaims: true, // Remove OIDC protocol claims (like nbf, iss, aud, etc.) from profile
+    // metadata: { // Provide endpoints explicitly if discovery is problematic
+    //   issuer: import.meta.env.VITE_AUTH_SERVER_URL,
+    //   authorization_endpoint: `${import.meta.env.VITE_AUTH_SERVER_URL}/oauth2/authorize`,
+    //   token_endpoint: `${import.meta.env.VITE_AUTH_SERVER_URL}/oauth2/token`,
+    //   userinfo_endpoint: `${import.meta.env.VITE_AUTH_SERVER_URL}/userinfo`, // If using OIDC userinfo
+    //   end_session_endpoint: `${import.meta.env.VITE_AUTH_SERVER_URL}/connect/logout`, // If using OIDC logout
+    //   jwks_uri: `${import.meta.env.VITE_AUTH_SERVER_URL}/oauth2/jwks`,
+    // }
+};
 
-    return code_challenge;
-}
-
-function generateRandomString(length: number) {
-    const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
-    let result = "";
-    for (let i = 0; i < length; i++) {
-        result += charset.charAt(Math.floor(Math.random() * charset.length));
+class AuthService {
+    constructor() {
+        this.userManager = new UserManager(userManagerSettings);
+        //this.setupEventHandlers();
     }
-    return result;
-}
 
-async function sha256(plain: string) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(plain);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    return btoa(String.fromCharCode(...new Uint8Array(hashBuffer)))
-        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); // Base64URL encode
-}
+    setupEventHandlers() {
+        const authStore = useAuthStore(); // Get Pinia store instance
 
-export default {
+        // Called when a user object is loaded (initial load, login callback, silent renew)
+        this.userManager.events.addUserLoaded((user) => {
+            console.log('AuthService: User loaded', user);
+            authStore.setUser(user); // Update Pinia store
+            authStore.setLoading(false);
+        });
 
-    async loginWithUsernamePassword(username: string, password: string) {
-          
-    },
+        // Called when the access token is nearing expiry and silent renew is triggered
+        this.userManager.events.addAccessTokenExpiring(() => {
+            console.log('AuthService: Access token expiring, silent renew starting...');
+            // No action needed usually, library handles the renew
+        });
 
-    /**
-     * Logs the user in using the Resource Owner Password Credentials (ROPC) flow.
-     * @param username The user's email address.
-     * @param password The user's password.
-     * @returns A promise that resolves with the token response on success.
-     * @throws An error with a user-friendly message on failure.
-     */
-    async loginWithPassword(username: string, password: string): Promise<TokenResponse> {
-        const params = new URLSearchParams();
-        params.append('grant_type', 'password');
-        params.append('username', username);
-        params.append('password', password);
-        params.append('client_id', CLIENT_ID);
-        // Optionally add scope if your auth server requires/supports it for password grant
-        params.append('scope', SCOPE);
+        // Called when silent renew succeeds
+        this.userManager.events.addUserSignedIn(() => {
+            console.log("AuthService: User signed in silently.");
+            // Refresh user state if necessary, though addUserLoaded should also fire
+            this.getUser().then(user => authStore.setUser(user));
+        });
 
-        try {
-            console.log(`Attempting ROPC login for ${username} at ${TOKEN_ENDPOINT}`);
-            const response = await axios.post<TokenResponse>(TOKEN_ENDPOINT, params, {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                    // No 'Authorization' header needed here for public clients (ClientAuthenticationMethod.NONE)
-                    // If your client was confidential, you'd add Basic Auth here.
-                }
+        // Called when the access token has expired (silent renew might have failed)
+        this.userManager.events.addAccessTokenExpired(() => {
+            console.warn('AuthService: Access token expired. User may need to log in again.');
+            // Optionally attempt manual signinSilent or trigger logout
+            this.userManager.signinSilent().catch(err => {
+                console.error("Manual silent signin failed after expiry:", err);
+                this.logout(); // Force logout if silent renew ultimately fails
             });
+        });
 
-            // Store tokens upon successful login
-            if (response.data.access_token) {
-                localStorage.setItem(AUTH_TOKEN_KEY, response.data.access_token);
-                console.log("Access token stored.");
-            }
-            if (response.data.refresh_token) {
-                localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
-                console.log("Refresh token stored.");
-            }
+        // Called when silent renew fails
+        this.userManager.events.addSilentRenewError((error) => {
+            console.error('AuthService: Silent renew error', error);
+            authStore.setUser(null); // Clear user state on failure
+            authStore.setLoading(false);
+            // Potentially trigger a full login redirect or show error message
+            // this.login();
+        });
 
-            return response.data;
+        // Called when user is logged out or session is terminated elsewhere
+        this.userManager.events.addUserSignedOut(() => {
+            console.log('AuthService: User signed out');
+            authStore.setUser(null);
+            authStore.setLoading(false);
+            // Could redirect to login or logged-out page
+        });
 
+        // Called when user session has changed (e.g. logged in/out in another tab)
+        this.userManager.events.addUserSessionChanged(() => {
+            console.log("AuthService: User session changed.");
+            // Reload user data to reflect the change
+            this.getUser().then(user => authStore.setUser(user));
+        });
+    }
+
+    // --- Public Methods ---
+
+    // Trigger login redirect
+    login() {
+        useAuthStore().setLoading(true);
+        return this.userManager.signinRedirect({ state: { /* optional data */ } });
+    }
+
+    // Handle the callback from login redirect
+    async handleLoginCallback() {
+        console.log("in callback method")
+        useAuthStore().setLoading(true);
+        try {
+            const user = await this.userManager.signinRedirectCallback();
+            console.log('AuthService: Login callback successful', user);
+            useAuthStore().setLoading(false);
+            // setUser is handled by the addUserLoaded event handler
+            return user;
         } catch (error) {
-            if (axios.isAxiosError(error) && error.response) {
-                const errorData = error.response.data as TokenErrorResponse;
-                console.error("OAuth Token Error (Password Grant):", error.response.status, errorData.error, errorData.error_description);
-                // Provide a more user-friendly message based on the error
-                if (errorData.error === 'invalid_grant' || error.response.status === 400 || error.response.status === 401) {
-                    // 400 or 401 with invalid_grant usually means bad username/password
-                    throw new Error('Ungültige E-Mail oder Passwort.');
-                } else if (errorData.error === 'invalid_client') {
-                     throw new Error('Client-Konfigurationsfehler.');
-                } else {
-                    throw new Error(errorData.error_description || errorData.error || 'Login fehlgeschlagen.');
-                }
-            } else {
-                console.error("Error during password login:", error);
-                throw new Error('Ein unerwarteter Fehler ist beim Login aufgetreten.');
-            }
+            console.error("AuthService: Error handling login callback:", error);
+            useAuthStore().setUser(null);
+            useAuthStore().setLoading(false);
+            throw error; // Re-throw for component
         }
-    },
+    }
 
-    /**
-     * Logs the user out by removing tokens from local storage.
-     */
+    // Trigger logout redirect
     logout() {
-        localStorage.removeItem(AUTH_TOKEN_KEY);
-        localStorage.removeItem(REFRESH_TOKEN_KEY);
-        // Clear PKCE verifier just in case (though not used in ROPC)
-        sessionStorage.removeItem('pkce_code_verifier');
-        console.log("User logged out, tokens removed.");
-        // Optional: Redirect to a post-logout page or login page
-        // window.location.href = '/login'; // Or use router.push('/login') in component
-    },
+        useAuthStore().setLoading(true);
+        return this.userManager.signoutRedirect({ state: { /* optional data */ } });
+    }
 
-    /**
-     * Retrieves the stored access token.
-     * @returns The access token string or null if not found.
-     */
-    getToken(): string | null {
-        return localStorage.getItem(AUTH_TOKEN_KEY);
-    },
+    // Handle the callback from logout redirect (if needed, often just redirects)
+    async handleLogoutCallback() {
+        // Usually no user object is returned, just completes the redirect
+        await this.userManager.signoutRedirectCallback();
+        // setUser(null) handled by addUserSignedOut event
+    }
 
-    /**
-     * Checks if the user is currently authenticated (i.e., has an access token).
-     * Note: This does not check token validity/expiration.
-     * @returns True if an access token exists, false otherwise.
-     */
-    isAuthenticated(): boolean {
-        return !!localStorage.getItem(AUTH_TOKEN_KEY);
-    },
+    // Get the current user object (may be null)
+    async getUser() {
+        const user = await this.userManager.getUser();
+        // Ensure Pinia store is updated on initial check if needed
+        // useAuthStore().setUser(user); // Handled by addUserLoaded generally
+        return user;
+    }
 
-    // --- Authorization Code Flow Methods Removed ---
-    // async initiateLogin(): Promise<void> { ... }
-    // async exchangeCodeForToken(code: string, codeVerifier: string): Promise<TokenResponse> { ... }
+    // Get the current valid access token (returns null if not available/expired)
+    async getAccessToken() {
+        const user = await this.getUser();
+        if (user && !user.expired) {
+            return user.access_token;
+        }
+        return null; // Or potentially trigger silent renew manually if needed: this.userManager.signinSilent()
+    }
 
-    // Optional: Add function for refresh token grant if needed
-    // async refreshToken(): Promise<TokenResponse | null> { ... }
+    // Expose the UserManager instance if needed for advanced scenarios
+    getUserManager(): UserManager {
+        return this.userManager;
+    }
 }
+
+// Export a singleton instance
+export default new AuthService();

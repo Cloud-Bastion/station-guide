@@ -4,6 +4,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+  sql:
+    init:
+      mode: always
+      platform: postgres
   datasource:
     url: "jdbc:postgresql://localhost:5432/test"
     username: "aventica"
@@ -14,18 +18,19 @@ spring:
       client:
         registration:
           google:
+            provider: google
             client-id: classpath:secret/google_client_id.txt
             client-secret: classpath:secret/google_client_secret.txt
-          github:
-            client-id: Ov23liQKGMY4YHaZVfEs
-            client-secret: e96263017c02351e2b153c7e7fa84f1142e56965
-            scope: user:email
-            redirect-uri: "http://localhost:8090/v1/auth/login/oauth2/callback/github"
-        provider:
-          github:
-            authorization-uri: https://github.com/login/oauth/authorize
-            token-uri: https://github.com/login/oauth/access_token
-            user-info-uri: https://api.github.com/user
+            scope:
+              - openid
+              - profile
+              - email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+  session:
+    jdbc:
+      table-name: SPRING_SESSION
+    timeout: 10m
 
 station:
   config:
@@ -33,23 +38,14 @@ station:
       password-prefix: "{bcrypt}"
       rsa-public-key: classpath:secret/public.pem
       rsa-private-key: classpath:secret/private.pem
-      auth-providers:
-        google:
-          client-id: 158421481211-6vp5a7oq3lbd60s16f43r3fs3ic66s7r.apps.googleusercontent.com
-          client-secret: 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
-        github:
-          client-id: Ov23liQKGMY4YHaZVfEs
-          client-secret: e96263017c02351e2b153c7e7fa84f1142e56965
-          redirect-uri: "http://localhost:8090/v1/auth/login/oauth2/callback/github"
 
 server:
-  port: 8081
+  port: 8080
   servlet:
     session:
       cookie:
         same-site: none
         secure: true
-#trace: true
 
 logging:
   level:

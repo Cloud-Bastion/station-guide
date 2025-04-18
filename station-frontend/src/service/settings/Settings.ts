@@ -1,31 +1,27 @@
-import axios from "axios";
+import axios from 'axios';
 
-const API_BASE_URL: string = window.env.API_BASE_URL; // Resource Server URL
-const AUTH_BASE_URL: string = window.env.AUTH_BASE_URL; // Auth Server URL (if needed separately)
+const API_BASE_URL: string = window.env.API_BASE_URL;
+const AUTH_SERVER_URL: string = window.env.AUTH_SERVER_URL;
+const AUTH_CLIENT_ID: string = window.env.AUTH_CLIENT_ID;
+const AUTH_REDIRECT_URI: string = window.env.AUTH_REDIRECT_URI;
+const AUTH_POST_LOGOUT_REDIRECT_URI: string = window.env.AUTH_POST_LOGOUT_REDIRECT_URI;
+const AUTH_SCOPES: string = window.env.AUTH_SCOPES;
+const AUTH_SILENT_REDIRECT_URI: string = window.env.AUTH_SILENT_REDIRECT_URI;
 
-// Axios instance for Resource Server API calls
-const apiClient = axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
-        "Content-Type": "application/json",
-    },
-});
-
-// Axios instance specifically for Auth Server calls (if needed, e.g., for user info endpoint)
 const authApiClient = axios.create({
-    baseURL: AUTH_BASE_URL,
+    baseURL: AUTH_SERVER_URL,
     headers: {
-        "Content-Type": "application/json",
-    },
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+    }
 });
 
-
-// --- Axios Request Interceptor for Resource Server API ---
-// Add the Authorization header to requests if a token exists
-apiClient.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('auth_token');
-        if (token) {
+// Request Interceptor: Add Authorization header
+authApiClient.interceptors.request.use(
+    async (config) => { // Make interceptor async
+        const authService = (await import('@/service/AuthUserService')).default;
+        const token = await authService.getAccessToken(); // Get token from AuthService
+        if (token && !config.headers.Authorization) {
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -35,68 +31,77 @@ apiClient.interceptors.request.use(
     }
 );
 
-// --- Optional: Axios Response Interceptor for Resource Server API ---
-// Handle token expiration (e.g., by using refresh token or redirecting to login)
-apiClient.interceptors.response.use(
-    (response) => {
-        // If request successful, just return the response
-        return response;
-    },
+// Response Interceptor (Optional - Simplified)
+// oidc-client-ts aims to refresh *before* expiry, reducing the need for 401 handling.
+// You might keep a basic handler for unexpected 401s (e.g., token revoked server-side).
+authApiClient.interceptors.response.use(
+    (response) => response, // Pass through successful responses
     async (error) => {
-        const originalRequest = error.config;
-
-        // Check if it's a 401 Unauthorized error and not a retry attempt
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true; // Mark as retry attempt
-
-            // Option 1: Try to refresh the token (if refresh token logic is implemented)
-            /*
-            const refreshToken = localStorage.getItem('refresh_token');
-            if (refreshToken) {
-                try {
-                    // Call your refresh token function (needs to be implemented in AuthUserService)
-                    const newTokenResponse = await AuthUserService.refreshToken(refreshToken);
-                    localStorage.setItem('auth_token', newTokenResponse.access_token);
-                    if (newTokenResponse.refresh_token) {
-                        localStorage.setItem('refresh_token', newTokenResponse.refresh_token);
-                    }
-                    // Update the header in the original request and retry
-                    originalRequest.headers.Authorization = `Bearer ${newTokenResponse.access_token}`;
-                    return apiClient(originalRequest);
-                } catch (refreshError) {
-                    console.error("Unable to refresh token:", refreshError);
-                    // If refresh fails, clear tokens and redirect to login
-                    localStorage.removeItem('auth_token');
-                    localStorage.removeItem('refresh_token');
-                    // Redirect to login (use router instance if available, otherwise window.location)
-                    window.location.href = '/login'; // Or use router.push('/login')
-                    return Promise.reject(refreshError);
-                }
-            } else {
-                // No refresh token available, redirect to login
-                console.log("No refresh token, redirecting to login.");
-                localStorage.removeItem('auth_token');
-                 window.location.href = '/login'; // Or use router.push('/login')
-            }
-            */
-
-            // Option 2: Simple redirect to login on 401
-            console.log("Unauthorized (401). Token might be expired. Redirecting to login.");
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('refresh_token'); // Also remove refresh token if used
-            // Use window.location for simplicity here, or inject router if needed elsewhere
-            window.location.href = '/login';
+        if (error.response?.status === 401) {
+            console.warn("Received 401 Unauthorized. Token might be invalid or revoked. Logging out.");
+            const authService = (await import('@/service/AuthUserService')).default;
+            // If silent renew failed or token is truly invalid, logging out might be the best option.
+            authService.logout(); // Trigger logout
+            // Avoid retrying the request as the user is being logged out.
+            return Promise.reject(new Error("Unauthorized request, user logged out."));
         }
+        // For other errors, reject as usual
+        return Promise.reject(error);
+    }
+);
 
-        // For other errors, just reject the promise
+const apiClient = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+    }
+});
+
+// Request Interceptor: Add Authorization header
+apiClient.interceptors.request.use(
+    async (config) => { // Make interceptor async
+        const authService = (await import('@/service/AuthUserService')).default;
+        const token = await authService.getAccessToken(); // Get token from AuthService
+        if (token && !config.headers.Authorization) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Response Interceptor (Optional - Simplified)
+// oidc-client-ts aims to refresh *before* expiry, reducing the need for 401 handling.
+// You might keep a basic handler for unexpected 401s (e.g., token revoked server-side).
+apiClient.interceptors.response.use(
+    (response) => response, // Pass through successful responses
+    async (error) => {
+        if (error.response?.status === 401) {
+            console.warn("Received 401 Unauthorized. Token might be invalid or revoked. Logging out.");
+            // If silent renew failed or token is truly invalid, logging out might be the best option.
+            const authService = (await import('@/service/AuthUserService')).default;
+            await authService.logout(); // Trigger logout
+            // Avoid retrying the request as the user is being logged out.
+            return Promise.reject(new Error("Unauthorized request, user logged out."));
+        }
+        // For other errors, reject as usual
         return Promise.reject(error);
     }
 );
 
 
 export default {
+    apiClient,
+    authApiClient,
     API_BASE_URL,
-    AUTH_BASE_URL,
-    apiClient, // Use this for Resource Server calls
-    authApiClient // Use this for Auth Server calls (if any direct calls are needed)
-};
+    AUTH_SERVER_URL,
+    AUTH_CLIENT_ID,
+    AUTH_REDIRECT_URI,
+    AUTH_POST_LOGOUT_REDIRECT_URI,
+    AUTH_SCOPES,
+    AUTH_SILENT_REDIRECT_URI,
+    AUTH_SILENT_REDIRECT_URI,
+}

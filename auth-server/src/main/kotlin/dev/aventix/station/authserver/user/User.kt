@@ -1,9 +1,7 @@
 package dev.aventix.station.authserver.user
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import dev.aventix.station.authserver.provider.AuthProvider
 import dev.aventix.station.authserver.user.authority.UserAuthority
-import dev.aventix.station.authserver.user.session.Session
 import jakarta.persistence.*
 import java.util.UUID
 
@@ -33,14 +31,10 @@ class User {
         inverseJoinColumns = [JoinColumn(name = "authority_id")],
     )
     lateinit var authorities: MutableSet<UserAuthority>
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    lateinit var authProvider: AuthProvider
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "account", cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
-    var sessions: MutableList<Session> = mutableListOf()
+//
+//    @Enumerated(EnumType.STRING)
+//    @Column(nullable = false)
+//    lateinit var authProvider: AuthProvider
 
     @Column(nullable = true)
     var oAuthId: String? = null
@@ -53,9 +47,7 @@ class User {
             lastName,
             password,
             authorities.map { authority -> authority.toDto() }.toSet(),
-            authProvider,
             oAuthId,
-            sessions
         )
 
 }

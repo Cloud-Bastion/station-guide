@@ -1,12 +1,14 @@
 package dev.aventix.station.authserver.user.session
 
 import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.jpa.repository.Query
-import java.util.*
+import org.springframework.data.repository.PagingAndSortingRepository
+import org.springframework.stereotype.Repository
 
-interface SessionRepository : JpaRepository<Session, UUID> {
-    fun findByState(state: String): Session?
+@Repository("customSessionRepository")
+interface SessionRepository:
+    JpaRepository<SpringSession, String>,
+    PagingAndSortingRepository<SpringSession, String> {
 
-    @Query("from Session s join s.tokens t where s.state = :token or t.value = :token")
-    fun findByStateOrToken(token: String): Session?
+    fun findByPrincipalName(principalName: String): SpringSession?
+
 }

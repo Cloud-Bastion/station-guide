@@ -5,22 +5,15 @@ import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
 import LoginView from "@/view/login/LoginView.vue";
 import NotFoundView from "@/view/error/NotFoundView.vue";
 import SilentRenew from "@/view/login/SilentRenew.vue";
-import OAuthUserService, {useUserSession} from "@/service/OAuthUserService";
-import LogoutView from "@/view/login/LogoutView.vue";
+import LoginCallbackView from "@/view/login/LoginCallbackView.vue";
+import {useAuthStore} from "@/storage/AuthUserStore";
+import AuthUserService from "@/service/AuthUserService";
 
 const routes: Array<RouteRecordRaw> = [
     {
         path: '/:pathMatch(.*)*',
         name: '404',
         component: NotFoundView
-    },
-    {
-        path: '/login',
-        name: 'login',
-        component: LoginView,
-        meta: {
-            requiresAuth: false
-        }
     },
     {
         path: '',
@@ -53,9 +46,9 @@ const routes: Array<RouteRecordRaw> = [
         }
     },
     {
-        path: '/logout',
-        name: 'logout',
-        component: LogoutView,
+        path: '/callback',
+        name: 'callback',
+        component: LoginCallbackView,
         meta: {
             requiresAuth: true
         }
@@ -75,31 +68,31 @@ const router = createRouter({
     routes
 })
 // Global Navigation Guard
-router.beforeEach((to, from, next) => {
-    const userManager = useUserSession.value
-    const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+router.beforeEach(async (to, from, next) => {
+    const authStore = useAuthStore();
 
-    if (requiresAuth) {
-        next()
-        /*userManager.verify().then(() => {
-            const isAuthenticated = userManager.isLoggedIn.value
-            console.log(isAuthenticated)
-
-            console.log(`Navigating to: ${to.path}, Requires Auth: ${requiresAuth}, Is Authenticated: ${isAuthenticated}`);
-
-            if (!isAuthenticated) {
-                console.log(`Redirecting to login. Target: ${to.fullPath}`);
-                next({name: 'login'});
-            } else {
-                next()
-            }
-
-        })*/
-    } else {
-        next()
+    // Ensure auth state is loaded before proceeding, especially on initial load
+    if (authStore.isLoading) {
+        // If loading, wait for initialization (or implement a loading indicator)
+        // This might need a more robust solution like a dedicated loading state check
+        // or ensuring initializeAuth completes before navigation.
+        // For simplicity here, we assume loading completes reasonably fast.
+        // A better way is to await initializeAuth() perhaps in App.vue's setup.
+        console.log("Auth guard waiting for loading state...");
+        await new Promise(resolve => setTimeout(resolve, 50)); // Small delay, improve this
     }
 
+    const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+    const isAuthenticated = authStore.isAuthenticated; // Use Pinia getter
 
+    if (requiresAuth && !isAuthenticated) {
+        console.log(`Route ${to.path} requires auth, user not authenticated. Redirecting to login...`);
+        await authService.login();
+        // Prevent navigation until redirect happens
+        next(false); // Or don't call next() if login() reliably redirects
+    } else {
+        next(); // Proceed as normal
+    }
 });
 
 export default router

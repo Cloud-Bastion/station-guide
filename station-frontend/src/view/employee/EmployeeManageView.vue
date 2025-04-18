@@ -5,7 +5,6 @@ import EmployeeAdminView from "@/view/employee/EmployeeAdminView.vue";
 import EmployeeSchedulerView from "@/view/employee/EmployeeSchedulerView.vue";
 import {ref, computed, onMounted} from 'vue';
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {useUserSession} from "@/service/OAuthUserService";
 
 let currentSiteMode: Ref<string> = new Ref("schedule"); //schedule_admin, vacation, vacation_admin, illness, illness_admin, employee_admin
 
@@ -85,7 +84,6 @@ function updateEmployee(employee: Employee) {
   //Implement
 }
 
-const userManager = useUserSession.value
 </script>
 
 <template>

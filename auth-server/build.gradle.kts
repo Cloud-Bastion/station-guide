@@ -35,6 +35,9 @@ dependencies {
     //implementation("com.vladmihalcea:hibernate-types-60:2.21.1")
     // https://mvnrepository.com/artifact/io.hypersistence/hypersistence-utils-hibernate-63
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.8")
+    implementation("org.springframework.session:spring-session-jdbc")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
     runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     implementation("org.springframework.boot:spring-boot-testcontainers")
