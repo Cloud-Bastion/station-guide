@@ -8,9 +8,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
 
-
-//TODO: Add active/inactive field
-
 @Entity
 @Table(name = "station_employee")
 class EmployeeEntity {
@@ -52,13 +49,10 @@ class EmployeeEntity {
     @JoinColumn(name = "created_by_id", nullable = true)
     var createdBy: EmployeeEntity? = null
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.EAGER, cascade = [CascadeType.MERGE])
     var timestamps: MutableList<StampEntry> = mutableListOf()
 
-    @OneToMany(fetch = FetchType.LAZY)
-    var createdTimestamps: MutableList<StampEntry> = mutableListOf()
-
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.EAGER, cascade = [CascadeType.ALL])
     var monthlyReports: MutableList<MonthlyReport> = mutableListOf()
 
     fun toDTO(): EmployeeDTO {
@@ -77,7 +71,7 @@ class EmployeeEntity {
         )
     }
 
-    //TODO: Login data
+    //TODO: Add active/inactive field
     //TODO: RFID/NFC ID's
     //TODO: Permissions
 }

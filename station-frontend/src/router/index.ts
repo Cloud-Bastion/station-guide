@@ -2,7 +2,6 @@ import {createRouter, createWebHistory, RouteRecordRaw} from 'vue-router'
 import EmployeeManageView from "@/view/employee/EmployeeManageView.vue";
 import TaskManagementView from "@/view/task/TaskManagementView.vue";
 import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
-import LoginView from "@/view/login/LoginView.vue";
 import NotFoundView from "@/view/error/NotFoundView.vue";
 import SilentRenew from "@/view/login/SilentRenew.vue";
 import LoginCallbackView from "@/view/login/LoginCallbackView.vue";
@@ -50,7 +49,7 @@ const routes: Array<RouteRecordRaw> = [
         name: 'callback',
         component: LoginCallbackView,
         meta: {
-            requiresAuth: true
+            requiresAuth: false
         }
     },
     {
@@ -67,6 +66,8 @@ const router = createRouter({
     history: createWebHistory(), // Use createWebHistory for cleaner URLs
     routes
 })
+
+const authService = AuthUserService
 // Global Navigation Guard
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore();

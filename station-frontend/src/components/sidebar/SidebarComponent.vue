@@ -3,6 +3,7 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {ref, onMounted, computed} from 'vue';
 import EmployeeManageView from "@/view/employee/EmployeeManageView.vue";
 import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
+import AuthUserService from "@/service/AuthUserService";
 
 const props = defineProps<{
   site: string;
@@ -41,6 +42,10 @@ const closeDropdown = (event: MouseEvent) => {
   }
 };
 
+const logout = () => {
+  AuthUserService.logout()
+};
+
 onMounted(() => {
   window.addEventListener('click', closeDropdown);
 });
@@ -56,11 +61,11 @@ onMounted(() => {
       <img src="/logo.png" alt="circle k logo" :class="$style['logo']">
 
       <div :class="$style['workprogramms-container']">
-        <router-link to="/logout"
+        <div @click="logout();"
                      :class="[$style['workprogramms-entity'], props.site === 'product-expire-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'fa-right-from-bracket']" size="lg" :class="$style['icon']"/>
           <span>AUSLOGGEN</span>
-        </router-link>
+        </div>
         <router-link to="/employee/management"
                      :class="[$style['workprogramms-entity'], props.site === 'employee-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'id-badge']" size="lg" :class="$style['icon']"/>

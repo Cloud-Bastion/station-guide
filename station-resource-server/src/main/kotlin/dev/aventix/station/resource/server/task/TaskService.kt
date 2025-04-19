@@ -11,12 +11,28 @@ import org.springframework.stereotype.Service
 import java.time.*
 import java.time.format.DateTimeFormatter
 import kotlin.jvm.optionals.getOrNull
+import kotlin.time.Duration
 
 @Service
 class TaskService(
     private val scheduledTaskRepository: ScheduledTaskRepository,
     private val taskRepository: TaskRepository,
 ) {
+    // @PostConstruct
+    fun init() {
+        var test1 = ZonedDateTime.of(2025, 3, 30,0,55,0,0, ZoneId.of("Europe/Berlin"))
+        var test2 = ZonedDateTime.of(2025, 3, 30,6,55,0,0, ZoneId.of("Europe/Berlin"))
+
+//        val zoned1 = test1.atZoneSameInstant(ZoneId.of("Europe/Berlin"))
+//        val zoned2 = test2.atZoneSameInstant(ZoneId.of("Europe/Berlin"))
+        val save = test1.toOffsetDateTime()
+        val convertBack = save.atZoneSameInstant(ZoneId.of("Europe/Berlin"))
+
+        var duration = java.time.Duration.between(convertBack, test2)
+
+        println("Duration between: ${duration.toHours()}")
+    }
+
     fun getAllOpenTasks(): MutableList<TaskDTO> {
         return this.taskRepository.findAllByIsTemplateAndCompleted(isTemplate = false, completed = false)
             .map(TaskEntity::toDTO).toCollection(mutableListOf())
