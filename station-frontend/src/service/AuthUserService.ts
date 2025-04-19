@@ -12,31 +12,14 @@ const userManagerSettings = {
     redirect_uri: Settings.AUTH_REDIRECT_URI,
     silent_redirect_uri: Settings.AUTH_SILENT_REDIRECT_URI,
     post_logout_redirect_uri: Settings.AUTH_POST_LOGOUT_REDIRECT_URI,
-
-    response_type: 'code', // Use Authorization Code flow (PKCE is automatic)
-    scope: Settings.AUTH_SCOPES, // Ensure 'openid' is present
-
-    // --- Silent Renew ---
-    automaticSilentRenew: true, // Enable silent renewal
-    // checkSessionIntervalInSeconds: 10, // How often to check session status (optional)
-    // silentRequestTimeoutInSeconds: 10, // Timeout for silent renew iframe (optional)
-
-    // --- Storage ---
-    // Defaults to sessionStorage, use localStorage to persist across tabs/windows
+    response_type: 'code',
+    scope: Settings.AUTH_SCOPES,
+    automaticSilentRenew: true,
     userStore: new WebStorageStateStore({ store: window.localStorage }),
 
-    // --- Optional Settings ---
-    loadUserInfo: true, // Fetch user info from userinfo endpoint after login/refresh
-    monitorSession: true, // Recommended: Enable monitoring session status via check session iframe
-    filterProtocolClaims: true, // Remove OIDC protocol claims (like nbf, iss, aud, etc.) from profile
-    // metadata: { // Provide endpoints explicitly if discovery is problematic
-    //   issuer: import.meta.env.VITE_AUTH_SERVER_URL,
-    //   authorization_endpoint: `${import.meta.env.VITE_AUTH_SERVER_URL}/oauth2/authorize`,
-    //   token_endpoint: `${import.meta.env.VITE_AUTH_SERVER_URL}/oauth2/token`,
-    //   userinfo_endpoint: `${import.meta.env.VITE_AUTH_SERVER_URL}/userinfo`, // If using OIDC userinfo
-    //   end_session_endpoint: `${import.meta.env.VITE_AUTH_SERVER_URL}/connect/logout`, // If using OIDC logout
-    //   jwks_uri: `${import.meta.env.VITE_AUTH_SERVER_URL}/oauth2/jwks`,
-    // }
+    loadUserInfo: true,
+    monitorSession: true,
+    filterProtocolClaims: true,
 };
 
 class AuthService {

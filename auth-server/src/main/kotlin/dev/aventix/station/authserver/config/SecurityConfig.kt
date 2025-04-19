@@ -1,22 +1,16 @@
 package dev.aventix.station.authserver.config
 
 import dev.aventix.station.authserver.user.OAuth2StationUserService
-import dev.aventix.station.authserver.user.UserService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpMethod
-import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.authentication.ProviderManager
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer
 import org.springframework.security.config.annotation.web.configurers.oauth2.client.OAuth2LoginConfigurer
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
-import org.springframework.security.core.userdetails.UserDetailsService
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository
@@ -33,8 +27,6 @@ import java.util.*
 
 @Configuration
 class SecurityConfig(
-    private val applicationConfig: ApplicationConfigProperties,
-    private val userService: UserService,
     private val oauth2UserService: OAuth2StationUserService,
 ) {
     @Bean
@@ -45,26 +37,18 @@ class SecurityConfig(
             .authorizeHttpRequests { authorize ->
                 authorize
                     .requestMatchers("/login", "/error", "/webjars/**", "/css/**", "/favicon.ico")
-                    .permitAll() // Permit access to login page, error page, and static resources
+                    .permitAll()
                     .anyRequest().authenticated()
-            } // All other requests require authentication
-            // --- Custom Login Page Configuration ---
+            }
             .formLogin { formLogin: FormLoginConfigurer<HttpSecurity?> ->
                 formLogin
                     .loginPage("/login")
-            } // Point to your custom login page URL
-            // --- OAuth2 Login Configuration (for Social Logins) ---
+            }
             .oauth2Login { oauth2Login: OAuth2LoginConfigurer<HttpSecurity?> ->
                 oauth2Login
                     .loginPage("/login")
                     .userInfoEndpoint { it.userService(oauth2UserService) }
-                // Optional: Add a custom success handler if you need logic AFTER authentication succeeds
-                // .successHandler(yourCustomAuthenticationSuccessHandler())
-            } // Also redirect to custom login page if social login fails or needs initiation
-            // .defaultSuccessUrl("/logged-in-successfully", true) // Optional: Redirect after successful social login IF not part of an OAuth flow
-            // --- Exception Handling for Unauthenticated Users ---
-            // Redirect unauthenticated users trying to access protected resources (like /oauth2/authorize)
-            // to the custom login page.
+            }
             .exceptionHandling { exceptions: ExceptionHandlingConfigurer<HttpSecurity?> ->
                 exceptions
                     .authenticationEntryPoint(LoginUrlAuthenticationEntryPoint("/login"))
@@ -81,8 +65,6 @@ class SecurityConfig(
         return http.build()
     }
 
-    // --- Spring Security Filter Chain for OAuth2 Authorization Server ---
-    // This configures the OAuth2 endpoints (/oauth2/authorize, /oauth2/token, etc.)
     @Bean
     @Order(1)
     @Throws(Exception::class)
@@ -127,23 +109,6 @@ class SecurityConfig(
 
         return http.build()
     }
-//
-//    @Bean
-//    fun configureOpenIdToken() = OAuth2TokenCustomizer<JwtEncodingContext> {
-//        val account = it.getPrincipal<StationAuthentication>().account
-//        it.claims.subject(account.id.toString())
-//        it.claims.claim("email", account.email)
-//        it.claims.claim("role", "role_user")
-//        val authorization = it.get<OAuth2Authorization>(OAuth2Authorization::class.java.name)
-//        if (authorization != null) {
-//            // Using the authorization ID as the SID is a common approach
-//            it.claims.claim("sid", authorization.id)
-//        } else {
-//            // Fallback or generate if no authorization context (shouldn't happen for ID token)
-//            it.claims.claim("sid", UUID.randomUUID().toString())
-//        }
-//    }
-
     @Bean
     fun registeredClientRepository(): RegisteredClientRepository {
         val frontendClient =
@@ -159,6 +124,7 @@ class SecurityConfig(
                 .postLogoutRedirectUri("http://localhost:5173/") // Post Logout URI
                 .scope("openid")
                 .scope("profile")
+                .scope("email")
                 .clientSettings(
                     ClientSettings.builder()
                         .requireProofKey(true)
@@ -168,19 +134,6 @@ class SecurityConfig(
 
         return InMemoryRegisteredClientRepository(frontendClient)
     }
-
-
-//    @Bean
-//    // This AuthenticationManager is used by the form login AND the ROPC grant type
-//    fun authenticationManager(
-//        userDetailsService: UserDetailsService,
-//        passwordEncoder: PasswordEncoder,
-//    ): AuthenticationManager {
-//        val provider = DaoAuthenticationProvider()
-//        provider.setUserDetailsService(userDetailsService)
-//        provider.setPasswordEncoder(passwordEncoder)
-//        return ProviderManager(provider)
-//    }
 
     @Bean
     fun authorizationServerSettings(): AuthorizationServerSettings {

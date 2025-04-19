@@ -1,14 +1,11 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import AuthUserService from '@/service/AuthUserService';
-import {useAuthStore} from "@/storage/AuthUserStore";
 
 const router = useRouter();
 const isLoading = ref(true);
 const error = ref(null);
-
-const authStore = useAuthStore()
 
 onMounted(async () => {
   try {
