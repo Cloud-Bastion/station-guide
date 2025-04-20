@@ -30,18 +30,6 @@ export interface EmployeeAddress {
     apartment?: string; // Made optional
 }
 
-
-// Interface for creating a new employee/account
-// Based on Account interface and backend needs for user creation
-export interface CreateEmployeeAccount {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-    // authorities?: Set<AccountAuthority>; // Optional: Backend might assign defaults
-    // badgeNumber?: number; // Optional: Backend likely generates this
-}
-
 // Interface representing user authorities (from auth-server)
 export interface AccountAuthority {
     id: string;
@@ -49,13 +37,14 @@ export interface AccountAuthority {
 }
 
 // Interface representing the user account (from auth-server UserDto)
+// Note: Password is included here for creation context, but usually not returned by GET requests.
 export interface Account {
     id: string;
     badgeNumber: number;
     email: string;
     firstName: string;
     lastName: string;
-    password?: string; // Password usually not sent back from API
+    password?: string; // Password included for creation, usually not sent back from API
     authorities: Set<AccountAuthority>;
     // oAuthId?: string; // Add if needed
 }
@@ -83,27 +72,15 @@ const EmployeeService = {
      * Creates a new employee and their associated account.
      * Sends a nested structure containing employee and account details.
      * Assumes the backend endpoint POST /v1/employees expects { employee: {...}, account: {...} }.
-     * @param creationData Data required to create the employee account (firstName, lastName, email, password).
+     * @param employeeData Data conforming to the Employee interface (excluding generated fields like id).
+     * @param accountData Data conforming to the Account interface (excluding generated fields like id, badgeNumber, authorities).
      */
-    async createEmployee(creationData: CreateEmployeeAccount): Promise<Employee> { // Assuming backend returns the created Employee
+    async createEmployee(employeeData: Employee, accountData: Account): Promise<Employee> { // Assuming backend returns the created Employee
         try {
-            // Prepare the nested payload structure
+            // Prepare the nested payload structure using the provided arguments
             const payload = {
-                employee: { // Data primarily for the EmployeeEntity
-                    firstName: creationData.firstName,
-                    lastName: creationData.lastName,
-                    email: creationData.email,
-                    // Address, minijob, hourlyWage etc. are not collected in the current dialog,
-                    // so they are omitted here. The backend might set defaults or require
-                    // these fields to be updated later.
-                },
-                account: { // Data primarily for the User/Account entity
-                    firstName: creationData.firstName,
-                    lastName: creationData.lastName,
-                    email: creationData.email,
-                    password: creationData.password,
-                    // Authorities might be set to default by the backend
-                }
+                employee: employeeData, // Send the complete Employee object as received
+                account: accountData   // Send the complete Account object as received
             };
 
             // Send the nested payload
@@ -119,4 +96,4 @@ const EmployeeService = {
 export default EmployeeService;
 
 // Export interfaces separately if needed in multiple places
-// (Employee, EmployeeAddress, AccountAuthority, Account, CreateEmployeeAccount are already exported)
+export type { EmployeeAddress, AccountAuthority, Account }; // Employee is already exported implicitly
