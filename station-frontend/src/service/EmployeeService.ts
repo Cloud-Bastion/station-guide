@@ -3,7 +3,7 @@ import settings from "./settings/Settings";
 const API_URL = "/v1/employees"; // Base URL for employees in resource server
 
 // Interface representing the data structure returned by GET /v1/employees
-// Based on EmployeeDTO summary
+// Based on EmployeeDTO summary - Added birthDate, taxId, socialSecurityId
 export interface Employee {
     id: string;
     badgeNumber?: number; // Made optional as it might not always be present initially
@@ -11,13 +11,13 @@ export interface Employee {
     lastName: string;
     email: string;
     address: EmployeeAddress; // Keep full address structure as defined
+    birthDate: string; // Added - Expecting ISO date string (YYYY-MM-DD) from frontend
+    taxId: number; // Added
+    socialSecurityId: string; // Added
     minijob?: boolean; // Added from EmployeeManageView example
     hourlyWage?: number; // Added from EmployeeManageView example
-    // Add other fields from EmployeeDTO if needed for display/use
-    // birthDate: string;
-    // taxId: number;
-    // socialSecurityId: string;
-    // createdAt: string;
+    // createdAt and createdBy are typically handled by the backend
+    // createdAt?: string;
     // createdBy?: Employee;
 }
 
@@ -60,7 +60,7 @@ const EmployeeService = {
     async getAllEmployees(): Promise<Employee[]> {
         try {
             const response = await settings.apiClient.get<Employee[]>(API_URL);
-            // TODO: Add data transformation if needed (e.g., date parsing)
+            // TODO: Add data transformation if needed (e.g., date parsing for display)
             return response.data;
         } catch (error) {
             console.error("Error fetching employees:", error);
@@ -72,12 +72,13 @@ const EmployeeService = {
      * Creates a new employee and their associated account.
      * Sends a nested structure containing employee and account details.
      * Assumes the backend endpoint POST /v1/employees expects { employee: {...}, account: {...} }.
-     * @param employeeData Data conforming to the Employee interface (excluding generated fields like id).
+     * @param employeeData Data conforming to the Employee interface (excluding generated fields like id, badgeNumber).
      * @param accountData Data conforming to the Account interface (excluding generated fields like id, badgeNumber, authorities).
      */
     async createEmployee(employeeData: Employee, accountData: Account): Promise<Employee> { // Assuming backend returns the created Employee
         try {
             // Prepare the nested payload structure using the provided arguments
+            // Backend should handle setting id, badgeNumber, createdAt, createdBy etc.
             const payload = {
                 employee: employeeData, // Send the complete Employee object as received
                 account: accountData   // Send the complete Account object as received
@@ -96,3 +97,4 @@ const EmployeeService = {
 export default EmployeeService;
 
 // Export interfaces separately if needed in multiple places
+export type { EmployeeAddress, AccountAuthority, Account }; // Employee is already exported implicitly
