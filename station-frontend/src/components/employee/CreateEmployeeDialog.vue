@@ -9,8 +9,8 @@ const newEmployee = reactive({
   firstName: '',
   lastName: '',
   email: '',
-  password: '',
-  // Add other fields if necessary based on your backend requirements
+  minijob: false,
+  hourlyWage: 0
 });
 
 const isLoading = ref(false);
