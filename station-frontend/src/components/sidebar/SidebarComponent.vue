@@ -61,11 +61,6 @@ onMounted(() => {
       <img src="/logo.png" alt="circle k logo" :class="$style['logo']">
 
       <div :class="$style['workprogramms-container']">
-        <div @click="logout();"
-                     :class="[$style['workprogramms-entity'], props.site === 'product-expire-management' ? $style['workprogramms-entity-active'] : '']">
-          <FontAwesomeIcon :icon="['far', 'fa-right-from-bracket']" size="lg" :class="$style['icon']"/>
-          <span>AUSLOGGEN</span>
-        </div>
         <router-link to="/employee/management"
                      :class="[$style['workprogramms-entity'], props.site === 'employee-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'id-badge']" size="lg" :class="$style['icon']"/>
@@ -104,10 +99,10 @@ onMounted(() => {
               Einstellungen
             </router-link>
             <div :class="$style['dropdown-divider']"></div>
-            <router-link to="/logout" :class="$style['dropdown-item']" @click.prevent="logout">
+            <div @click="logout();" :class="$style['dropdown-item']" >
               <FontAwesomeIcon :icon="['fas', 'sign-out-alt']" :class="$style['dropdown-item-icon']" />
               Logout
-            </router-link>
+            </div>
           </div>
         </transition>
       </div>
