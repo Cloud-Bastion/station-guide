@@ -4,11 +4,9 @@ import { ref, computed } from 'vue';
 import type { User } from 'oidc-client-ts';
 
 export const useAuthStore = defineStore('authStore', () => {
-    // State
-    const user = ref(null); // Will hold the User object from oidc-client-ts
-    const isLoading = ref(true); // Start as true until initial check completes
+    const user = ref(null);
+    const isLoading = ref(true);
 
-    // Getters
     const isAuthenticated = computed(() => {
         // Check if user exists and is not expired
         return !!user.value && !user.value.expired;
@@ -35,13 +33,12 @@ export const useAuthStore = defineStore('authStore', () => {
         isLoading.value = status;
     }
 
-    // Action to initialize on app load (called from App.vue or router)
     async function initializeAuth() {
-        const authService = (await import('@/service/AuthUserService')).default; // Dynamic import if circular dependency risk
+        const authService = (await import('@/service/AuthUserService')).default;
         setLoading(true);
         try {
             const loadedUser = await authService.getUser();
-            setUser(loadedUser); // Set user based on current state in storage
+            setUser(loadedUser);
             console.log("Auth initialized, user:", loadedUser);
         } catch (error) {
             console.error("Error initializing auth:", error);

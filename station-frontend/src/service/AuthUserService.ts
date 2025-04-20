@@ -2,10 +2,6 @@ import { UserManager, WebStorageStateStore, Log } from 'oidc-client-ts';
 import { useAuthStore } from '@/storage/AuthUserStore';
 import Settings from "@/service/settings/Settings"; // We'll create/update this Pinia store
 
-// Optional: Configure logging level
-// Log.setLevel(Log.DEBUG);
-// Log.setLogger(console);
-
 const userManagerSettings = {
     authority: Settings.AUTH_SERVER_URL,
     client_id: Settings.AUTH_CLIENT_ID,
@@ -86,15 +82,11 @@ class AuthService {
         });
     }
 
-    // --- Public Methods ---
-
-    // Trigger login redirect
     login() {
         useAuthStore().setLoading(true);
         return this.userManager.signinRedirect({ state: { /* optional data */ } });
     }
 
-    // Handle the callback from login redirect
     async handleLoginCallback() {
         console.log("in callback method")
         useAuthStore().setLoading(true);
@@ -112,41 +104,31 @@ class AuthService {
         }
     }
 
-    // Trigger logout redirect
     logout() {
         useAuthStore().setLoading(true);
         return this.userManager.signoutRedirect({ state: { /* optional data */ } });
     }
 
-    // Handle the callback from logout redirect (if needed, often just redirects)
     async handleLogoutCallback() {
-        // Usually no user object is returned, just completes the redirect
         await this.userManager.signoutRedirectCallback();
-        // setUser(null) handled by addUserSignedOut event
     }
 
-    // Get the current user object (may be null)
     async getUser() {
         const user = await this.userManager.getUser();
-        // Ensure Pinia store is updated on initial check if needed
-        // useAuthStore().setUser(user); // Handled by addUserLoaded generally
         return user;
     }
 
-    // Get the current valid access token (returns null if not available/expired)
     async getAccessToken() {
         const user = await this.getUser();
         if (user && !user.expired) {
             return user.access_token;
         }
-        return null; // Or potentially trigger silent renew manually if needed: this.userManager.signinSilent()
+        return null;
     }
 
-    // Expose the UserManager instance if needed for advanced scenarios
     getUserManager(): UserManager {
         return this.userManager;
     }
 }
 
-// Export a singleton instance
 export default new AuthService();
