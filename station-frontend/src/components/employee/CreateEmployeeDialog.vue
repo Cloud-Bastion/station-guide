@@ -20,7 +20,7 @@ const newEmployee = reactive({
     streetNumber: '',
     apartment: ''
   },
-  birthDate: '', // Added - Use YYYY-MM-DD format from date input
+  birthDate: null as Date | null, // Added - Use YYYY-MM-DD format from date input
   taxId: null as number | null, // Added
   socialSecurityId: '', // Added
   minijob: false,
@@ -116,6 +116,7 @@ const createEmployee = async () => {
         lastName: newEmployee.lastName,
         email: newEmployee.email,
         password: newEmployee.password, // Include password for account creation
+        authorities: []
     };
 
 
@@ -132,7 +133,7 @@ const createEmployee = async () => {
     newEmployee.email = '';
     newEmployee.password = '';
     newEmployee.address = { zipcode: null, city: '', street: '', streetNumber: '', apartment: '' };
-    newEmployee.birthDate = '';
+    newEmployee.birthDate = null;
     newEmployee.taxId = null;
     newEmployee.socialSecurityId = '';
     newEmployee.minijob = false;

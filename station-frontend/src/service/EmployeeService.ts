@@ -9,7 +9,7 @@ export interface Employee {
     lastName: string;
     email: string;
     address: EmployeeAddress;
-    birthDate: string;
+    birthDate: Date;
     taxId: number;
     socialSecurityId: string;
     minijob?: boolean;
@@ -63,15 +63,27 @@ const EmployeeService = {
                 email: employeeData.email,
                 password: accountData.password,
                 address: employeeData.address,
+                birthDate: employeeData.birthDate,
                 taxId: employeeData.taxId,
                 socialSecurityId: employeeData.socialSecurityId,
                 createdBy: null,
                 createdAt: null,
             };
 
+            const authPayLoad = {
+                email: employeeData.email,
+                firstName: employeeData.firstName,
+                lastName: employeeData.lastName,
+                password: accountData.password,
+                initialAuthorities: accountData.authorities
+            };
+
             // Send the nested payload
             const response = await settings.apiClient.post(API_URL + "/create", payload);
-            return response.data;
+            console.log(response.data)
+            const authResponse = await settings.authApiClient.post("/api/v1/auth/create-account", authPayLoad)
+            console.log(authResponse.data)
+            return authResponse.data;
         } catch (error) {
             console.error("Error creating employee:", error);
             throw error;
