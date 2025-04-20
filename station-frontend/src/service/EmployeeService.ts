@@ -96,4 +96,3 @@ const EmployeeService = {
 export default EmployeeService;
 
 // Export interfaces separately if needed in multiple places
-export type { EmployeeAddress, AccountAuthority, Account }; // Employee is already exported implicitly
