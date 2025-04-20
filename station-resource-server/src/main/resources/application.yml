@@ -18,8 +18,14 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8081
+          issuer-uri: http://localhost:8080
   application:
     name: Station-Guide
 server:
   port: 8082
+
+logging:
+  level:
+    org:
+      springframework:
+        security: TRACE

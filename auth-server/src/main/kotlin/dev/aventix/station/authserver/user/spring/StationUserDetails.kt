@@ -16,7 +16,7 @@ class StationUserDetails(private val userData: UserDto): UserDetails {
     }
 
     override fun getPassword(): String {
-        return userData.password
+        return userData.password ?: ""
     }
 
     override fun getUsername(): String {

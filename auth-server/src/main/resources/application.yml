@@ -19,8 +19,8 @@ spring:
         registration:
           google:
             provider: google
-            client-id: classpath:secret/google_client_id.txt
-            client-secret: classpath:secret/google_client_secret.txt
+            client-id: ${STATION_GOOGLE_CLIENT_ID}
+            client-secret: ${STATION_GOOGLE_CLIENT_SECRET}
             scope:
               - openid
               - profile

@@ -108,6 +108,7 @@ const createEmployee = async () => {
         minijob: newEmployee.minijob,
         hourlyWage: newEmployee.hourlyWage ?? undefined, // Send undefined if null
     };
+    console.log("Creating employee. Tax id emp payload: " + employeePayload.taxId)
 
     // Construct the Account payload (excluding fields generated/set by backend like id, badgeNumber, authorities)
     const accountPayload: Omit<Account, 'id' | 'badgeNumber' | 'authorities'> = {

@@ -12,5 +12,4 @@ data class UserDto(
     val lastName: String,
     val password: String,
     val authorities: Set<UserAuthorityDto>,
-    val oAuthId: String?,
 ): Serializable

@@ -1,6 +1,6 @@
 package dev.aventix.station.authserver.config
 
-import dev.aventix.station.authserver.user.OAuth2StationUserService
+import dev.aventix.station.authserver.user.StationOidcUserService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -11,6 +11,8 @@ import org.springframework.security.config.annotation.web.configurers.ExceptionH
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer
 import org.springframework.security.config.annotation.web.configurers.oauth2.client.OAuth2LoginConfigurer
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
+import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository
@@ -27,7 +29,7 @@ import java.util.*
 
 @Configuration
 class SecurityConfig(
-    private val oauth2UserService: OAuth2StationUserService,
+    private val oidcUserService: StationOidcUserService,
 ) {
     @Bean
     @Order(2)
@@ -47,7 +49,7 @@ class SecurityConfig(
             .oauth2Login { oauth2Login: OAuth2LoginConfigurer<HttpSecurity?> ->
                 oauth2Login
                     .loginPage("/login")
-                    .userInfoEndpoint { it.userService(oauth2UserService) }
+                    .userInfoEndpoint { it.oidcUserService(oidcUserService) }
             }
             .exceptionHandling { exceptions: ExceptionHandlingConfigurer<HttpSecurity?> ->
                 exceptions

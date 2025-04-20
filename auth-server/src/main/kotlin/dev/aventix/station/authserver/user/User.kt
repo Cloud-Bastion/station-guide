@@ -10,19 +10,23 @@ import java.util.UUID
 class User {
 
     @Id
-    // @GeneratedValue(strategy = GenerationType.AUTO)
+    //@GeneratedValue(strategy = GenerationType.AUTO)
     //@Column(nullable = false, unique = true)
     var id: UUID = UUID.randomUUID()
 
     @Column(unique = true, nullable = false)
     var badgeNumber: Long = 0
 
+    @Column(nullable = false)
     lateinit var email: String
 
+    @Column(nullable = false)
     lateinit var firstName: String
 
+    @Column(nullable = false)
     lateinit var lastName: String
 
+    @Column(nullable = true)
     lateinit var password: String
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -31,13 +35,6 @@ class User {
         inverseJoinColumns = [JoinColumn(name = "authority_id")],
     )
     lateinit var authorities: MutableSet<UserAuthority>
-//
-//    @Enumerated(EnumType.STRING)
-//    @Column(nullable = false)
-//    lateinit var authProvider: AuthProvider
-
-    @Column(nullable = true)
-    var oAuthId: String? = null
 
     fun toDto(): UserDto =
         UserDto(id,
@@ -47,7 +44,6 @@ class User {
             lastName,
             password,
             authorities.map { authority -> authority.toDto() }.toSet(),
-            oAuthId,
         )
 
 }

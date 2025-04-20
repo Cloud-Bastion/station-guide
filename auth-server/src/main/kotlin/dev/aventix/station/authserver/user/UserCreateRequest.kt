@@ -1,6 +1,5 @@
 package dev.aventix.station.authserver.user
 
-import dev.aventix.station.authserver.user.authority.UserAuthorityCreateRequest
 import java.util.UUID
 
 data class UserCreateRequest(

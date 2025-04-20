@@ -24,17 +24,17 @@ class ScheduleEntryService(
 
     @PostConstruct
     fun init() {
-        val employee = employeeService.create(EmployeeCreateRequest(
-            "Test",
-            "TestL",
-            "test-mail",
-            EmployeeAddressDTO(55131, "Testhausen", "Teststraße", "12a", null),
-            LocalDate.now(),
-            273843L,
-            "E016",
-            null,
-            LocalDateTime.now()
-        ))
+//        val employee = employeeService.create(EmployeeCreateRequest(
+//            "Test",
+//            "TestL",
+//            "test-mail",
+//            EmployeeAddressDTO(55131, "Testhausen", "Teststraße", "12a", null),
+//            LocalDate.now(),
+//            273843L,
+//            "E016",
+//            null,
+//            LocalDateTime.now()
+//        ))
     }
 
     // 11 h break between 6-hour shifts

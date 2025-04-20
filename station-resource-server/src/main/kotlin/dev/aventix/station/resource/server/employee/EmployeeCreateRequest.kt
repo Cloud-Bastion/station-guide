@@ -10,10 +10,11 @@ data class EmployeeCreateRequest(
     val firstName: String,
     val lastName: String,
     val email: String,
+    val password: String,
     val address: EmployeeAddressDTO,
     val birthDate: LocalDate,
     val taxId: Long,
     val socialSecurityId: String,
     val createdBy: EmployeeDTO?,
-    val createdAt: LocalDateTime = LocalDateTime.now()
+    val createdAt: LocalDateTime? = LocalDateTime.now()
 )

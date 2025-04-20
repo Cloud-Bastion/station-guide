@@ -7,11 +7,10 @@ import dev.aventix.station.authserver.user.authority.UserAuthorityDto
 import dev.aventix.station.authserver.user.authority.UserAuthorityRepository
 import dev.aventix.station.authserver.user.spring.StationUserDetails
 import jakarta.annotation.PostConstruct
+import jakarta.persistence.EntityExistsException
 import jakarta.persistence.EntityNotFoundException
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
@@ -21,7 +20,6 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
-import kotlin.NoSuchElementException
 
 @Service
 class UserService(
@@ -37,19 +35,20 @@ class UserService(
     @Transactional // Add transactional annotation for PostConstruct data initialization
     fun init() {
         // Check if user already exists to avoid errors on restart
-        if (userRepository.findByEmail("test@gmail.com").isEmpty) {
+        if (userRepository.findByEmail("@one").isEmpty) {
             println("Creating initial test user...")
             try {
                 createUser(
                     UserCreateRequest(
-                        "test@gmail.com", "Raphael", "Eiden", "password", // Raw password
-                        emptySet()
+                        "@one", "Raphael", "Eiden", "password", // Raw password
+                        setOf()
                     )
                 )
                 println("Initial test user created successfully.")
             } catch (e: Exception) {
                 println("Error creating initial test user: ${e.message}")
                 // Consider logging the stack trace
+                e.printStackTrace()
             }
         } else {
             println("Initial test user already exists.")
@@ -73,17 +72,12 @@ class UserService(
         authorityRepository.deleteById(id)
     }
 
-    @Transactional // Add transactional annotation
+    @Transactional
+    @Throws(IllegalArgumentException::class, EntityNotFoundException::class)
     fun createUser(request: UserCreateRequest): UserDto {
-        // Check if user already exists
         if (userRepository.findByEmail(request.email).isPresent) {
-            // Handle appropriately - throw exception, return existing user, etc.
-            // For now, let's print a message and potentially throw an error or return null/existing DTO
             println("User with email ${request.email} already exists.")
-            // Depending on requirements, you might want to throw an exception:
-            // throw EntityExistsException("User with email ${request.email} already exists.")
-            // Or return the existing user's DTO:
-            return userRepository.findByEmail(request.email).get().toDto()
+            throw EntityExistsException("User already exists.")
         }
 
         val entity = User().apply {
