@@ -40,9 +40,7 @@ authApiClient.interceptors.response.use(
         if (error.response?.status === 401) {
             console.warn("Received 401 Unauthorized. Token might be invalid or revoked. Logging out.");
             const authService = (await import('@/service/AuthUserService')).default;
-            // If silent renew failed or token is truly invalid, logging out might be the best option.
-            authService.logout(); // Trigger logout
-            // Avoid retrying the request as the user is being logged out.
+            await authService.logout(); // Trigger logout
             return Promise.reject(new Error("Unauthorized request, user logged out."));
         }
         // For other errors, reject as usual

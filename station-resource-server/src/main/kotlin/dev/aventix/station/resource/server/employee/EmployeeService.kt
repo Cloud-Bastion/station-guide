@@ -19,7 +19,6 @@ class EmployeeService(
 
     @Throws(EntityExistsException::class, IllegalArgumentException::class)
     fun create(createRequest: EmployeeCreateRequest): EmployeeDTO {
-        println("CREATING EMPLOYEE")
         return this.employeeRepository.saveAndFlush(
             EmployeeEntity().apply { ->
                 this.badgeNumber = createBadgeNumber()
@@ -66,6 +65,9 @@ class EmployeeService(
         patchRequest.socialSecurityId?.let { entity.socialSecurityId = it }
         return this.employeeRepository.saveAndFlush(entity).toDTO()
     }
+
+    fun getAllEmployees(): List<EmployeeDTO> =
+        employeeRepository.findAll().map { it.toDTO() }
 
     private fun createBadgeNumber(): Long {
         return this.employeeRepository.count() + 1

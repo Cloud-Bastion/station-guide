@@ -4,18 +4,13 @@ import {ref, onMounted, computed} from 'vue';
 import EmployeeManageView from "@/view/employee/EmployeeManageView.vue";
 import ProductExpireManageView from "@/view/expire/ProductExpireManageView.vue";
 import AuthUserService from "@/service/AuthUserService";
+import {useAuthStore} from "@/storage/AuthUserStore";
 
 const props = defineProps<{
   site: string;
 }>()
 
 // Placeholder data for the user profile.  Replace this with actual user data.
-const user = ref({
-  name: 'Max Mustermann',
-  role: 'Store Manager', // Example additional info
-  avatar: '/default-avatar.png' // Path to a default avatar image
-});
-
 // Simulate fetching user data (replace with actual API call if needed)
 onMounted(async () => {
   // In a real application, you would fetch user data from an API here.
@@ -66,7 +61,7 @@ onMounted(() => {
           <FontAwesomeIcon :icon="['far', 'id-badge']" size="lg" :class="$style['icon']"/>
           <span>Mitarbeiter-Management</span>
         </router-link>
-        <router-link to="/expire/management"
+        <router-link v-if="useAuthStore().hasPermission('expire_product:read')" to="/expire/management"
                      :class="[$style['workprogramms-entity'], props.site === 'product-expire-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'lemon']" size="lg" :class="$style['icon']"/>
           <span>MHD-Tool</span>
@@ -80,10 +75,10 @@ onMounted(() => {
 
       <!-- User Profile Section -->
       <div :class="$style['user-profile']" @click="toggleDropdown" ref="userProfile">
-        <img :src="user.avatar" alt="User Avatar" :class="$style['user-avatar']"/>
+        <img :src="useAuthStore().getUserProfileInfo.profilePictureUrl" alt="User Avatar" :class="$style['user-avatar']"/>
         <div :class="$style['user-info']">
-          <div :class="$style['user-name']">{{ user.name }}</div>
-          <div :class="$style['user-role']">{{ user.role }}</div> <!-- Display user role -->
+          <div :class="$style['user-name']">{{ useAuthStore().getUserProfileInfo.firstname + useAuthStore().getUserProfileInfo.lastname }}</div>
+          <div :class="$style['user-role']">{{ useAuthStore().getUserProfileInfo.roleName }}</div> <!-- Display user role -->
         </div>
         <FontAwesomeIcon :icon="['fas', 'chevron-down']" :class="$style['dropdown-icon']" />
 

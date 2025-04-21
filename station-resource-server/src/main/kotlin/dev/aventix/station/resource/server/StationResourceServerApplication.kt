@@ -15,9 +15,4 @@ class StationResourceServerApplication
 fun main(args: Array<String>) {
     runApplication<StationResourceServerApplication>(*args)
 
-    val start = OffsetDateTime.now()
-    val end = OffsetDateTime.now()
-
-    val duration = Duration.between(start, end)
-
 }

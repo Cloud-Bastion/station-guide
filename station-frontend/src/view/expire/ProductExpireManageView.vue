@@ -12,6 +12,7 @@ import Datepicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 import AddExpireProduct from "@/view/expire/AddExpireProduct.vue";
 import AddExpireProductCategory from "@/view/expire/AddExpireProductCategory.vue";
+import {useAuthStore} from "@/storage/AuthUserStore";
 
 const otherCategorie: ExpireProductCategory = new class implements ExpireProductCategory {
   name = "Andere";
@@ -236,7 +237,7 @@ onMounted(async () => {
         {{ Array.from(expiredProducts.value.values()).reduce((sum, products) => sum + products.length, 0) }} Artikel
       </div>
 
-      <button :class="$style['settings-button']" @click="settingsMenuOpen = !settingsMenuOpen">
+      <button v-if="useAuthStore().hasPermission('expire_product:create')" :class="$style['settings-button']" @click="settingsMenuOpen = !settingsMenuOpen">
         <FontAwesomeIcon icon="fa-gear"/>
         <span>Einstellungen</span>
       </button>

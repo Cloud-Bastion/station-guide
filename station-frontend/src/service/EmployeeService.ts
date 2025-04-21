@@ -47,7 +47,6 @@ const EmployeeService = {
     async getAllEmployees(): Promise<Employee[]> {
         try {
             const response = await settings.apiClient.get<Employee[]>(API_URL);
-            // TODO: Add data transformation if needed (e.g., date parsing for display)
             return response.data;
         } catch (error) {
             console.error("Error fetching employees:", error);

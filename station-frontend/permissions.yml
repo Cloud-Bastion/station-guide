@@ -1,0 +1,4 @@
+employee:create - To create an employee
+employee:read - To see all Employees that exists with email and private informations
+expire_product:create - To create a category or product into mhd tool
+expire_product:read - To see mhd tool site

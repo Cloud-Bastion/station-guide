@@ -7,6 +7,7 @@ import CreateEmployeeDialog from "@/components/employee/CreateEmployeeDialog.vue
 import EmployeeService, { Employee } from "@/service/EmployeeService"; // Import service and Employee interface
 import { ref, computed, onMounted } from 'vue';
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import {useAuthStore} from "@/storage/AuthUserStore";
 
 let currentSiteMode: Ref<string> = new Ref("schedule"); // schedule, vacation, illness, employee_admin
 
@@ -106,7 +107,7 @@ function openEmployeeDetails(employee: Employee) {
             @click="changeSiteMode('illness')">
           Krankmeldungen
         </button>
-        <button
+        <button v-if="useAuthStore().hasPermission('employee:read')"
             :class="[$style['submenu-button'], currentSiteMode.value === 'employee_admin' ? $style['submenu-button-active'] : '']"
             @click="changeSiteMode('employee_admin')">
           Mitarbeiterpflege
@@ -119,7 +120,7 @@ function openEmployeeDetails(employee: Employee) {
         <!-- <IllnessView v-if="currentSiteMode.value === 'illness'" /> -->
 
         <!-- Employee Admin View Content -->
-        <div v-if="currentSiteMode.value === 'employee_admin'" :class="$style['employee-admin-view']">
+        <div v-if="currentSiteMode.value === 'employee_admin' && useAuthStore().hasPermission('employee:read')" :class="$style['employee-admin-view']">
           <div :class="$style['settings-container']">
              <!-- Search Bar (Optional) -->
              <div :class="$style['search-bar-container']">
@@ -137,7 +138,7 @@ function openEmployeeDetails(employee: Employee) {
               {{ displayedEmployees.length }} Mitarbeiter
             </div>
             <!-- Changed button to open the create dialog -->
-            <button :class="$style['settings-button']" @click="openCreateEmployeeDialog">
+            <button v-if="useAuthStore().hasPermission('employee:create')" :class="$style['settings-button']" @click="openCreateEmployeeDialog">
               <FontAwesomeIcon icon="plus"/>
               <span>Mitarbeiter anlegen</span>
             </button>

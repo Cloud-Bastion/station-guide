@@ -25,7 +25,8 @@ const routes: Array<RouteRecordRaw> = [
         name: 'employee-management',
         component: EmployeeManageView,
         meta: {
-            requiresAuth: true // Mark as requiring authentication
+            requiresAuth: true, // Mark as requiring authentication
+            needPermission: null
         }
     },
     {
@@ -33,7 +34,8 @@ const routes: Array<RouteRecordRaw> = [
         name: 'expire-management', // Consistent naming convention
         component: ProductExpireManageView,
         meta: {
-            requiresAuth: true
+            requiresAuth: true,
+            needPermission: "expire_product:read"
         }
     },
     {
@@ -72,19 +74,14 @@ const authService = AuthUserService
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore();
 
-    // Ensure auth state is loaded before proceeding, especially on initial load
     if (authStore.isLoading) {
-        // If loading, wait for initialization (or implement a loading indicator)
-        // This might need a more robust solution like a dedicated loading state check
-        // or ensuring initializeAuth completes before navigation.
-        // For simplicity here, we assume loading completes reasonably fast.
-        // A better way is to await initializeAuth() perhaps in App.vue's setup.
         console.log("Auth guard waiting for loading state...");
         await new Promise(resolve => setTimeout(resolve, 50)); // Small delay, improve this
     }
 
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
     const isAuthenticated = authStore.isAuthenticated; // Use Pinia getter
+    const hasPermission = to.matched.some(record => record.meta.needPermission === null || record.meta.needPermission === undefined || authStore.hasPermission(record.meta.needPermission as string));
 
     if (requiresAuth && !isAuthenticated) {
         console.log(`Route ${to.path} requires auth, user not authenticated. Redirecting to login...`);
@@ -92,7 +89,11 @@ router.beforeEach(async (to, from, next) => {
         // Prevent navigation until redirect happens
         next(false); // Or don't call next() if login() reliably redirects
     } else {
-        next(); // Proceed as normal
+        if (hasPermission) {
+            next();
+        } else {
+            next(false);
+        }
     }
 });
 

@@ -14,17 +14,18 @@ import org.springframework.web.bind.annotation.RestController
 class UserController(
     private val userService: UserService
 ) {
-
     @PostMapping("/create-account")
     fun createAccount(@RequestBody request: UserCreateRequest): ResponseEntity<Any> {
         try {
             val user = userService.createUser(request)
+            println("Account created successfully!")
             return ResponseEntity.ok(user)
         } catch (e: EntityExistsException) {
+            println("User already exists")
             return ResponseEntity.badRequest().build()
         } catch (e: IllegalArgumentException) {
+            println("IllegalArgumentException: " + e.message)
             return ResponseEntity.badRequest().body("")
         }
     }
-
 }
