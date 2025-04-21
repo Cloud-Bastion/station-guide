@@ -19,7 +19,7 @@ class EmployeeController(
 ) {
 
     @PostMapping("/create")
-    //  @PreAuthorize("hasAuthority('SCOPE_user.create')")
+    @PreAuthorize("hasAuthority('user:create')")
     fun createEmployee(@RequestBody request: EmployeeCreateRequest, http: HttpServletRequest): ResponseEntity<Any> {
         employeeService.create(request)
         return ResponseEntity.ok().build()

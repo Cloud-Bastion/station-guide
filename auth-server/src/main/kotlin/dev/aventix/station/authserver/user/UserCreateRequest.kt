@@ -7,5 +7,6 @@ data class UserCreateRequest(
     val firstName: String,
     val lastName: String,
     val password: String,
-    val initialAuthorities: Set<UUID>
+    val initialAuthorities: Set<String>,
+    val roles: Set<String>
 )

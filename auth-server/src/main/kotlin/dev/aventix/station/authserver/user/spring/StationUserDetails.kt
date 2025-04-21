@@ -8,11 +8,14 @@ import org.springframework.security.core.userdetails.UserDetails
 class StationUserDetails(private val userData: UserDto): UserDetails {
 
     override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
-        return userData.authorities
+        val roleAuthorities = userData.roles.flatMap { it.authorities.map { authority -> SimpleGrantedAuthority(authority.name) } }
+        val allAuthorities = userData.authorities
             .map { authority ->
                 SimpleGrantedAuthority(authority.name)
             }
             .toCollection(ArrayList())
+        val all = roleAuthorities + allAuthorities
+        return all.toMutableSet()
     }
 
     override fun getPassword(): String {

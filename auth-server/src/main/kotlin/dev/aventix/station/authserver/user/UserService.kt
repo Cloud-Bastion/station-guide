@@ -1,10 +1,10 @@
 package dev.aventix.station.authserver.user
 
 import dev.aventix.station.authserver.config.ApplicationConfigProperties
-import dev.aventix.station.authserver.user.authority.UserAuthority
-import dev.aventix.station.authserver.user.authority.UserAuthorityCreateRequest
-import dev.aventix.station.authserver.user.authority.UserAuthorityDto
-import dev.aventix.station.authserver.user.authority.UserAuthorityRepository
+import dev.aventix.station.authserver.user.authority.*
+import dev.aventix.station.authserver.user.role.UserRoleCreateRequest
+import dev.aventix.station.authserver.user.role.UserRoleRepository
+import dev.aventix.station.authserver.user.role.UserRoleService
 import dev.aventix.station.authserver.user.spring.StationUserDetails
 import jakarta.annotation.PostConstruct
 import jakarta.persistence.EntityExistsException
@@ -25,6 +25,9 @@ import java.util.*
 class UserService(
     private val userRepository: UserRepository,
     private val authorityRepository: UserAuthorityRepository,
+    private val authorityService: UserAuthorityService,
+    private val roleService: UserRoleService,
+    private val roleRepository: UserRoleRepository,
     private val passwordEncoder: PasswordEncoder,
     private val appProperties: ApplicationConfigProperties, // Keep for potential future use, but not for prefixing here
 ) : UserDetailsService {
@@ -34,14 +37,38 @@ class UserService(
     @PostConstruct
     @Transactional // Add transactional annotation for PostConstruct data initialization
     fun init() {
+        authorityService.createAuthoritiesIfNotExists(listOf(
+            "employee:create",
+            "employee:read",
+            "employee:remove",
+            "expire_product:create",
+            "expire_product:read",
+        ))
+
+        if (roleRepository.findByName("admin") == null) {
+            roleService.createRole(UserRoleCreateRequest("admin", listOf(
+                "employee:create",
+                "employee:remove",
+                "expire_product:create",
+            )))
+        }
+
+        if (roleRepository.findByName("employee") == null) {
+            roleService.createRole(UserRoleCreateRequest("employee", listOf(
+                "employee:read",
+                "expire_product:read",
+            )))
+        }
+
+
         // Check if user already exists to avoid errors on restart
-        if (userRepository.findByEmail("@one").isEmpty) {
+        if (userRepository.findByEmail("three").isEmpty) {
             println("Creating initial test user...")
             try {
                 createUser(
                     UserCreateRequest(
-                        "@one", "Raphael", "Eiden", "password", // Raw password
-                        setOf()
+                        "three", "Raphael", "Eiden", "pw", // Raw password
+                        setOf(), setOf("admin", "employee")
                     )
                 )
                 println("Initial test user created successfully.")
@@ -88,8 +115,9 @@ class UserService(
             this.password = passwordEncoder.encode(request.password)
             this.authorities = request.initialAuthorities.mapNotNull { authorityId ->
                 // Use findByIdOrNull for safer handling if an authority ID is invalid
-                authorityRepository.findById(authorityId).orElse(null)
+                authorityRepository.findByName(authorityId)
             }.toMutableSet()
+            this.roles = request.roles.mapNotNull { roleName -> roleRepository.findByName(roleName) }.toMutableSet()
             // Assign a badge number (ensure this logic is robust, e.g., sequence or random unique)
             // Simple incrementing count might have race conditions without proper locking/sequences
             this.badgeNumber = userRepository.count() + 1 // Consider a more robust approach

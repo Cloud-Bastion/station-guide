@@ -2,6 +2,7 @@ package dev.aventix.station.authserver.user
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import dev.aventix.station.authserver.user.authority.UserAuthority
+import dev.aventix.station.authserver.user.role.UserRole
 import jakarta.persistence.*
 import java.util.UUID
 
@@ -36,6 +37,13 @@ class User {
     )
     lateinit var authorities: MutableSet<UserAuthority>
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "user_roles_map",
+        joinColumns = [JoinColumn(name = "user_id")],
+        inverseJoinColumns = [JoinColumn(name = "role_id")],
+    )
+    lateinit var roles: MutableSet<UserRole>
+
     fun toDto(): UserDto =
         UserDto(id,
             badgeNumber,
@@ -44,6 +52,7 @@ class User {
             lastName,
             password,
             authorities.map { authority -> authority.toDto() }.toSet(),
+            roles.map { it.toDto() }.toSet()
         )
 
 }
