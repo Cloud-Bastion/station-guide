@@ -5,7 +5,7 @@ import java.io.Serializable
 import java.util.UUID
 
 data class UserRoleDto(
-    val id: UUID,
-    val name: String,
-    val authorities: List<UserAuthorityDto>,
+    var id: UUID?,
+    var name: String,
+    var authorities: List<UserAuthorityDto>,
 ): Serializable

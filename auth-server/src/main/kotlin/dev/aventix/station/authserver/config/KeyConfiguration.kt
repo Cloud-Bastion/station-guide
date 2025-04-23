@@ -18,7 +18,6 @@ import java.util.*
 class KeyConfiguration(
     private val serverProperties: ApplicationConfigProperties
 ) {
-
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 

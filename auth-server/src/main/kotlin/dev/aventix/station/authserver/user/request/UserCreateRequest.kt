@@ -1,6 +1,4 @@
-package dev.aventix.station.authserver.user
-
-import java.util.UUID
+package dev.aventix.station.authserver.user.request
 
 data class UserCreateRequest(
     val email: String,

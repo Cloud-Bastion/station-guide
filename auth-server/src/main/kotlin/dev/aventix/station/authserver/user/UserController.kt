@@ -1,7 +1,6 @@
-package dev.aventix.station.authserver.controller
+package dev.aventix.station.authserver.user
 
-import dev.aventix.station.authserver.user.UserCreateRequest
-import dev.aventix.station.authserver.user.UserService
+import dev.aventix.station.authserver.user.request.UserCreateRequest
 import jakarta.persistence.EntityExistsException
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -18,13 +17,10 @@ class UserController(
     fun createAccount(@RequestBody request: UserCreateRequest): ResponseEntity<Any> {
         try {
             val user = userService.createUser(request)
-            println("Account created successfully!")
             return ResponseEntity.ok(user)
         } catch (e: EntityExistsException) {
-            println("User already exists")
             return ResponseEntity.badRequest().build()
         } catch (e: IllegalArgumentException) {
-            println("IllegalArgumentException: " + e.message)
             return ResponseEntity.badRequest().body("")
         }
     }

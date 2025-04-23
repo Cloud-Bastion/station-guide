@@ -70,6 +70,7 @@ class SecurityConfig(
                 frameOptions.sameOrigin()
             }.contentSecurityPolicy { csp ->
                 csp.policyDirectives("frame-ancestors 'self' http://localhost:5173/;")
+                csp.policyDirectives("frame-ancestors 'self' https://dashboard.cakmak-station.de/;")
             }
         }
 
@@ -109,6 +110,7 @@ class SecurityConfig(
                 frameOptions.sameOrigin()
             }.contentSecurityPolicy { csp ->
                 csp.policyDirectives("frame-ancestors 'self' http://localhost:5173/;")
+                csp.policyDirectives("frame-ancestors 'self' https://dashboard.cakmak-station.de/;")
             }
         }
 
@@ -125,9 +127,12 @@ class SecurityConfig(
             RegisteredClient.withId(UUID.nameUUIDFromBytes(("station-frontend").toByteArray()).toString())
                 .clientId("station-frontend").clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("http://localhost:5173/silent-renew") // OIDC Callback URI
-                .redirectUri("http://localhost:5173/callback") // OIDC Callback URI
-                .postLogoutRedirectUri("http://localhost:5173/") // Post Logout URI
+                .redirectUri("https://dashboard.cakmak-station.de/silent-renew")
+                .redirectUri("https://localhost:5173/callback")
+                .redirectUri("https://dashboard.cakmak-station.de/silent-renew")
+                .redirectUri("http://localhost:5173/callback")
+                .postLogoutRedirectUri("http://localhost:5173/")
+                .postLogoutRedirectUri("https://dashboard.cakmak-station.de/")
                 .scope("openid").scope("profile").scope("email")
                 .scope("user:create")
                 .clientSettings(
@@ -139,6 +144,6 @@ class SecurityConfig(
 
     @Bean
     fun authorizationServerSettings(): AuthorizationServerSettings {
-        return AuthorizationServerSettings.builder().issuer("http://localhost:8080").build()
+        return AuthorizationServerSettings.builder().issuer("http://localhost:9000").build()
     }
 }

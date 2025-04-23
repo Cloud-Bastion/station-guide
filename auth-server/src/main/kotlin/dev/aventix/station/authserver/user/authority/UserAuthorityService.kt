@@ -6,15 +6,6 @@ import org.springframework.stereotype.Service
 class UserAuthorityService(
     private val repo: UserAuthorityRepository,
 ) {
-
-//    @PostConstruct
-//    fun initAuthorities() {
-//        createAuthoritiesIfNotExists(listOf(
-//            "user:create",
-//            "user:read",
-//        ))
-//    }
-
     fun createAuthoritiesIfNotExists(authorities: List<String>) {
         authorities.forEach { authority -> createAuthorityIfNotExists(authority) }
     }

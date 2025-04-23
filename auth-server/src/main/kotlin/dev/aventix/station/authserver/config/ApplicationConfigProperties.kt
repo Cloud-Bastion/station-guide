@@ -1,6 +1,5 @@
 package dev.aventix.station.authserver.config
 
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.context.properties.ConfigurationProperties
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey

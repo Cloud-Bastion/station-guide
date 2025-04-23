@@ -1,4 +1,4 @@
-package dev.aventix.station.authserver.controller
+package dev.aventix.station.authserver.login
 
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping

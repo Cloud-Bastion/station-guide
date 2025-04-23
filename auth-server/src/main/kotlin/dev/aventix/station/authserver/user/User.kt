@@ -1,6 +1,5 @@
 package dev.aventix.station.authserver.user
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import dev.aventix.station.authserver.user.authority.UserAuthority
 import dev.aventix.station.authserver.user.role.UserRole
 import jakarta.persistence.*
@@ -11,9 +10,8 @@ import java.util.UUID
 class User {
 
     @Id
-    //@GeneratedValue(strategy = GenerationType.AUTO)
-    //@Column(nullable = false, unique = true)
-    var id: UUID = UUID.randomUUID()
+    @GeneratedValue(strategy = GenerationType.UUID)
+    lateinit var id: UUID
 
     @Column(unique = true, nullable = false)
     var badgeNumber: Long = 0

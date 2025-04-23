@@ -1,4 +1,4 @@
-package dev.aventix.station.authserver.user
+package dev.aventix.station.authserver.user.request
 
 import java.util.UUID
 
