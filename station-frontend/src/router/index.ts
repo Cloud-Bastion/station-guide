@@ -7,6 +7,8 @@ import SilentRenew from "@/view/login/SilentRenew.vue";
 import LoginCallbackView from "@/view/login/LoginCallbackView.vue";
 import {useAuthStore} from "@/storage/AuthUserStore";
 import AuthUserService from "@/service/AuthUserService";
+// Import the new view
+import RoleAuthorityManagementView from "@/view/admin/RoleAuthorityManagementView.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -26,7 +28,7 @@ const routes: Array<RouteRecordRaw> = [
         component: EmployeeManageView,
         meta: {
             requiresAuth: true, // Mark as requiring authentication
-            needPermission: null
+            needPermission: null // Or specific permission like 'employee:read'
         }
     },
     {
@@ -43,9 +45,21 @@ const routes: Array<RouteRecordRaw> = [
         name: 'tasks',
         component: TaskManagementView,
         meta: {
-            requiresAuth: true
+            requiresAuth: true,
+            needPermission: null // Or specific permission like 'task:read'
         }
     },
+    // --- New Route for Role/Authority Management ---
+    {
+        path: '/admin/roles',
+        name: 'role-authority-management',
+        component: RoleAuthorityManagementView,
+        meta: {
+            requiresAuth: true,
+            needPermission: "role:read" // Requires 'role:read' permission
+        }
+    },
+    // --- End New Route ---
     {
         path: '/callback',
         name: 'callback',
@@ -74,26 +88,36 @@ const authService = AuthUserService
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore();
 
-    if (authStore.isLoading) {
+    // Wait for auth initialization if it's still loading
+    while (authStore.isLoading) {
         console.log("Auth guard waiting for loading state...");
-        await new Promise(resolve => setTimeout(resolve, 50)); // Small delay, improve this
+        await new Promise(resolve => setTimeout(resolve, 50)); // Small delay
     }
 
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-    const isAuthenticated = authStore.isAuthenticated; // Use Pinia getter
-    const hasPermission = to.matched.some(record => record.meta.needPermission === null || record.meta.needPermission === undefined || authStore.hasPermission(record.meta.needPermission as string));
+    const isAuthenticated = authStore.isAuthenticated;
+    const requiredPermission = to.meta.needPermission as string | undefined;
 
     if (requiresAuth && !isAuthenticated) {
         console.log(`Route ${to.path} requires auth, user not authenticated. Redirecting to login...`);
         await authService.login();
         // Prevent navigation until redirect happens
-        next(false); // Or don't call next() if login() reliably redirects
+        next(false);
+    } else if (requiresAuth && requiredPermission && !authStore.hasPermission(requiredPermission)) {
+        // If auth is required and a specific permission is needed but missing
+        console.warn(`User authenticated but lacks permission '${requiredPermission}' for route ${to.path}. Redirecting or showing 'Forbidden'.`);
+        // Option 1: Redirect to a 'Forbidden' page
+        // next({ name: 'forbidden' }); // Assuming you have a 'forbidden' route
+        // Option 2: Redirect to a safe page like home/tasks
+        next({ name: 'tasks' });
+        // Option 3: Prevent navigation
+        // next(false);
     } else {
-        if (hasPermission) {
-            next();
-        } else {
-            next(false);
-        }
+        // Allow navigation if:
+        // - Route doesn't require auth OR
+        // - User is authenticated and no specific permission is needed OR
+        // - User is authenticated and has the required permission
+        next();
     }
 });
 

@@ -10,7 +10,9 @@ const props = defineProps<{
   site: string;
 }>()
 
-// Placeholder data for the user profile.  Replace this with actual user data.
+const authStore = useAuthStore(); // Get auth store instance
+
+// Placeholder data for the user profile. Replace this with actual user data.
 // Simulate fetching user data (replace with actual API call if needed)
 onMounted(async () => {
   // In a real application, you would fetch user data from an API here.
@@ -32,10 +34,13 @@ const toggleDropdown = () => {
 
 // Close dropdown when clicking outside
 const closeDropdown = (event: MouseEvent) => {
-  if (isDropdownOpen.value && event.target instanceof Node && !$refs.userProfile.contains(event.target)) {
-    isDropdownOpen.value = false;
-  }
+    // Check if the click target exists and if the userProfile ref exists and contains the target
+    const userProfileElement = document.getElementById('userProfileContainer'); // Use a static ID
+    if (isDropdownOpen.value && event.target instanceof Node && userProfileElement && !userProfileElement.contains(event.target)) {
+        isDropdownOpen.value = false;
+    }
 };
+
 
 const logout = () => {
   AuthUserService.logout()
@@ -45,7 +50,9 @@ onMounted(() => {
   window.addEventListener('click', closeDropdown);
 });
 
-onMounted(() => {
+// Use onBeforeUnmount for cleanup
+import { onBeforeUnmount } from 'vue';
+onBeforeUnmount(() => {
     window.removeEventListener('click', closeDropdown);
 })
 </script>
@@ -59,9 +66,9 @@ onMounted(() => {
         <router-link to="/employee/management"
                      :class="[$style['workprogramms-entity'], props.site === 'employee-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'id-badge']" size="lg" :class="$style['icon']"/>
-          <span>Mitarbeiter-Management</span>
+          <span>Mitarbeiter</span>
         </router-link>
-        <router-link v-if="useAuthStore().hasPermission('expire_product:read')" to="/expire/management"
+        <router-link v-if="authStore.hasPermission('expire_product:read')" to="/expire/management"
                      :class="[$style['workprogramms-entity'], props.site === 'product-expire-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'lemon']" size="lg" :class="$style['icon']"/>
           <span>MHD-Tool</span>
@@ -69,18 +76,26 @@ onMounted(() => {
         <router-link to="/tasks"
                      :class="[$style['workprogramms-entity'], props.site === 'task-management' ? $style['workprogramms-entity-active'] : '']">
           <FontAwesomeIcon :icon="['far', 'fa-rectangle-list']" size="lg" :class="$style['icon']"/>
-          <span>Task-Manager</span>
+          <span>Aufgaben</span>
         </router-link>
+         <!-- New Link for Role/Authority Management -->
+         <router-link v-if="authStore.hasPermission('role:read')" to="/admin/roles"
+                      :class="[$style['workprogramms-entity'], props.site === 'role-authority-management' ? $style['workprogramms-entity-active'] : '']">
+           <FontAwesomeIcon :icon="['fas', 'user-shield']" size="lg" :class="$style['icon']"/>
+           <span>Rollen</span>
+         </router-link>
+         <!-- End New Link -->
       </div>
 
       <!-- User Profile Section -->
-      <div :class="$style['user-profile']" @click="toggleDropdown" ref="userProfile">
-        <img :src="useAuthStore().getUserProfileInfo.profilePictureUrl" alt="User Avatar" :class="$style['user-avatar']"/>
+      <!-- Added id="userProfileContainer" for click outside detection -->
+      <div :class="$style['user-profile']" @click="toggleDropdown" id="userProfileContainer">
+        <img :src="authStore.getUserProfileInfo.profilePictureUrl" alt="User Avatar" :class="$style['user-avatar']"/>
         <div :class="$style['user-info']">
-          <div :class="$style['user-name']">{{ useAuthStore().getUserProfileInfo.firstname + useAuthStore().getUserProfileInfo.lastname }}</div>
-          <div :class="$style['user-role']">{{ useAuthStore().getUserProfileInfo.roleName }}</div> <!-- Display user role -->
+          <div :class="$style['user-name']">{{ authStore.getUserProfileInfo.firstname }} {{ authStore.getUserProfileInfo.lastname }}</div>
+          <div :class="$style['user-role']">{{ authStore.getUserProfileInfo.roleName }}</div> <!-- Display user role -->
         </div>
-        <FontAwesomeIcon :icon="['fas', 'chevron-down']" :class="$style['dropdown-icon']" />
+        <FontAwesomeIcon :icon="['fas', 'chevron-down']" :class="[$style['dropdown-icon'], isDropdownOpen ? $style['dropdown-icon-open'] : '']" />
 
         <!-- Dropdown Menu -->
         <transition name="fade">
@@ -94,7 +109,7 @@ onMounted(() => {
               Einstellungen
             </router-link>
             <div :class="$style['dropdown-divider']"></div>
-            <div @click="logout();" :class="$style['dropdown-item']" >
+            <div @click.stop="logout();" :class="$style['dropdown-item']" > <!-- Added .stop to prevent immediate closing -->
               <FontAwesomeIcon :icon="['fas', 'sign-out-alt']" :class="$style['dropdown-item-icon']" />
               Logout
             </div>
@@ -112,6 +127,7 @@ $bg-dark: #121212;
 $bg-medium: #1e1e1e;
 $bg-light: #2a2a2a;
 $text-color: #f1f1f1;
+$text-color-light: #b0b0b0;
 $accent: #ff4500; // Red accent
 $accent-hover: #b83200; // Darker red for hover
 $border-radius: 5px;
@@ -121,35 +137,40 @@ $transition-speed: 0.3s;
   display: flex;
   flex-direction: column;
   background-color: $bg-dark; // Consistent dark background
+  flex-shrink: 0; // Prevent sidebar from shrinking
 
   .menu-container {
     display: flex;
     flex-direction: row;
     align-items: center; // Vertically center items
     margin: 0 30px; // Reduced margin
-    padding: 20px 0; // Add vertical padding
+    padding: 15px 0; // Adjusted vertical padding
 
     .logo {
-      width: 120px; // Slightly smaller logo
+      width: 100px; // Smaller logo
       height: auto;
-      margin-right: 30px; // Reduced margin
+      margin-right: 25px; // Reduced margin
+      flex-shrink: 0;
     }
 
     .workprogramms-container {
       display: flex;
       flex-direction: row;
       flex-grow: 1;
-      justify-content: space-around; // Evenly space items
+      justify-content: flex-start; // Align items to the start
+      gap: 15px; // Space between items
 
       .workprogramms-entity {
-        color: #b0b0b0;
+        color: $text-color-light;
         text-decoration: none;
         display: flex; // Use flex for alignment
         flex-direction: column; // Stack icon and text
         align-items: center; // Center items horizontally
-        padding: 10px 15px; // Add padding
+        padding: 8px 12px; // Adjusted padding
         border-radius: $border-radius; // Add border-radius
         transition: background-color $transition-speed ease, color $transition-speed ease;
+        text-align: center;
+        min-width: 80px; // Ensure minimum width for items
 
         &:hover {
           background-color: $bg-light; // Hover effect
@@ -162,12 +183,14 @@ $transition-speed: 0.3s;
 
         .icon {
           margin-bottom: 5px; // Space between icon and text
-          color: #b0b0b0; // Icon color
+          color: $text-color-light; // Icon color
           transition: color $transition-speed ease;
+          font-size: 1.1rem; // Slightly larger icon
         }
 
         span {
-          font-size: small;
+          font-size: 0.75rem; // Smaller text
+          line-height: 1.2;
         }
       }
 
@@ -187,60 +210,72 @@ $transition-speed: 0.3s;
       margin-left: auto; /* Push to the right */
       cursor: pointer; /* Indicate it's clickable */
       position: relative; /* For dropdown positioning */
+      padding: 5px; // Add some padding for easier clicking
+      border-radius: $border-radius;
+      transition: background-color $transition-speed ease;
+      flex-shrink: 0;
+
+      &:hover {
+          background-color: $bg-light;
+      }
 
       .user-avatar {
-        width: 40px; /* Adjust size as needed */
-        height: 40px; /* Adjust size as needed */
-        border-radius: 50%; /* Make it circular */
-        margin-right: 10px; /* Space between avatar and text */
-        object-fit: cover; /* Ensure the image covers the area */
-        border: 2px solid $accent; /* Add a border */
+        width: 35px; // Slightly smaller avatar
+        height: 35px;
+        border-radius: 50%;
+        margin-right: 10px;
+        object-fit: cover;
+        border: 1px solid $accent; // Thinner border
       }
 
       .user-info {
-        text-align: left; /* Align text to the left */
+        text-align: left;
+        margin-right: 8px; // Space before icon
 
         .user-name {
           color: $text-color;
-          font-weight: bold;
-          font-size: 0.9rem; /* Adjust size as needed */
+          font-weight: 500; // Normal weight
+          font-size: 0.85rem;
+          white-space: nowrap;
         }
 
         .user-role {
-          color: #aaa; /* Lighter color for the role */
-          font-size: 0.7rem; /* Adjust size as needed */
+          color: $text-color-light;
+          font-size: 0.7rem;
+          white-space: nowrap;
         }
       }
 
       .dropdown-icon {
-        color: #aaa;
-        margin-left: 5px;
+        color: $text-color-light;
         transition: transform $transition-speed ease;
+        font-size: 0.8rem; // Smaller icon
+      }
+      .dropdown-icon-open { // Style for when dropdown is open
+          transform: rotate(180deg);
       }
 
-      &:hover .dropdown-icon {
-        transform: rotate(180deg); /* Rotate on hover */
-      }
 
       .dropdown-menu {
         position: absolute;
-        top: 100%; /* Position below the profile */
-        right: 0; /* Align to the right */
+        top: calc(100% + 5px); // Position below the profile with a small gap
+        right: 0;
         background-color: $bg-medium;
-        border: 1px solid #444;
+        border: 1px solid $input-border; // Use input border color
         border-radius: $border-radius;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-        z-index: 100; /* Ensure it's above other content */
-        min-width: 160px; /* Minimum width */
-        padding: 5px 0; /* Vertical padding */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        z-index: 1100; // Ensure dropdown is on top
+        min-width: 180px;
+        padding: 6px 0; // Vertical padding
 
         .dropdown-item {
           display: flex;
           align-items: center;
-          padding: 8px 15px;
+          padding: 9px 15px; // Adjusted padding
           color: $text-color;
           text-decoration: none;
           transition: background-color $transition-speed ease;
+          font-size: 0.9rem; // Consistent font size
 
           &:hover {
             background-color: $bg-light;
@@ -248,26 +283,27 @@ $transition-speed: 0.3s;
 
           .dropdown-item-icon {
             margin-right: 10px;
-            color: #aaa;
-            width: 20px; /* Fixed width for icons */
-            text-align: center; /* Center the icons */
+            color: $text-color-light; // Lighter icon color
+            width: 18px; // Fixed width for icons
+            text-align: center;
+            font-size: 0.9em; // Icon size relative to text
           }
         }
 
         .dropdown-divider {
           height: 1px;
-          background-color: #444;
-          margin: 5px 0;
+          background-color: $input-border; // Use input border color
+          margin: 6px 0;
         }
       }
     }
   }
 
   .menu-stick {
-    height: 2px; // Use height instead of flex
-    margin: 10px 25px; // Consistent margin
+    height: 1px; // Thinner stick
+    margin: 0 25px 10px 25px; // Adjust margin
     border-radius: 20px;
-    background-color: #444; // Darker stick color
+    background-color: $input-border; // Use input border color
   }
 }
 
@@ -280,6 +316,6 @@ $transition-speed: 0.3s;
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(-10px); /* Slight vertical movement */
+  transform: translateY(-5px); // Smaller vertical movement
 }
 </style>
