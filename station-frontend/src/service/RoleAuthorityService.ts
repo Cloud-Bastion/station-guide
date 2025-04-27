@@ -1,25 +1,22 @@
 import settings from "./settings/Settings";
 
-// --- Interfaces based on Kotlin DTOs ---
-
 export interface UserAuthority {
-    id?: string; // UUID is string in TS
+    id?: string;
     name: string;
 }
 
 export interface UserRole {
-    id?: string; // UUID is string in TS
+    id?: string;
+    displayName: string;
     name: string;
     authorities: UserAuthority[];
 }
 
-// Interface for the request body when creating a role
 export interface UserRoleCreateRequest {
     name: string;
+    displayName: string;
     initialAuthorities: string[]; // Array of authority names
 }
-
-// --- Service Implementation ---
 
 const API_URL = "/api/v1/auth/role"; // Base URL on the auth server
 
@@ -86,9 +83,6 @@ const RoleAuthorityService = {
         }
     },
 
-    // It seems there's no dedicated endpoint to get *all* possible authorities.
-    // We might need to infer them from the roles or add such an endpoint later.
-    // For now, we can extract unique authorities from the fetched roles.
     extractUniqueAuthorities(roles: UserRole[]): UserAuthority[] {
         const authorityMap = new Map<string, UserAuthority>();
         roles.forEach(role => {

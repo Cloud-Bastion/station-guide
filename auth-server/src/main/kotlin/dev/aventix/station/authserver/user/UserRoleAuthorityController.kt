@@ -36,6 +36,7 @@ class UserRoleAuthorityController(
                     UserRoleDto(
                         null,
                         request.name,
+                        request.displayName,
                         request.initialAuthorities.map { authority -> UserAuthorityDto(null, authority) })
                 )
             )

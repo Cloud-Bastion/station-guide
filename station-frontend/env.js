@@ -1,6 +1,6 @@
 window.env = {
     API_BASE_URL: "http://localhost:8082/api/",
-    AUTH_SERVER_URL: "http://localhost:8080",
+    AUTH_SERVER_URL: "http://localhost:9000",
     AUTH_CLIENT_ID: "station-frontend",
     AUTH_REDIRECT_URI: "http://localhost:5173/callback",
     AUTH_POST_LOGOUT_REDIRECT_URI: "http://localhost:5173/",

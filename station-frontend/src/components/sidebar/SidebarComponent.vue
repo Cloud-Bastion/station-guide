@@ -128,6 +128,7 @@ $bg-medium: #1e1e1e;
 $bg-light: #2a2a2a;
 $text-color: #f1f1f1;
 $text-color-light: #b0b0b0;
+$input-border: #555;
 $accent: #ff4500; // Red accent
 $accent-hover: #b83200; // Darker red for hover
 $border-radius: 5px;

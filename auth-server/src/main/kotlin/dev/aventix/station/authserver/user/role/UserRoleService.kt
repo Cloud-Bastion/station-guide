@@ -13,13 +13,14 @@ class UserRoleService(
     private val authorityRepository: UserAuthorityRepository,
 ) {
     @Throws(EntityExistsException::class)
-    fun createRole(userRole: UserRoleDto) : UserRoleDto {
+    fun createRole(userRole: UserRoleDto): UserRoleDto {
         if (roleRepo.findByName(userRole.name) != null) {
             throw EntityExistsException("Role already exists")
         }
 
         val entity = UserRole().apply {
             this.name = userRole.name
+            this.displayName = userRole.displayName
             this.authorities = userRole.authorities.mapNotNull {
                 authorityRepository.findByName(it.name)
             }.toMutableSet()
@@ -39,7 +40,7 @@ class UserRoleService(
     }
 
     @Throws(EntityNotFoundException::class, EntityExistsException::class)
-    fun addAuthorityToRole(name: String, authority: String) : UserRoleDto {
+    fun addAuthorityToRole(name: String, authority: String): UserRoleDto {
         val role = this.roleRepo.findByName(name) ?: throw EntityNotFoundException("Role does not exists")
 
         if (role.authorities.any { it.name == authority }) throw EntityExistsException("authority $authority already exists in role $name")
@@ -52,19 +53,20 @@ class UserRoleService(
     }
 
     @Throws(EntityNotFoundException::class)
-    fun removeAuthorityToRole(name: String, authority: String) : UserRoleDto {
+    fun removeAuthorityToRole(name: String, authority: String): UserRoleDto {
         val role = this.roleRepo.findByName(name) ?: throw EntityNotFoundException("Role does not exists")
 
         if (!role.authorities.any { it.name == authority }) throw EntityNotFoundException("authority $authority dont exist in role $name")
 
-        val authorityEntity = this.authorityRepository.findByName(authority) ?: throw EntityNotFoundException("authority $authority dont exist")
+        val authorityEntity = this.authorityRepository.findByName(authority)
+            ?: throw EntityNotFoundException("authority $authority dont exist")
 
         role.authorities.remove(authorityEntity)
         return this.roleRepo.saveAndFlush(role).toDto()
     }
 
     @Throws(EntityNotFoundException::class)
-    fun setAuthoritiesToRole(name: String, authorities: List<String>) : UserRoleDto {
+    fun setAuthoritiesToRole(name: String, authorities: List<String>): UserRoleDto {
         val role = this.roleRepo.findByName(name) ?: throw EntityNotFoundException("Role does not exists")
 
         role.authorities.clear()

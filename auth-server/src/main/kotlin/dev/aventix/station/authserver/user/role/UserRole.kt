@@ -14,6 +14,8 @@ class UserRole {
 
     lateinit var name: String
 
+    lateinit var displayName: String
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "role_authorities_map",
         joinColumns = [JoinColumn(name = "role_id")],
@@ -28,7 +30,7 @@ class UserRole {
     lateinit var users: MutableSet<User>
 
     fun toDto(): UserRoleDto {
-        return UserRoleDto(id, name, authorities.map { it.toDto() })
+        return UserRoleDto(id, name, displayName, authorities.map { it.toDto() })
     }
 
 }

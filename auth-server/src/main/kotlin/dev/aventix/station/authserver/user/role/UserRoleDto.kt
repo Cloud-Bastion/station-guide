@@ -7,5 +7,6 @@ import java.util.UUID
 data class UserRoleDto(
     var id: UUID?,
     var name: String,
+    var displayName: String,
     var authorities: List<UserAuthorityDto>,
 ): Serializable

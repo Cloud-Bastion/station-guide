@@ -11,19 +11,20 @@
             <div :class="$style['section-header']">
               <h2>Rollen</h2>
               <button v-if="canCreateRole" @click="openCreateRoleModal" :class="$style['add-button']">
-                <FontAwesomeIcon icon="plus"/> Neue Rolle
+                <FontAwesomeIcon icon="plus"/>
+                Neue Rolle
               </button>
             </div>
             <div v-if="isLoadingRoles" :class="$style['loading-message']">Lade Rollen...</div>
             <div v-else-if="rolesError" :class="$style['error-message']">{{ rolesError }}</div>
             <ul v-else :class="$style['roles-list']">
               <li
-                v-for="role in roles"
-                :key="role.id"
-                :class="[$style['role-item'], selectedRole?.id === role.id ? $style['selected'] : '']"
-                @click="selectRole(role)"
+                  v-for="role in roles"
+                  :key="role.id"
+                  :class="[$style['role-item'], selectedRole?.id === role.id ? $style['selected'] : '']"
+                  @click="selectRole(role)"
               >
-                {{ role.name }}
+                {{ role.displayName }}
               </li>
             </ul>
           </div>
@@ -31,7 +32,7 @@
           <!-- Authorities Detail View -->
           <div :class="$style['authorities-detail-section']">
             <div :class="$style['section-header']">
-              <h2>Berechtigungen für "{{ selectedRole?.name || 'Keine Rolle ausgewählt' }}"</h2>
+              <h2>Berechtigungen für {{ selectedRole?.displayName || 'Keine Rolle ausgewählt' }}</h2>
             </div>
             <div v-if="!selectedRole" :class="$style['placeholder']">
               Wählen Sie eine Rolle aus der Liste aus, um deren Berechtigungen anzuzeigen und zu bearbeiten.
@@ -45,7 +46,8 @@
                   <ul v-if="selectedRole.authorities.length > 0" :class="$style['authorities-list']">
                     <li v-for="auth in selectedRole.authorities" :key="auth.name" :class="$style['authority-item']">
                       <span>{{ auth.name }}</span>
-                      <button v-if="canUpdateRole" @click="removeAuthority(auth.name)" :class="$style['remove-button']" title="Berechtigung entfernen">
+                      <button v-if="canUpdateRole" @click="removeAuthority(auth.name)" :class="$style['remove-button']"
+                              title="Berechtigung entfernen">
                         <FontAwesomeIcon icon="times"/>
                       </button>
                     </li>
@@ -55,23 +57,25 @@
 
                 <div v-if="canUpdateRole" :class="$style['add-authority-section']">
                   <h3>Berechtigung hinzufügen:</h3>
-                   <div :class="$style['authority-input-group']">
+                  <div :class="$style['authority-input-group']">
                     <input
-                      type="text"
-                      v-model="newAuthorityName"
-                      placeholder="Berechtigungsname eingeben..."
-                      :class="$style['authority-input']"
-                      list="available-authorities-list"
+                        type="text"
+                        v-model="newAuthorityName"
+                        placeholder="Berechtigungsname eingeben..."
+                        :class="$style['authority-input']"
+                        list="available-authorities-list"
                     />
-                     <!-- Datalist for suggestions -->
+                    <!-- Datalist for suggestions -->
                     <datalist id="available-authorities-list">
-                        <option v-for="auth in availableAuthorities" :key="auth.name" :value="auth.name"></option>
+                      <option v-for="auth in availableAuthorities" :key="auth.name" :value="auth.name"></option>
                     </datalist>
-                    <button @click="addAuthority" :disabled="!newAuthorityName.trim()" :class="$style['add-button-small']">
-                      <FontAwesomeIcon icon="plus"/> Hinzufügen
+                    <button @click="addAuthority" :disabled="!newAuthorityName.trim()"
+                            :class="$style['add-button-small']">
+                      <FontAwesomeIcon icon="plus"/>
+                      Hinzufügen
                     </button>
                   </div>
-                   <div v-if="addAuthorityError" :class="$style['error-message-small']">{{ addAuthorityError }}</div>
+                  <div v-if="addAuthorityError" :class="$style['error-message-small']">{{ addAuthorityError }}</div>
                 </div>
               </div>
             </div>
@@ -95,11 +99,18 @@
             <input type="text" id="new-role-name" v-model="newRole.name" :class="$style['input']" required/>
           </div>
           <div :class="$style['form-group']">
+            <label for="new-role-displayname">Displayname:</label>
+            <input type="text" id="new-role-displayname" v-model="newRole.displayName" :class="$style['input']"
+                   required/>
+          </div>
+          <div :class="$style['form-group']">
             <label for="initial-authorities">Initiale Berechtigungen (kommagetrennt, optional):</label>
-            <input type="text" id="initial-authorities" v-model="newRole.initialAuthoritiesString" :class="$style['input']" placeholder="z.B. task:read,task:create"/>
+            <input type="text" id="initial-authorities" v-model="newRole.initialAuthoritiesString"
+                   :class="$style['input']" placeholder="z.B. task:read,task:create"/>
           </div>
           <div v-if="createRoleError" :class="$style['error-message']">{{ createRoleError }}</div>
-          <button @click="submitCreateRole" :disabled="!newRole.name.trim() || isCreatingRole" :class="$style['create-button']">
+          <button @click="submitCreateRole" :disabled="!newRole.name.trim() || isCreatingRole"
+                  :class="$style['create-button']">
             <FontAwesomeIcon v-if="isCreatingRole" icon="spinner" spin/>
             {{ isCreatingRole ? 'Wird erstellt...' : 'Rolle erstellen' }}
           </button>
@@ -112,11 +123,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, reactive } from 'vue';
+import {ref, onMounted, computed, reactive} from 'vue';
 import SidebarComponent from "@/components/sidebar/SidebarComponent.vue";
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import RoleAuthorityService, { UserRole, UserAuthority, UserRoleCreateRequest } from "@/service/RoleAuthorityService";
-import { useAuthStore } from "@/storage/AuthUserStore";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import RoleAuthorityService, {UserRole, UserAuthority, UserRoleCreateRequest} from "@/service/RoleAuthorityService";
+import {useAuthStore} from "@/storage/AuthUserStore";
 
 const authStore = useAuthStore();
 
@@ -137,13 +148,18 @@ const isCreatingRole = ref(false);
 const createRoleError = ref('');
 const newRole = reactive({
   name: '',
+  displayName: '',
   initialAuthoritiesString: '', // Input as comma-separated string
 });
 
 // Permissions (using placeholders)
-const canReadRole = computed(() => authStore.hasPermission('role:read'));
-const canCreateRole = computed(() => authStore.hasPermission('role:create'));
-const canUpdateRole = computed(() => authStore.hasPermission('role:update'));
+const canReadRole = computed(() => true)
+//authStore.hasPermission('role:read'));
+const canCreateRole = computed(() => true)
+//computed(() =>
+//authStore.hasPermission('role:create'));
+const canUpdateRole = computed(() => true)
+//authStore.hasPermission('role:update'));
 
 // --- Lifecycle ---
 onMounted(async () => {
@@ -195,7 +211,7 @@ async function addAuthority() {
     newAuthorityName.value = ''; // Clear input
     // Refresh available authorities if the added one was new
     if (!availableAuthorities.value.some(auth => auth.name === authToAdd)) {
-        availableAuthorities.value = RoleAuthorityService.extractUniqueAuthorities(roles.value);
+      availableAuthorities.value = RoleAuthorityService.extractUniqueAuthorities(roles.value);
     }
   } catch (error: any) {
     console.error(`Error adding authority ${authToAdd} to role ${roleName}:`, error);
@@ -210,7 +226,7 @@ async function removeAuthority(authorityName: string) {
     return;
   }
   if (!confirm(`Sind Sie sicher, dass Sie die Berechtigung "${authorityName}" von der Rolle "${selectedRole.value.name}" entfernen möchten?`)) {
-      return;
+    return;
   }
 
   isLoadingAuthorities.value = true;
@@ -242,6 +258,7 @@ function updateRoleInList(updatedRole: UserRole) {
 function openCreateRoleModal() {
   if (!canCreateRole.value) return;
   newRole.name = '';
+  newRole.displayName = '';
   newRole.initialAuthoritiesString = '';
   createRoleError.value = '';
   showCreateModal.value = true;
@@ -260,12 +277,13 @@ async function submitCreateRole() {
   createRoleError.value = '';
 
   const initialAuthorities = newRole.initialAuthoritiesString
-    .split(',')
-    .map(auth => auth.trim())
-    .filter(auth => auth.length > 0);
+      .split(',')
+      .map(auth => auth.trim())
+      .filter(auth => auth.length > 0);
 
   const createRequest: UserRoleCreateRequest = {
     name: newRole.name.trim(),
+    displayName: newRole.displayName,
     initialAuthorities: initialAuthorities,
   };
 
@@ -451,25 +469,25 @@ $button-padding-small: 6px 10px;
 }
 
 .authority-input-group {
-    display: flex;
-    gap: 10px;
-    align-items: center;
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .authority-input {
-    flex-grow: 1;
-    padding: $button-padding-small;
-    border: 1px solid $input-border;
-    border-radius: $border-radius;
-    background-color: $input-bg;
-    color: $text-color;
-    font-size: 0.9rem;
-    transition: border-color $transition-speed ease;
+  flex-grow: 1;
+  padding: $button-padding-small;
+  border: 1px solid $input-border;
+  border-radius: $border-radius;
+  background-color: $input-bg;
+  color: $text-color;
+  font-size: 0.9rem;
+  transition: border-color $transition-speed ease;
 
-    &:focus {
-        border-color: $input-focus-border;
-        outline: none;
-    }
+  &:focus {
+    border-color: $input-focus-border;
+    outline: none;
+  }
 }
 
 // --- Buttons ---
@@ -491,15 +509,31 @@ $button-padding-small: 6px 10px;
   &:hover:not(:disabled) {
     background-color: $accent-hover;
   }
+
   &:disabled {
     background-color: darken($accent, 20%);
     cursor: not-allowed;
     opacity: 0.7;
   }
 }
-.add-button { padding: $button-padding; font-size: 0.9rem; }
-.create-button { padding: 10px 15px; font-size: 1rem; width: 100%; justify-content: center; margin-top: 15px; }
-.add-button-small { padding: $button-padding-small; font-size: 0.9rem; }
+
+.add-button {
+  padding: $button-padding;
+  font-size: 0.9rem;
+}
+
+.create-button {
+  padding: 10px 15px;
+  font-size: 1rem;
+  width: 100%;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.add-button-small {
+  padding: $button-padding-small;
+  font-size: 0.9rem;
+}
 
 
 .remove-button {
@@ -527,17 +561,22 @@ $button-padding-small: 6px 10px;
   text-align: center;
   margin-top: 10px;
 }
-.loading-message { color: $text-color-light; }
-.error-message {
-    color: $error-color;
-    background-color: rgba($error-color, 0.1);
-    border: 1px solid rgba($error-color, 0.3);
-    font-size: 0.9rem;
+
+.loading-message {
+  color: $text-color-light;
 }
+
+.error-message {
+  color: $error-color;
+  background-color: rgba($error-color, 0.1);
+  border: 1px solid rgba($error-color, 0.3);
+  font-size: 0.9rem;
+}
+
 .error-message-small {
-    color: $error-color;
-    font-size: 0.85rem;
-    margin-top: 5px;
+  color: $error-color;
+  font-size: 0.85rem;
+  margin-top: 5px;
 }
 
 
