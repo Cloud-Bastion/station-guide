@@ -3,11 +3,6 @@ spring:
     init:
       mode: always
       platform: postgres
-  datasource:
-    url: "jdbc:postgresql://localhost:5432/test"
-    username: "aventica"
-    password: "aventica"
-    driver-class-name: org.postgresql.Driver
   jpa:
     show-sql: false
     hibernate:
@@ -22,7 +17,7 @@ spring:
   application:
     name: Station-Guide
 server:
-  port: 8082
+  port: 8080
 
 logging:
   level:
