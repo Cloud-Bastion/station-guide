@@ -144,6 +144,6 @@ class SecurityConfig(
 
     @Bean
     fun authorizationServerSettings(): AuthorizationServerSettings {
-        return AuthorizationServerSettings.builder().issuer("http://localhost:9000").build()
+        return AuthorizationServerSettings.builder().issuer("https://auth.cakmak-station.de").build()
     }
 }
