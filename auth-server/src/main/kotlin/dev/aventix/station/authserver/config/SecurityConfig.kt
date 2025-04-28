@@ -127,7 +127,7 @@ class SecurityConfig(
             RegisteredClient.withId(UUID.nameUUIDFromBytes(("station-frontend").toByteArray()).toString())
                 .clientId("station-frontend").clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("https://dashboard.cakmak-station.de/callbackw")
+                .redirectUri("https://dashboard.cakmak-station.de/callback")
                 .redirectUri("https://localhost:5173/callback")
                 .redirectUri("https://dashboard.cakmak-station.de/silent-renew")
                 .redirectUri("http://localhost:5173/silent-renew")
