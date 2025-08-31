@@ -13,11 +13,11 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://auth.cakmak-station.de
+          issuer-uri: http://localhost:8080
   application:
     name: Station-Guide
 server:
-  port: 8080
+  port: 8081
 
 logging:
   level:

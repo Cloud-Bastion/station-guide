@@ -4,7 +4,7 @@ services:
     image: postgres:17-alpine # Use a specific version (e.g., 15) or latest
     container_name: station_guide_development # Custom name for the container
     environment:
-      POSTGRES_DB: test     # Name of the database to create
+      POSTGRES_DB: test   # Name of the database to create
       POSTGRES_USER: aventica         # Username for the database
       POSTGRES_PASSWORD: aventica # Secure password for the user
     ports:
