@@ -1,5 +1,6 @@
 package dev.aventix.station.authserver.user.authority
 
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 
 @Service
@@ -20,6 +21,11 @@ class UserAuthorityService(
             this.name = name
         }
         repo.saveAndFlush(entity)
+    }
+
+    fun getAuthorityByName(name: String): UserAuthorityDto {
+        val authority = repo.findByName(name) ?: throw EntityNotFoundException("Authority does not exist.")
+        return authority.toDto()
     }
 
 }

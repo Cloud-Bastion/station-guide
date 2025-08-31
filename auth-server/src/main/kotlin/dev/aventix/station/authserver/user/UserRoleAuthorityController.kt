@@ -32,13 +32,7 @@ class UserRoleAuthorityController(
     fun createRole(@RequestBody request: UserRoleCreateRequest): ResponseEntity<UserRoleDto> {
         return try {
             ResponseEntity.ok(
-                this.userRoleService.createRole(
-                    UserRoleDto(
-                        null,
-                        request.name,
-                        request.displayName,
-                        request.initialAuthorities.map { authority -> UserAuthorityDto(null, authority) })
-                )
+                this.userRoleService.createRole(request)
             )
         } catch (notFound: EntityExistsException) {
             ResponseEntity.notFound().build()

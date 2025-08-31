@@ -4,9 +4,11 @@ import dev.aventix.station.authserver.config.ApplicationConfigProperties
 import dev.aventix.station.authserver.user.authority.*
 import dev.aventix.station.authserver.user.request.UserCreateRequest
 import dev.aventix.station.authserver.user.request.UserPatchRequest
+import dev.aventix.station.authserver.user.role.UserRoleCreateRequest
 import dev.aventix.station.authserver.user.role.UserRoleRepository
 import dev.aventix.station.authserver.user.role.UserRoleService
 import dev.aventix.station.authserver.user.spring.StationUserDetails
+import jakarta.annotation.PostConstruct
 import jakarta.persistence.EntityExistsException
 import jakarta.persistence.EntityNotFoundException
 import jakarta.servlet.http.HttpServletRequest
@@ -34,7 +36,7 @@ class UserService(
     private val securityContextRepository = HttpSessionSecurityContextRepository()
     private val securityHolderStrategy = SecurityContextHolder.getContextHolderStrategy()
 
-    /*@PostConstruct
+    @PostConstruct
     @Transactional // Add transactional annotation for PostConstruct data initialization
     fun init() {
         authorityService.createAuthoritiesIfNotExists(listOf(
@@ -46,15 +48,19 @@ class UserService(
         ))
 
         if (roleRepository.findByName("admin") == null) {
-            roleService.createRole(UserRoleCreateRequest("admin", listOf(
-                "employee:create",
-                "employee:remove",
-                "expire_product:create",
-            )))
+            roleService.createRole(
+                UserRoleCreateRequest(
+                    "admin", "Admin", listOf(
+                        "employee:create",
+                        "employee:remove",
+                        "expire_product:create",
+                    )
+                )
+            )
         }
 
         if (roleRepository.findByName("employee") == null) {
-            roleService.createRole(UserRoleCreateRequest("employee", listOf(
+            roleService.createRole(UserRoleCreateRequest("employee", "Employee", listOf(
                 "employee:read",
                 "expire_product:read",
             )))
@@ -77,7 +83,7 @@ class UserService(
         } else {
             println("Initial test user already exists.")
         }
-    }*/
+    }
 
     fun findByEmail(email: String): Optional<UserDto> = userRepository.findByEmail(email).map { u -> u.toDto() }
 

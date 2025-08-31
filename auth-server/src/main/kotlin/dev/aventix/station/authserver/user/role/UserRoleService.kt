@@ -13,16 +13,16 @@ class UserRoleService(
     private val authorityRepository: UserAuthorityRepository,
 ) {
     @Throws(EntityExistsException::class)
-    fun createRole(userRole: UserRoleDto): UserRoleDto {
-        if (roleRepo.findByName(userRole.name) != null) {
+    fun createRole(request: UserRoleCreateRequest): UserRoleDto {
+        if (roleRepo.findByName(request.name) != null) {
             throw EntityExistsException("Role already exists")
         }
 
         val entity = UserRole().apply {
-            this.name = userRole.name
-            this.displayName = userRole.displayName
-            this.authorities = userRole.authorities.mapNotNull {
-                authorityRepository.findByName(it.name)
+            this.name = request.name
+            this.displayName = request.displayName
+            this.authorities = request.initialAuthorities.mapNotNull {
+                authorityRepository.findByName(it)
             }.toMutableSet()
         }
 
