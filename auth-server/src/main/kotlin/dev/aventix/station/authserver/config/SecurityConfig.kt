@@ -128,7 +128,7 @@ class SecurityConfig(
                 .clientId("station-frontend").clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .redirectUri("https://dashboard.cakmak-station.de/callback")
-                .redirectUri("https://localhost:5173/callback")
+                .redirectUri("http://localhost:5173/callback")
                 .redirectUri("https://dashboard.cakmak-station.de/silent-renew")
                 .redirectUri("http://localhost:5173/silent-renew")
                 .postLogoutRedirectUri("http://localhost:5173/")
@@ -144,6 +144,6 @@ class SecurityConfig(
 
     @Bean
     fun authorizationServerSettings(): AuthorizationServerSettings {
-        return AuthorizationServerSettings.builder().issuer("https://auth.cakmak-station.de").build()
+        return AuthorizationServerSettings.builder().issuer("http://localhost:8080").build()
     }
 }
