@@ -1,13 +1,35 @@
 spring:
   application:
     name: "auth-server"
-  jpa:
-    hibernate:
-      ddl-auto: update
   sql:
     init:
       mode: always
       platform: postgres
+
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/test
+    username: aventica
+    password: aventica
+
+  # --- Spring Session Configuration ---
+  session:
+    #store-type: jdbc
+    jdbc:
+      table-name: SPRING_SESSION # Default table name, ensure it doesn't clash if DB is shared
+      # Optional: Customize cleanup cron if needed
+      # cleanup-cron: "0 * * * * *"
+    timeout: 30m
+
+  jpa:
+    hibernate:
+      # create-drop for development purposes
+      ddl-auto: update
+    properties:
+      hibernate:
+        #dialect: org.hibernate.dialect.PostgreSQLDialect | NO NEED to configure explicitly
+        format-sql: true
+      show-sql: true
   security:
     oauth2:
       resourceserver:
@@ -24,11 +46,6 @@ spring:
               - profile
               - email
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-
-  session:
-    jdbc:
-      table-name: SPRING_SESSION
-    timeout: 10m
 
 station:
   config:
