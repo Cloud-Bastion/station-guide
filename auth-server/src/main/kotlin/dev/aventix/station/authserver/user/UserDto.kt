@@ -12,6 +12,7 @@ data class UserDto(
     val firstName: String,
     val lastName: String,
     val password: String,
+    val passwordChanged: Boolean,
     val authorities: Set<UserAuthorityDto>,
     val roles: Set<UserRoleDto>,
 ): Serializable

@@ -1,5 +1,6 @@
 package dev.aventix.station.authserver.config
 
+import dev.aventix.station.authserver.user.FirstLoginSuccessHandler
 import dev.aventix.station.authserver.user.StationOidcUserService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -53,6 +54,7 @@ class SecurityConfig(
                 .anyRequest().authenticated()
         }.formLogin { formLogin: FormLoginConfigurer<HttpSecurity?> ->
             formLogin.loginPage("/login")
+            formLogin.successHandler(FirstLoginSuccessHandler())
         }.oauth2Login { oauth2Login: OAuth2LoginConfigurer<HttpSecurity?> ->
             oauth2Login.loginPage("/login").userInfoEndpoint { it.oidcUserService(oidcUserService) }
         }.exceptionHandling { exceptions: ExceptionHandlingConfigurer<HttpSecurity?> ->

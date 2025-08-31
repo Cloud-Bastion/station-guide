@@ -83,6 +83,24 @@ class UserService(
         } else {
             println("Initial test user already exists.")
         }
+
+        if (userRepository.findByEmail("pxav.studios@gmail.com").isEmpty) {
+            println("Creating initial test user2...")
+            try {
+                createUser(
+                    UserCreateRequest(
+                        "pxav.studios@gmail.com", "Melvin", "Schneider", "pw", // Raw password
+                        setOf(), setOf("admin", "employee")
+                    )
+                )
+                println("Initial test user2 created successfully.")
+            } catch (e: Exception) {
+                println("Error creating initial test user2: ${e.message}")
+                e.printStackTrace()
+            }
+        } else {
+            println("Initial test user2 already exists.")
+        }
     }
 
     fun findByEmail(email: String): Optional<UserDto> = userRepository.findByEmail(email).map { u -> u.toDto() }
@@ -127,6 +145,19 @@ class UserService(
     @Transactional
     fun patchUser(request: UserPatchRequest): UserDto {
         TODO("not implemented yet")
+    }
+
+    @Transactional
+    fun changePassword(username: String, newPassword: String): UserDto {
+        val user = userRepository.findByEmail(username).orElseThrow {
+            EntityNotFoundException("User not found.")
+        }
+        user.apply {
+            this.password = passwordEncoder.encode(newPassword)
+            this.passwordChanged = true
+        }
+        userRepository.saveAndFlush(user)
+        return user.toDto()
     }
 
     @Transactional

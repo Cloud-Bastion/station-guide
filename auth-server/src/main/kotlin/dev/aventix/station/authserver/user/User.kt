@@ -28,6 +28,9 @@ class User {
     @Column(nullable = true)
     lateinit var password: String
 
+    @Column(nullable = false)
+    var passwordChanged: Boolean = false
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_authorities_map",
         joinColumns = [JoinColumn(name = "user_id")],
@@ -49,6 +52,7 @@ class User {
             firstName,
             lastName,
             password,
+            passwordChanged,
             authorities.map { authority -> authority.toDto() }.toSet(),
             roles.map { it.toDto() }.toSet()
         )

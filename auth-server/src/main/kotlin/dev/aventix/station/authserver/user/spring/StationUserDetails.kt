@@ -42,4 +42,8 @@ class StationUserDetails(private val userData: UserDto): UserDetails {
         return true
     }
 
+    fun isPasswordChanged(): Boolean {
+        return userData.passwordChanged
+    }
+
 }
